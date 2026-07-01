@@ -25,20 +25,12 @@ class _HomeScreenState extends State<HomeScreen> {
   final MapController _mapController = MapController();
   final PanelController _panelController = PanelController();
 
-  // 監控 AppState 中的中心點變化，實現真正的地圖跳轉
-  void _listenToCenterChanges() {
-    final appState = Provider.of<AppState>(context, listen: false);
-    // 注意：在實際實作中，我們會使用 ValueNotifier 或在 build 中監控
-    // 這裡我們在 build 方法中透過 Provider 處理
-  }
-
   Future<void> _handleLocationToggle(bool enable) async {
     final appState = Provider.of<AppState>(context, listen: false);
     if (enable) {
       final status = await _locationService.requestPermission();
       if (status == LocationPermissionStatus.granted) {
         await appState.toggleUserTracking(true);
-        // 立即移動到目前位置
         final pos = await _locationService.getCurrentPosition();
         _mapController.move(LatLng(pos.latitude, pos.longitude), 15.0);
       } else {
@@ -79,10 +71,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
 
-    // 關鍵修復：當 AppState 的 center 改變時，地圖自動移動 (實現定位跳轉)
-    // 我們利用 WidgetsBinding 避免在 build 期間執行 side effect
+    // 同步地圖中心點 (實作定位跳轉)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-       // 如果追蹤中，則同步中心點 (簡化實作)
        if(appState.isFollowingUser) {
          _mapController.move(appState.center, 15.0);
        }
@@ -90,16 +80,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       drawer: const SettingsPanel(),
-      body: SlidingUpPanel(
-        controller: _panelController,
-        minHeight: MediaQuery.of(context).size.height * 0.2,
-        maxHeight: MediaQuery.of(context).size.height * 0.8,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        panel: _buildPanelContent(context, appState),
-        body: Stack(
-          children: [
-            // 1. 地圖層
-            FlutterMap(
+      body: Stack(
+        children: [
+          // 1. 底部面板層 (最底層)
+          SlidingUpPanel(
+            controller: _panelController,
+            minHeight: MediaQuery.of(context).size.height * 0.2,
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            panel: _buildPanelContent(context, appState),
+            body: Container(), // body 留空，讓地圖層獨立
+          ),
+
+          // 2. 地圖層 (位於面板之下，但-在按鈕之下)
+          // 注意：為了讓地圖能被操作，我們將地圖放在 Stack 的獨立層
+          Positioned.fill(
+            child: FlutterMap(
               mapController: _mapController,
               options: MapOptions(
                 initialCenter: appState.center,
@@ -126,40 +122,43 @@ class _HomeScreenState extends State<HomeScreen> {
                       userAgentPackageName: 'com.youbike.android',
                     ),
                   ),
-                // 確保 Marker 渲染：使用最穩定的 MarkerLayer
                 MarkerLayer(markers: appState.stationMarkers),
               ],
             ),
+          ),
 
-            // 2. 功能按鈕 (頂層)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 10,
-              left: 20,
-              child: FloatingActionButton.small(
-                heroTag: 'location',
-                backgroundColor: AppColors.primary,
-                onPressed: () => _handleLocationToggle(true),
-                child: Icon(
-                  Icons.my_location,
-                  color: appState.isFollowingUser ? Colors.white : Colors.black54,
-                ),
+          // 3. 功能按鈕層 (絕對頂層 - 永遠不被遮擋)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 20,
+            child: FloatingActionButton.small(
+              heroTag: 'location',
+              backgroundColor: AppColors.primary,
+              onPressed: () => _handleLocationToggle(true),
+              child: Icon(
+                Icons.my_location,
+                color: appState.isFollowingUser ? Colors.white : Colors.black54,
               ),
             ),
+          ),
 
-            Positioned(
-              bottom: 100,
-              right: 20,
-              child: FloatingActionButton.small(
-                heroTag: 'settings',
-                backgroundColor: AppColors.primary,
-                onPressed: () => Scaffold.of(context).openDrawer(),
-                child: const Icon(Icons.settings, color: Colors.white),
-              ),
+          Positioned(
+            bottom: 100,
+            right: 20,
+            child: FloatingActionButton.small(
+              heroTag: 'settings',
+              backgroundColor: AppColors.primary,
+              onPressed: () => Scaffold.of(context).openDrawer(),
+              child: const Icon(Icons.settings, color: Colors.white),
             ),
+          ),
 
-            Positioned(
-              bottom: 20,
-              right: 20,
+          // 更新按鈕：位於螢幕正下方中央
+          Positioned(
+            bottom: 20,
+            left: 0,
+            right: 0,
+            child: Center(
               child: FloatingActionButton.small(
                 heroTag: 'refresh',
                 backgroundColor: AppColors.primary,
@@ -167,10 +166,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: const Icon(Icons.autorenew, color: Colors.white),
               ),
             ),
+          ),
 
-            const LoadingOverlay(),
-          ],
-        ),
+          const LoadingOverlay(),
+        ],
       ),
     );
   }
@@ -180,7 +179,6 @@ class _HomeScreenState extends State<HomeScreen> {
       color: appState.isDarkMode ? AppColors.cardDark : AppColors.cardLight,
       child: Column(
         children: [
-          // 拖拽把手 (SlidingUpPanel 已內建，但我們可以自定義)
           Center(
             child: Container(
               margin: const EdgeInsets.symmetric(vertical: 12),
