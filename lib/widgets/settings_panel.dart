@@ -10,94 +10,66 @@ class SettingsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     
-    return NavigationDrawer(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(28, 32, 28, 16),
-          child: Text(
-            LanguageService.getText('settings_title', appState.currentLang),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).primaryColor,
+    return Drawer( // 確保封裝在 Drawer 中以支持 Scaffold.openDrawer()
+      child: NavigationDrawer(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(28, 60, 28, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.settings, size: 48, color: AppColors.primary),
+                const SizedBox(height: 16),
+                Text(
+                  "系統設定",
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ],
             ),
           ),
-        ),
-        const Divider(),
-        _buildSettingItem(
-          context,
-          icon: Icons.location_on_outlined,
-          label: LanguageService.getText('region_select', appState.currentLang),
-          child: DropdownButton<String>(
-            value: appState.currentRegion,
-            isExpanded: true,
-            underline: const SizedBox(),
-            items: [
-              // Add 'Custom' option to prevent Dropdown assertion error
-              const DropdownMenuItem(
-                value: 'custom',
-                child: Text("我的位置"),
+          const Divider(),
+          // 地區選擇
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: ListTile(
+              title: const Text("選擇地區"),
+              trailing: DropdownButton<String>(
+                value: appState.currentRegion,
+                items: AppState.regionCoordinates.keys.map((region) {
+                  return DropdownMenuItem(
+                    value: region,
+                    child: Text(region),
+                  );
+                }).toList(),
+                onChanged: (val) => appState.setRegion(val!),
               ),
-              ...AppState.regionCoordinates.entries
-                  .where((e) => e.key != 'custom')
-                  .map((e) => DropdownMenuItem(
-                        value: e.key,
-                        child: Text(e.key),
-                      )),
-            ],
-            onChanged: (newValue) {
-              if (newValue != null) appState.setRegion(newValue);
-            },
-          ),
-        ),
-        _buildSettingItem(
-          context,
-          icon: Icons.my_location,
-          label: LanguageService.getText('location_service', appState.currentLang),
-          child: Switch(
-            value: appState.isFollowingUser,
-            onChanged: (value) => appState.setFollowingUser(value),
-          ),
-        ),
-        _buildSettingItem(
-          context,
-          icon: Icons.dark_mode_outlined,
-          label: LanguageService.getText('dark_mode', appState.currentLang),
-          child: Switch(
-            value: appState.isDarkMode,
-            onChanged: (value) => appState.toggleDarkMode(value),
-          ),
-        ),
-        _buildSettingItem(
-          context,
-          icon: Icons.language,
-          label: LanguageService.getText('lang_toggle', appState.currentLang),
-          child: Switch(
-            value: appState.currentLang == 'en',
-            onChanged: (value) => appState.setLanguage(value ? 'en' : 'zh'),
-          ),
-        ),
-        const Spacer(),
-        Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Center(
-            child: Text(
-              "YouBike Android v1.0",
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSettingItem(BuildContext context, {required IconData icon, required String label, required Widget child}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: ListTile(
-        leading: Icon(icon, color: Colors.grey[600]),
-        title: Text(label, style: const TextStyle(fontSize: 15)),
-        trailing: child,
-        contentPadding: EdgeInsets.zero,
+          // 語言選擇
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: ListTile(
+              title: const Text("語言設定"),
+              trailing: DropdownButton<String>(
+                value: appState.currentLang,
+                items: const [
+                  DropdownMenuItem(value: 'zh', child: Text("中文")),
+                  DropdownMenuItem(value: 'en', child: Text("English")),
+                ],
+                onChanged: (val) => appState.setLanguage(val!),
+              ),
+            ),
+          ),
+          // 深色模式
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: SwitchListTile(
+              title: const Text("深色模式"),
+              value: appState.isDarkMode,
+              onChanged: (val) => appState.toggleDarkMode(val),
+            ),
+          ),
+        ],
       ),
     );
   }

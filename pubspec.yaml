@@ -14,8 +14,8 @@ dependencies:
   latlong2: ^0.9.0
   http: ^1.1.0
   geolocator: ^10.1.0
-  flutter_map_marker_cluster: ^1.3.0
-  shared_preferences: ^2.2.0 # 恢復被誤刪的依賴
+  shared_preferences: ^2.2.0
+  sliding_up_panel: ^2.0.0 # 引入專業底部面板套件
 
 dev_dependencies:
   flutter_test:

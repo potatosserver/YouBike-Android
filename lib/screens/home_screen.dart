@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import 'package:sliding_up_panel/sliding_up_panel.dart';
 import '../services/app_state.dart';
 import '../services/language_service.dart';
 import '../services/location_service.dart';
@@ -22,6 +23,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final LocationService _locationService = LocationService();
   final MapController _mapController = MapController();
+  final PanelController _panelController = PanelController();
+
+  // 監控 AppState 中的中心點變化，實現真正的地圖跳轉
+  void _listenToCenterChanges() {
+    final appState = Provider.of<AppState>(context, listen: false);
+    // 注意：在實際實作中，我們會使用 ValueNotifier 或在 build 中監控
+    // 這裡我們在 build 方法中透過 Provider 處理
+  }
 
   Future<void> _handleLocationToggle(bool enable) async {
     final appState = Provider.of<AppState>(context, listen: false);
@@ -29,6 +38,9 @@ class _HomeScreenState extends State<HomeScreen> {
       final status = await _locationService.requestPermission();
       if (status == LocationPermissionStatus.granted) {
         await appState.toggleUserTracking(true);
+        // 立即移動到目前位置
+        final pos = await _locationService.getCurrentPosition();
+        _mapController.move(LatLng(pos.latitude, pos.longitude), 15.0);
       } else {
         String msg = "";
         switch (status) {
@@ -67,183 +79,181 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
 
+    // 關鍵修復：當 AppState 的 center 改變時，地圖自動移動 (實現定位跳轉)
+    // 我們利用 WidgetsBinding 避免在 build 期間執行 side effect
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+       // 如果追蹤中，則同步中心點 (簡化實作)
+       if(appState.isFollowingUser) {
+         _mapController.move(appState.center, 15.0);
+       }
+    });
+
     return Scaffold(
       drawer: const SettingsPanel(),
-      body: Stack(
-        children: [
-          // 1. 地圖層 (最底層)
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: appState.center,
-              initialZoom: 15.0,
-              onPositionChanged: (position, hasGesture) {
-                if (hasGesture) appState.setFollowingUser(false);
-              },
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.youbike.android',
+      body: SlidingUpPanel(
+        controller: _panelController,
+        minHeight: MediaQuery.of(context).size.height * 0.2,
+        maxHeight: MediaQuery.of(context).size.height * 0.8,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        panel: _buildPanelContent(context, appState),
+        body: Stack(
+          children: [
+            // 1. 地圖層
+            FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: appState.center,
+                initialZoom: 15.0,
+                onPositionChanged: (position, hasGesture) {
+                  if (hasGesture) appState.setFollowingUser(false);
+                },
               ),
-              if (appState.isDarkMode)
-                ColorFiltered(
-                  colorFilter: const ColorFilter.matrix([
-                    -1,  0,  0, 0, 255,
-                     0, -1,  0, 0, 255,
-                     0,  0, -1, 0, 255,
-                     0,  0,  0, 1, 0,
-                  ]),
-                  child: TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.youbike.android',
-                  ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.youbike.android',
                 ),
-              MarkerLayer(markers: appState.stationMarkers),
-            ],
-          ),
+                if (appState.isDarkMode)
+                  ColorFiltered(
+                    colorFilter: const ColorFilter.matrix([
+                      -1,  0,  0, 0, 255,
+                       0, -1,  0, 0, 255,
+                       0,  0, -1, 0, 255,
+                       0,  0,  0, 1, 0,
+                    ]),
+                    child: TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.youbike.android',
+                    ),
+                  ),
+                // 確保 Marker 渲染：使用最穩定的 MarkerLayer
+                MarkerLayer(markers: appState.stationMarkers),
+              ],
+            ),
 
-          // 2. 底部面板 (位於地圖之上，但在 FAB 之下)
-          _buildBottomPanel(context, appState),
-
-          // 3. 功能按鈕 (最頂層，確保不會被面板蓋住)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 10,
-            left: 20,
-            child: FloatingActionButton.small(
-              heroTag: 'location',
-              backgroundColor: AppColors.primary,
-              onPressed: () => _handleLocationToggle(true),
-              child: Icon(
-                Icons.my_location,
-                color: appState.isFollowingUser ? Colors.white : Colors.black54,
+            // 2. 功能按鈕 (頂層)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 10,
+              left: 20,
+              child: FloatingActionButton.small(
+                heroTag: 'location',
+                backgroundColor: AppColors.primary,
+                onPressed: () => _handleLocationToggle(true),
+                child: Icon(
+                  Icons.my_location,
+                  color: appState.isFollowingUser ? Colors.white : Colors.black54,
+                ),
               ),
             ),
-          ),
 
-          Positioned(
-            bottom: 100,
-            right: 20,
-            child: FloatingActionButton.small(
-              heroTag: 'settings',
-              backgroundColor: AppColors.primary,
-              onPressed: () => Scaffold.of(context).openDrawer(),
-              child: const Icon(Icons.settings, color: Colors.white),
+            Positioned(
+              bottom: 100,
+              right: 20,
+              child: FloatingActionButton.small(
+                heroTag: 'settings',
+                backgroundColor: AppColors.primary,
+                onPressed: () => Scaffold.of(context).openDrawer(),
+                child: const Icon(Icons.settings, color: Colors.white),
+              ),
             ),
-          ),
 
-          // 更新按鈕：放在螢幕最底部，低於設定按鈕
-          Positioned(
-            bottom: 20,
-            right: 20,
-            child: FloatingActionButton.small(
-              heroTag: 'refresh',
-              backgroundColor: AppColors.primary,
-              onPressed: () => appState.updateRealtimeData(),
-              child: const Icon(Icons.autorenew, color: Colors.white),
+            Positioned(
+              bottom: 20,
+              right: 20,
+              child: FloatingActionButton.small(
+                heroTag: 'refresh',
+                backgroundColor: AppColors.primary,
+                onPressed: () => appState.updateRealtimeData(),
+                child: const Icon(Icons.autorenew, color: Colors.white),
+              ),
             ),
-          ),
 
-          const LoadingOverlay(),
-        ],
+            const LoadingOverlay(),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildBottomPanel(BuildContext context, AppState appState) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.3,
-      minChildSize: 0.15,
-      maxChildSize: 0.9,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: appState.isDarkMode ? AppColors.cardDark : AppColors.cardLight,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 15, offset: const Offset(0, -5)),
-            ],
+  Widget _buildPanelContent(BuildContext context, AppState appState) {
+    return Container(
+      color: appState.isDarkMode ? AppColors.cardDark : AppColors.cardLight,
+      child: Column(
+        children: [
+          // 拖拽把手 (SlidingUpPanel 已內建，但我們可以自定義)
+          Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              width: 50, height: 5,
+              decoration: BoxDecoration(
+                color: Colors.grey[400],
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
           ),
-          child: Column(
-            children: [
-              // 強化把手：確保它是可見且不攔截手勢的
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 12),
-                  width: 50, height: 5,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  LanguageService.getText('title', appState.currentLang),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 10),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: LanguageService.getText('search_placeholder', appState.currentLang),
+                prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                filled: true,
+                fillColor: appState.isDarkMode ? Colors.black26 : Colors.grey[100],
+              ),
+              onChanged: (val) => appState.searchStations(val),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: ListView.builder(
+              itemCount: appState.searchResults.length,
+              itemBuilder: (context, index) {
+                final s = appState.searchResults[index];
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
-                    color: appState.isDarkMode ? Colors.grey[600] : Colors.grey[400],
-                    borderRadius: BorderRadius.circular(10),
+                    color: appState.isDarkMode ? Colors.white10 : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.withOpacity(0.2), width: 0.5),
                   ),
-                ),
-              ),
-              
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      LanguageService.getText('title', appState.currentLang),
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    leading: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
+                      child: const Icon(Icons.directions_bike, color: AppColors.primary, size: 20),
                     ),
-                    // 將原本的更新按鈕移至最底層 FAB
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: LanguageService.getText('search_placeholder', appState.currentLang),
-                    prefixIcon: const Icon(Icons.search, color: AppColors.primary),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-                    filled: true,
-                    fillColor: appState.isDarkMode ? Colors.black26 : Colors.grey[100],
+                    title: Text(
+                      appState.currentLang == 'en' ? s.nameEn : s.nameTw,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                    ),
+                    subtitle: Text(
+                      appState.currentLang == 'en' ? s.addressEn : s.addressTw,
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
+                    trailing: const Icon(Icons.chevron_right, size: 20),
+                    onTap: () => _onStationSelected(s),
                   ),
-                  onChanged: (val) => appState.searchStations(val),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  itemCount: appState.searchResults.length,
-                  itemBuilder: (context, index) {
-                    final s = appState.searchResults[index];
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: appState.isDarkMode ? Colors.white10 : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.withOpacity(0.2), width: 0.5),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                        leading: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-                          child: const Icon(Icons.directions_bike, color: AppColors.primary, size: 20),
-                        ),
-                        title: Text(
-                          appState.currentLang == 'en' ? s.nameEn : s.nameTw,
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                        ),
-                        subtitle: Text(
-                          appState.currentLang == 'en' ? s.addressEn : s.addressTw,
-                          style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                        ),
-                        trailing: const Icon(Icons.chevron_right, size: 20),
-                        onTap: () => _onStationSelected(s),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+                );
+              },
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
