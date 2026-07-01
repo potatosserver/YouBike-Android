@@ -17,6 +17,7 @@ class AppState extends ChangeNotifier {
   bool isDarkMode = false;
   bool isFollowingUser = false;
   String currentLang = 'zh';
+  String currentRegion = "Kaohsiung"; // Added to fix 'currentRegion' getter error
   int countdown = 30;
   
   List<Station> _allStations = [];
@@ -102,7 +103,6 @@ class AppState extends ChangeNotifier {
                s.addressEn.toLowerCase().contains(q);
       }).toList();
       
-      // Sync with Web: Always sort search results by distance
       _sortStationsByDistance(_searchResults);
     }
     notifyListeners();
@@ -128,7 +128,6 @@ class AppState extends ChangeNotifier {
   Future<void> fetchRealTimeData(List<String> stationIds) async {
     if (stationIds.isEmpty) return;
     
-    // Web version limits batch to 60, batch size 20
     final batchSize = 20;
     for (int i = 0; i < stationIds.length; i += batchSize) {
       final batch = stationIds.sublist(i, i + batchSize > stationIds.length ? stationIds.length : i + batchSize);
@@ -167,7 +166,6 @@ class AppState extends ChangeNotifier {
 
   Future<void> refreshStations() async {
     await loadBaseStations();
-    // Fetch real-time data for currently visible/closest stations
     final closest = getClosestStations(center, limit: 50);
     await fetchRealTimeData(closest.map((s) => s.id).toList());
     notifyListeners();

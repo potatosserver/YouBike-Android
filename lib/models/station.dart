@@ -13,6 +13,7 @@ class Station {
   int availableBikes = 0;
   int availableElectricBikes = 0;
   int emptySpaces = 0;
+  int totalBikes = 0; // Added to fix 'totalBikes' getter error
 
   Station({
     required this.id,
@@ -49,7 +50,9 @@ class Station {
         addressEn: json['address_en']?.toString() ?? '',
         lat: double.tryParse(json['lat']?.toString() ?? '') ?? 0.0,
         lng: double.tryParse(json['lng']?.toString() ?? '') ?? 0.0,
-      );
+      )..totalBikes = json['total_spaces']?.toString().isNotEmpty == true 
+          ? int.tryParse(json['total_spaces'].toString()) ?? 0 
+          : 0;
     } catch (e) {
       print("Error parsing Station: $e");
       return null;
