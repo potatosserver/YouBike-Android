@@ -29,26 +29,27 @@ class Station {
 
   static Station? fromJson(Map<String, dynamic> json) {
     try {
-      // 兼容 YouBike API 不同版本的鍵名
+      // 1. 兼容 ID 鍵名
       final id = json['station_no'] ?? json['id'] ?? '';
-      final nameTw = json['name_tw'] ?? '';
-      final nameEn = json['name_en'] ?? '';
-      final addressTw = json['address_tw'] ?? '';
-      final addressEn = json['address_en'] ?? '';
+      if (id == '') return null;
+
+      // 2. 解析坐標 (關鍵修復：處理 String 類型的坐標)
+      final latString = json['lat']?.toString() ?? '';
+      final lngString = json['lng']?.toString() ?? '';
       
-      // 坐標處理
-      final latRaw = json['lat'];
-      final lngRaw = json['lng'];
-      if (latRaw == null || lngRaw == null) return null;
+      final lat = double.tryParse(latString);
+      final lng = double.tryParse(lngString);
+      
+      if (lat == null || lng == null) return null;
 
       return Station(
         id: id.toString(),
-        nameTw: nameTw.toString(),
-        nameEn: nameEn.toString(),
-        addressTw: addressTw.toString(),
-        addressEn: addressEn.toString(),
-        lat: (latRaw as num).toDouble(),
-        lng: (lngRaw as num).toDouble(),
+        nameTw: (json['name_tw'] ?? '').toString(),
+        nameEn: (json['name_en'] ?? '').toString(),
+        addressTw: (json['address_tw'] ?? '').toString(),
+        addressEn: (json['address_en'] ?? '').toString(),
+        lat: lat,
+        lng: lng,
       );
     } catch (e) {
       return null;
@@ -56,9 +57,9 @@ class Station {
   }
 
   void updateRealtimeData(Map<String, dynamic> data) {
-    availableBikes = data['available_bikes'] ?? 0;
-    availableElectricBikes = data['available_ebikes'] ?? 0;
-    totalBikes = data['total_bikes'] ?? 0;
-    totalElectricBikes = data['total_ebikes'] ?? 0;
+    availableBikes = int.tryParse(data['available_bikes']?.toString() ?? '0') ?? 0;
+    availableElectricBikes = int.tryParse(data['available_ebikes']?.toString() ?? '0') ?? 0;
+    totalBikes = int.tryParse(data['total_bikes']?.toString() ?? '0') ?? 0;
+    totalElectricBikes = int.tryParse(data['total_ebikes']?.toString() ?? '0') ?? 0;
   }
 }
