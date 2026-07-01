@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/app_state.dart';
 import '../models/station.dart';
+import 'package:latlong2/latlong2.dart';
 
 class StationCard extends StatelessWidget {
   final Station station;
@@ -11,6 +12,18 @@ class StationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appState = Provider.of<AppState>(context, listen: false);
+    
+    // Calculate distance from current center for the display
+    final distance = const Distance().as(
+      LengthUnit.Meter, 
+      LatLng(station.lat, station.lng), 
+      appState.center
+    );
+    final distText = distance < 1000 
+        ? "${distance.round()} m" 
+        : "${distance.toStringAsFixed(2)} km";
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -51,14 +64,31 @@ class StationCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    station.addressTw,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
             Text(
-              station.addressTw,
+              "Distance: $distText",
               style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey[600],
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Colors.blue[700],
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

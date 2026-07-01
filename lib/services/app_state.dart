@@ -8,20 +8,17 @@ import 'dart:convert';
 import '../models/station.dart';
 
 class AppState extends ChangeNotifier {
-  // Configuration
   final String apiBaseUrl = "https://apis.youbike.com.tw/json";
-  final String apiEnBaseUrl = "https://apis.youbike.com.tw/json/en"; // For English API
+  final String apiEnBaseUrl = "https://apis.youbike.com.tw/json/en";
+  final String realTimeApiUrl = "https://apis.youbike.com.tw/tw2/parkingInfo";
   
-  // State
   LatLng center = const LatLng(22.631442, 120.30189);
   bool isLoading = true;
   bool isDarkMode = false;
   bool isFollowingUser = false;
   String currentLang = 'zh';
-  String currentRegion = 'kaohsiung';
   int countdown = 30;
   
-  // Data
   List<Station> _allStations = [];
   List<Station> _searchResults = [];
   List<Marker> stationMarkers = [];
@@ -35,12 +32,10 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _initialize() async {
-    _isLoading = true;
+    isLoading = true;
     notifyListeners();
     try {
-      await Future.wait([
-        loadBaseStations(),
-      ]);
+      await loadBaseStations();
     } catch (e) {
       debugPrint("Critical Initialization Error: $e");
     } finally {
@@ -63,18 +58,11 @@ class AppState extends ChangeNotifier {
 
   Future<void> loadBaseStations() async {
     try {
-      // Dynamic URL based on language
-      final url = currentLang == 'en' 
-          ? "$apiEnBaseUrl/station-min-yb2.json" 
-          : "$apiBaseUrl/station-min-yb2.json";
-          
+      final url = currentLang == 'en' ? "$apiEnBaseUrl/station-min-yb2.json" : "$apiBaseUrl/station-min-yb2.json";
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        _allStations = data
-            .map((json) => Station.fromJson(json))
-            .whereType<Station>()
-            .toList();
+        _allStations = data.map((json) => Station.fromJson(json)).whereType<Station>().toList();
         _generateMarkers();
       }
     } catch (e) {
@@ -106,9 +94,16 @@ class AppState extends ChangeNotifier {
     if (query.isEmpty) {
       _searchResults = [];
     } else {
-      _searchResults = _allStations
-          .where((s) => s.nameTw.contains(query) || s.addressTw.contains(query))
-          .toList();
+      _searchResults = _allStations.where((s) {
+        final q = query.toLowerCase();
+        return s.nameTw.toLowerCase().contains(q) || 
+               s.addressTw.toLowerCase().contains(q) || 
+               s.nameEn.toLowerCase().contains(q) || 
+               s.addressEn.toLowerCase().contains(q);
+      }).toList();
+      
+      // Sync with Web: Always sort search results by distance
+      _sortStationsByDistance(_searchResults);
     }
     notifyListeners();
   }
@@ -116,21 +111,65 @@ class AppState extends ChangeNotifier {
   List<Station> getClosestStations(LatLng point, {int limit = 10}) {
     if (_allStations.isEmpty) return [];
     
-    final distanceList = _allStations.map((s) {
-      final distance = const Distance().as(
-        LengthUnit.Meter, 
-        LatLng(s.lat, s.lng), 
-        point
-      );
-      return (station: s, distance: distance);
-    }).toList();
+    final sorted = List<Station>.from(_allStations);
+    _sortStationsByDistance(sorted, point: point);
+    return sorted.take(limit).toList();
+  }
 
-    distanceList.sort((a, b) => a.distance.compareTo(b.distance));
-    return distanceList.take(limit).map((pair) => pair.station).toList();
+  void _sortStationsByDistance(List<Station> stations, {LatLng? point}) {
+    final referencePoint = point ?? center;
+    stations.sort((a, b) {
+      final distA = const Distance().as(LengthUnit.Meter, LatLng(a.lat, a.lng), referencePoint);
+      final distB = const Distance().as(LengthUnit.Meter, LatLng(b.lat, b.lng), referencePoint);
+      return distA.compareTo(distB);
+    });
+  }
+
+  Future<void> fetchRealTimeData(List<String> stationIds) async {
+    if (stationIds.isEmpty) return;
+    
+    // Web version limits batch to 60, batch size 20
+    final batchSize = 20;
+    for (int i = 0; i < stationIds.length; i += batchSize) {
+      final batch = stationIds.sublist(i, i + batchSize > stationIds.length ? stationIds.length : i + batchSize);
+      try {
+        final response = await http.post(
+          Uri.parse(realTimeApiUrl),
+          headers: {
+            'Content-Type': 'application/json',
+            'Origin': 'https://www.youbike.com.tw',
+            'Referer': 'https://www.youbike.com.tw/',
+          },
+          body: jsonEncode({'station_no': batch}),
+        );
+        
+        if (response.statusCode == 200) {
+          final result = json.decode(response.body);
+          if (result['retCode'] == 1 && result['retVal'] != null && result['retVal']['data'] != null) {
+            final List data = result['retVal']['data'];
+            for (var item in data) {
+              final id = item['station_no'].toString();
+              final station = _allStations.firstWhere((s) => s.id == id, orElse: () => Station.empty());
+              if (station != Station.empty()) {
+                station.availableBikes = item['available_spaces_detail']?['yb2'] ?? 0;
+                station.availableElectricBikes = item['available_spaces_detail']?['eyb'] ?? 0;
+                station.emptySpaces = item['empty_spaces'] ?? 0;
+              }
+            }
+            notifyListeners();
+          }
+        }
+      } catch (e) {
+        debugPrint("Error fetching real-time data: $e");
+      }
+    }
   }
 
   Future<void> refreshStations() async {
     await loadBaseStations();
+    // Fetch real-time data for currently visible/closest stations
+    final closest = getClosestStations(center, limit: 50);
+    await fetchRealTimeData(closest.map((s) => s.id).toList());
     notifyListeners();
   }
 
@@ -159,7 +198,6 @@ class AppState extends ChangeNotifier {
 
   void setLanguage(String lang) {
     currentLang = lang;
-    // Trigger data reload to get English API data
     loadBaseStations();
     notifyListeners();
   }

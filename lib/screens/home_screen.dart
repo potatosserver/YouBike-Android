@@ -1,49 +1,48 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:provider/provider.dart';
-import 'package:sliding_up_panel/sliding_up_panel.dart';
-import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
-import '../services/app_state.dart';
-import '../widgets/pulse_marker.dart';
-import '../widgets/station_card.dart';
-import 'settings_page.dart';
-import 'debug_screen.dart';
-import '../models/station.dart';
+import 'package:flutter/material.dart'
+import 'package:flutter_map/flutter_map.dart'
+import 'package:latlong2/latlong.dart'
+import 'package:provider/provider.dart'
+import 'package:sliding_up_panel/sliding_up_panel.dart'
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart'
+import '../services/app_state.dart'
+import '../widgets/pulse_marker.dart'
+import '../widgets/station_card.dart'
+import 'settings_page.dart'
+import 'debug_screen.dart'
+import '../models/station.dart'
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key})
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState()
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final MapController _mapController = MapController();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>()
+  final MapController _mapController = MapController()
 
   void _handleLocationPress() async {
-    final appState = Provider.of<AppState>(context, listen: false);
-    await appState.requestPermission();
+    final appState = Provider.of<AppState>(context, listen: false)
+    await appState.requestPermission()
     
     if (appState.isFollowingUser) {
-      appState.toggleFollowing();
+      appState.toggleFollowing()
     } else {
-      appState.toggleFollowing();
-      final pos = await appState.getCurrentPosition();
+      appState.toggleFollowing()
+      final pos = await appState.getCurrentPosition()
       if (pos != null) {
-        _mapController.move(pos, 15.0);
+        _mapController.move(pos, 15.0)
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context);
+    final appState = Provider.of<AppState>(context)
 
     return Scaffold(
       key: _scaffoldKey,
-      // Removed the Drawer, now using a separate SettingsPage
       body: Stack(
         children: [
           SlidingUpPanel(
@@ -53,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   mapController: _mapController,
                   options: MapOptions(
                     initialCenter: appState.center,
-                    initialZoom: 18.0, // CORRECTED: Aligned with web version (main.js)
+                    initialZoom: 18.0,
                   ),
                   children: [
                     TileLayer(
@@ -119,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const SettingsPage()),
-                );
+                )
               },
               backgroundColor: Colors.white,
               child: const Icon(Icons.settings, color: Colors.black87),
@@ -147,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const DebugScreen()),
-                );
+                )
               },
               backgroundColor: Colors.redAccent,
               child: const Icon(Icons.bug_report, color: Colors.white),
@@ -163,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
         ],
       ),
-    );
+    )
   }
 
   Widget _buildSearchAndRecentPanel(AppState appState) {
@@ -201,30 +200,30 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-    );
+    )
   }
 
   Widget _buildResultsList(AppState appState) {
-    bool isSearching = appState.searchResults.isNotEmpty;
+    bool isSearching = appState.searchResults.isNotEmpty
     List<Station> displayList = isSearching 
         ? appState.searchResults 
-        : appState.getClosestStations(appState.center);
+        : appState.getClosestStations(appState.center)
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: displayList.length,
       itemBuilder: (context, index) {
-        final s = displayList[index];
+        final s = displayList[index]
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: StationCard(
             station: s,
             onTap: () {
-              _mapController.move(LatLng(s.lat, s.lng), 16.0);
+              _mapController.move(LatLng(s.lat, s.lng), 16.0)
             },
           ),
         ),
-      ),
-    );
+      },
+    )
   }
 }
