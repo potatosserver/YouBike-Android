@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../services/app_state.dart';
@@ -34,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
         switch (status) {
           case LocationPermissionStatus.serviceDisabled: msg = "請開啟手機的定位服務"; break;
           case LocationPermissionStatus.denied: msg = "請在設定中允許定位權限"; break;
-          case LocationPermissionStatus.permanentlyDenied: msg = "權限已被永久拒絕，請至設定頁面手動開啟"; break;
+          case LocationPermissionStatus.permanentlyDenied: msg = "權限已被永久拒拒絕，請至設定頁面手動開啟"; break;
           default: msg = "無法獲取位置權限";
         }
         if (!mounted) return;
@@ -51,9 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onStationSelected(Station s) {
     final appState = Provider.of<AppState>(context, listen: false);
     appState.focusStation(s);
-    
     _mapController.move(LatLng(s.lat, s.lng), 16.0);
-    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -73,6 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
       drawer: const SettingsPanel(),
       body: Stack(
         children: [
+          // 1. 地圖層
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -100,10 +100,36 @@ class _HomeScreenState extends State<HomeScreen> {
                     userAgentPackageName: 'com.youbike.android',
                   ),
                 ),
-              MarkerLayer(markers: appState.stationMarkers),
+              // 引入 MarkerClusterLayer 解決圖釘聚合問題
+              MarkerClusterLayer(
+                options: MarkerClusterizationOptions(
+                  maxClusterRadius: 45,
+                  size: const Size(40, 40),
+                  flattenedMarkers: appState.stationMarkers,
+                  alwaysShowClosest: true,
+                ),
+                builder: (context, markers) {
+                  return Marker(
+                    point: markers.first.point,
+                    width: 36,
+                    height: 36,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2)),
+                        ],
+                      ),
+                      child: const Icon(Icons.directions_bike, color: Colors.white, size: 20),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
 
+          // 2. 定位按鈕 - 左上角
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
             left: 20,
@@ -118,6 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
+          // 3. 設定按鈕 - 右下角
           Positioned(
             bottom: 120,
             right: 20,
@@ -131,7 +158,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
+          // 4. 底部面板 - 徹底修復拖拽與 lister 衝突
           _buildBottomPanel(context, appState),
+          
           const LoadingOverlay(),
         ],
       ),
@@ -154,11 +183,23 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           child: Column(
             children: [
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                width: 50, height: 5,
-                decoration: BoxDecoration(color: Colors.grey[400], borderRadius: BorderRadius.circular(10)),
+              // 強化拖拽把手：增加高度與顏色對比
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onVerticalDragUpdate: (details) {
+                  // 這裡由 DraggableScrollableSheet 內部處理，但 GestureDetector 確保觸發區域
+                },
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  width: 60,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: appState.isDarkMode ? Colors.grey[600] : Colors.grey[400],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
               ),
+              
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
@@ -190,6 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
+
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextField(
@@ -206,6 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 10),
               Expanded(
                 child: ListView.builder(
+                  // 重要：必須將 scrollController 傳遞給 ListView 以啟用拖拽
                   controller: scrollController,
                   itemCount: appState.searchResults.length,
                   itemBuilder: (context, index) {
@@ -218,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         border: Border.all(color: Colors.grey.withOpacity(0.2), width: 0.5),
                       ),
                       child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: and 16, vertical: 4),
                         leading: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
