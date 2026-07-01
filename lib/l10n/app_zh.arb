@@ -1,0 +1,13 @@
+{
+  "appTitle": "YouBike 站點搜尋",
+  "searchPlaceholder": "搜尋站點名稱...",
+  "settings": "設定",
+  "location": "我的位置",
+  "refresh": "重新整理",
+  "debug": "偵錯",
+  "stationCount": "{count, plural, =0{找不到站牌} =1{找到 1 個站牌} other{找到 {count} 個站牌}}",
+  "recentStations": "最近站牌",
+  "darkMode": "深色模式",
+  "language": "語言",
+  "about": "關於"
+}

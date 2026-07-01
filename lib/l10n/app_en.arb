@@ -1,0 +1,13 @@
+{
+  "appTitle": "YouBike Finder",
+  "searchPlaceholder": "Search for stations...",
+  "settings": "Settings",
+  "location": "My Location",
+  "refresh": "Refresh",
+  "debug": "Debug",
+  "stationCount": "{count, plural, =0{No stations found} =1{1 station found} other{{count} stations found}}",
+  "recentStations": "Recent Stations",
+  "darkMode": "Dark Mode",
+  "language": "Language",
+  "about": "About"
+}

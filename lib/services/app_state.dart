@@ -3,67 +3,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:geolocator/geolocator.dart';
-
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../models/station.dart';
-import '../services/api_service.dart';
-import '../services/language_service.dart';
-import '../services/location_service.dart';
-import '../widgets/app_theme.dart';
 
 class AppState extends ChangeNotifier {
-  final ApiService _apiService = ApiService();
-  final LocationService _locationService = LocationService();
+  // Configuration
+  final String apiBaseUrl = "https://apis.youbike.com.tw/json";
+  final String apiEnBaseUrl = "https://apis.youbike.com.tw/json/en"; // For English API
   
-  static const Map<String, LatLng> regionCoordinates = {
-    'taipei': LatLng(25.047924, 121.517081),
-    'newTaipei': LatLng(25.0215339197085, 121.4568090197085),
-    'taoyuan': LatLng(24.953671, 121.225783),
-    'hsinchuCounty': LatLng(24.826917615712, 121.01290295049),
-    'hsinchuCity': LatLng(24.801815, 120.971459),
-    'sciencePark': LatLng(24.781830, 121.005074),
-    'miaoli': LatLng(24.5648599, 120.8185503),
-    'taichung': LatLng(24.154712, 120.664265),
-    'chiayi': LatLng(23.4797837, 120.4397206),
-    'tainan': LatLng(22.99230083082, 120.18509419659),
-    'kaohsiung': LatLng(22.631442, 120.301890),
-    'pingtung': LatLng(22.683036253664, 120.48790854724),
-    'taitung': LatLng(22.755711056126138, 121.15035332587574),
-    'custom': LatLng(22.631442, 120.301890),
-  };
-
-  String _currentRegion = 'kaohsiung';
-  String _currentLang = 'zh';
-  bool _isDarkMode = false;
-  bool _isFollowingUser = false;
-  LatLng? _customCenter;
+  // State
+  LatLng center = const LatLng(22.631442, 120.30189);
+  bool isLoading = true;
+  bool isDarkMode = false;
+  bool isFollowingUser = false;
+  String currentLang = 'zh';
+  String currentRegion = 'kaohsiung';
+  int countdown = 30;
   
+  // Data
   List<Station> _allStations = [];
   List<Station> _searchResults = [];
-  List<Marker> _stationMarkers = [];
-  bool _showOnlyAvailable = false;
-  
-  int _countdown = 60;
-  Timer? _refreshTimer;
-  bool _isLoading = true;
-  StreamSubscription<Position>? _locationSubscription;
+  List<Marker> stationMarkers = [];
 
-  String get currentRegion => _currentRegion;
-  String get currentLang => _currentLang;
-  bool get isDarkMode => _isDarkMode;
-  bool get isFollowingUser => _isFollowingUser;
+  List<Station> get allStations => _allStations;
   List<Station> get searchResults => _searchResults;
-  List<Marker> get stationMarkers => _stationMarkers;
-  int get countdown => _countdown;
-  bool get isLoading => _isLoading;
-  
-  LatLng get center => _currentRegion == 'custom' 
-      ? (_customCenter ?? regionCoordinates['kaohsiung']!) 
-      : (regionCoordinates[_currentRegion] ?? regionCoordinates['kaohsiung']!);
 
   AppState() {
     _initialize();
+    _startTimer();
   }
 
   Future<void> _initialize() async {
@@ -71,179 +39,128 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     try {
       await Future.wait([
-        _initSettings(),
         loadBaseStations(),
       ]);
     } catch (e) {
-      debugPrint("Critical Init Error: $e");
+      debugPrint("Critical Initialization Error: $e");
     } finally {
-      _startRefreshCycle();
-      _isLoading = false;
+      isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> _initSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    _currentLang = prefs.getString('lang') ?? 'zh';
-    _isDarkMode = prefs.getBool('darkMode') ?? false;
-  }
-
-  Future<void> loadBaseStations() async {
-    try {
-      _allStations = await _apiService.fetchAllStations();
-      debugPrint("Loaded ${_allStations.length} stations.");
-      await updateRealtimeData();
-      _generateMarkers();
-    } catch (e) {
-      debugPrint("Error loading stations: $e");
-    } finally {
-      notifyListeners();
-    }
-  }
-
-  Future<void> updateRealtimeData() async {
-    try {
-      final data = await _apiService.fetchRealtimeVehicles();
-      for (var station in _allStations) {
-        if (data.containsKey(station.id)) {
-          station.updateRealtimeData(data[station.id]);
-        }
-      }
-      _generateMarkers();
-      notifyListeners();
-    } catch (e) {
-      debugPrint("Error updating realtime data: $e");
-    }
-  }
-
-  bool get showOnlyAvailable => _showOnlyAvailable;
-
-  void toggleAvailableOnly(bool value) {
-    _showOnlyAvailable = value;
-    _generateMarkers();
-    notifyListeners();
-  }
-
-  void _generateMarkers() {
-    _stationMarkers = _allStations.where((s) {
-      if (_showOnlyAvailable) {
-        return (s.availableBikes + s.availableElectricBikes) > 0;
-      }
-      return true;
-    }).map((s) {
-      return Marker(
-        point: LatLng(s.lat, s.lng),
-        width: 36,
-        height: 36,
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.directions_bike, 
-            color: Colors.white, 
-            size: 20,
-          ),
-        ),
-      );
-    }).toList();
-  }
-
-  void searchStations(String query) {
-    if (query.trim().isEmpty) {
-      _searchResults = [];
-    } else {
-      _searchResults = _allStations.where((s) {
-        final q = query.toLowerCase();
-        return s.nameTw.contains(q) || 
-               s.addressTw.contains(q) || 
-               s.nameEn.toLowerCase().contains(q) || 
-               s.addressEn.toLowerCase().contains(q);
-      }).toList();
-    }
-    notifyListeners();
-  }
-
-  void focusStation(Station station) {
-    _currentRegion = 'custom';
-    _customCenter = LatLng(station.lat, station.lng);
-    notifyListeners();
-  }
-
-  Future<void> toggleUserTracking(bool enable) async {
-    _isFollowingUser = enable;
-    if (enable) {
-      try {
-        final status = await _locationService.requestPermission();
-        if (status == LocationPermissionStatus.granted) {
-          _locationSubscription?.cancel();
-          _locationSubscription = _locationService.getPositionStream().listen((position) {
-            _currentRegion = 'custom';
-            _customCenter = LatLng(position.latitude, position.longitude);
-            notifyListeners();
-          });
-        } else {
-          _isFollowingUser = false;
-        }
-      } catch (e) {
-        _isFollowingUser = false;
-        debugPrint("Location error: $e");
-      }
-    } else {
-      _locationSubscription?.cancel();
-    }
-    notifyListeners();
-  }
-
-  void setRegion(String region) {
-    _currentRegion = region;
-    notifyListeners();
-  }
-
-  void setLanguage(String lang) async {
-    _currentLang = lang;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('lang', lang);
-    notifyListeners();
-  }
-
-  void toggleDarkMode(bool value) async {
-    _isDarkMode = value;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('darkMode', value);
-    notifyListeners();
-  }
-
-  void setFollowingUser(bool value) {
-    _isFollowingUser = value;
-    notifyListeners();
-  }
-
-  void _startRefreshCycle() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      _countdown--;
-      if (_countdown <= 0) {
-        _countdown = 60;
-        await updateRealtimeData();
+  void _startTimer() {
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (countdown > 0) {
+        countdown--;
+      } else {
+        countdown = 30;
+        refreshStations();
       }
       notifyListeners();
     });
   }
 
-  @override
-  void dispose() {
-    _refreshTimer?.cancel();
-    _locationSubscription?.cancel();
-    super.dispose();
+  Future<void> loadBaseStations() async {
+    try {
+      // Dynamic URL based on language
+      final url = currentLang == 'en' 
+          ? "$apiEnBaseUrl/station-min-yb2.json" 
+          : "$apiBaseUrl/station-min-yb2.json";
+          
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        _allStations = data
+            .map((json) => Station.fromJson(json))
+            .whereType<Station>()
+            .toList();
+        _generateMarkers();
+      }
+    } catch (e) {
+      debugPrint("Error loading base stations: $e");
+    }
+  }
+
+  void _generateMarkers() {
+    stationMarkers = _allStations.map((s) {
+      return Marker(
+        point: LatLng(s.lat, s.lng),
+        width: 30,
+        height: 30,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.blue,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
+            boxShadow: const [BoxShadow(blurRadius: 4, color: Colors.black26)],
+          ),
+          child: const Icon(Icons.location_on, color: Colors.white, size: 16),
+        ),
+      );
+    }).toList();
+    notifyListeners();
+  }
+
+  void searchStations(String query) {
+    if (query.isEmpty) {
+      _searchResults = [];
+    } else {
+      _searchResults = _allStations
+          .where((s) => s.nameTw.contains(query) || s.addressTw.contains(query))
+          .toList();
+    }
+    notifyListeners();
+  }
+
+  List<Station> getClosestStations(LatLng point, {int limit = 10}) {
+    if (_allStations.isEmpty) return [];
+    
+    final distanceList = _allStations.map((s) {
+      final distance = const Distance().as(
+        LengthUnit.Meter, 
+        LatLng(s.lat, s.lng), 
+        point
+      );
+      return (station: s, distance: distance);
+    }).toList();
+
+    distanceList.sort((a, b) => a.distance.compareTo(b.distance));
+    return distanceList.take(limit).map((pair) => pair.station).toList();
+  }
+
+  Future<void> refreshStations() async {
+    await loadBaseStations();
+    notifyListeners();
+  }
+
+  Future<void> requestPermission() async {
+    return Future.value();
+  }
+
+  void toggleFollowing() {
+    isFollowingUser = !isFollowingUser;
+    notifyListeners();
+  }
+
+  Future<LatLng?> getCurrentPosition() async {
+    return null;
+  }
+
+  void updateCenter(LatLng newCenter) {
+    center = newCenter;
+    notifyListeners();
+  }
+
+  void toggleDarkMode() {
+    isDarkMode = !isDarkMode;
+    notifyListeners();
+  }
+
+  void setLanguage(String lang) {
+    currentLang = lang;
+    // Trigger data reload to get English API data
+    loadBaseStations();
+    notifyListeners();
   }
 }

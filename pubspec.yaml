@@ -1,6 +1,6 @@
 name: youbike_android
-description: YouBike Android App Translation
-
+description: A professional YouBike station finder.
+publish_to: 'none'
 version: 1.0.0+1
 
 environment:
@@ -9,13 +9,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.19.0
   provider: ^6.1.1
   flutter_map: ^6.1.0
-  latlong2: ^0.9.0
-  http: ^1.1.0
-  geolocator: ^10.1.0
-  shared_preferences: ^2.2.0
-  sliding_up_panel: ^2.0.0 # 引入專業底部面板套件
+  latlong2: ^0.9.1
+  http: ^1.2.0
+  geolocator: ^11.0.0
+  sliding_up_panel: ^2.0.0
+  flutter_map_marker_cluster: ^1.4.0
 
 dev_dependencies:
   flutter_test:

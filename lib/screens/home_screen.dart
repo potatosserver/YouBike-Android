@@ -3,16 +3,13 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import '../services/app_state.dart';
-import '../services/language_service.dart';
-import '../services/location_service.dart';
-import '../widgets/app_theme.dart';
-import '../widgets/loading_overlay.dart';
-import '../widgets/settings_panel.dart';
-import '../widgets/permission_modal.dart';
-import '../widgets/route_detail_panel.dart';
-import '../models/station.dart';
+import '../widgets/pulse_marker.dart';
+import '../widgets/station_card.dart';
+import 'settings_page.dart';
 import 'debug_screen.dart';
+import '../models/station.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,246 +19,211 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final LocationService _locationService = LocationService();
-  final MapController _mapController = MapController();
-  final PanelController _panelController = PanelController();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final MapController _mapController = MapController();
 
-  Future<void> _handleLocationToggle(bool enable) async {
+  void _handleLocationPress() async {
     final appState = Provider.of<AppState>(context, listen: false);
-    if (enable) {
-      final status = await _locationService.requestPermission();
-      if (status == LocationPermissionStatus.granted) {
-        await appState.toggleUserTracking(true);
-        final pos = await _locationService.getCurrentPosition();
-        _mapController.move(LatLng(pos.latitude, pos.longitude), 15.0);
-      } else {
-        String msg = "";
-        switch (status) {
-          case LocationPermissionStatus.serviceDisabled: msg = "請開啟手機的定位服務"; break;
-          case LocationPermissionStatus.denied: msg = "請在設定中允許定位權限"; break;
-          case LocationPermissionStatus.permanentlyDenied: msg = "權限已被永久拒絕，請至設定頁面手動開啟"; break;
-          default: msg = "無法獲取位置權限";
-        }
-        if (!mounted) return;
-        showDialog(
-          context: context,
-          builder: (context) => PermissionModal(message: msg, onConfirm: () => Navigator.pop(context)),
-        );
-      }
+    await appState.requestPermission();
+    
+    if (appState.isFollowingUser) {
+      appState.toggleFollowing();
     } else {
-      await appState.toggleUserTracking(false);
+      appState.toggleFollowing();
+      final pos = await appState.getCurrentPosition();
+      if (pos != null) {
+        _mapController.move(pos, 15.0);
+      }
     }
-  }
-
-  void _onStationSelected(Station s) {
-    final appState = Provider.of<AppState>(context, listen: false);
-    appState.focusStation(s);
-    _mapController.move(LatLng(s.lat, s.lng), 16.0);
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => RouteDetailPanel(
-        destination: s.nameTw,
-        steps: ["這是模擬的路徑步驟 1: 從目前位置出發", "步驟 2: 沿著主要道路直行", "步驟 3: 到達 ${s.nameTw} 站牌"],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-       if(appState.isFollowingUser) {
-         _mapController.move(appState.center, 15.0);
-       }
-    });
-
     return Scaffold(
       key: _scaffoldKey,
-      drawer: const SettingsPanel(),
+      // Removed the Drawer, now using a separate SettingsPage
       body: Stack(
         children: [
-          // 1. 底部層：地圖與面板 (SlidingUpPanel 包含地圖與搜尋面板)
           SlidingUpPanel(
-            controller: _panelController,
-            minHeight: MediaQuery.of(context).size.height * 0.2,
-            maxHeight: MediaQuery.of(context).size.height * 0.8,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            panel: _buildPanelContent(context, appState),
-            body: FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: appState.center,
-                initialZoom: 15.0,
-                onPositionChanged: (position, hasGesture) {
-                  if (hasGesture) appState.setFollowingUser(false);
-                },
-              ),
+            body: Stack(
               children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.youbike.android',
-                ),
-                if (appState.isDarkMode)
-                  ColorFiltered(
-                    colorFilter: const ColorFilter.matrix([
-                      -1,  0,  0, 0, 255,
-                       0, -1,  0, 0, 255,
-                       0,  0, -1, 0, 255,
-                       0,  0,  0, 1, 0,
-                    ]),
-                    child: TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.youbike.android',
-                    ),
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: appState.center,
+                    initialZoom: 18.0, // CORRECTED: Aligned with web version (main.js)
                   ),
-                MarkerLayer(markers: appState.stationMarkers),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.youbike.finder',
+                    ),
+                    MarkerClusterLayer(
+                      markers: appState.stationMarkers,
+                      clusterBuilder: (context, count, index) => Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.blue,
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: const [BoxShadow(blurRadius: 4, color: Colors.black26)],
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$count',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: appState.center,
+                          width: 40,
+                          height: 40,
+                          child: PulseMarker(
+                            latitude: appState.center.latitude, 
+                            longitude: appState.center.longitude,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ],
             ),
+            panel: _buildSearchAndRecentPanel(appState),
           ),
-
-          // 2. 中間層：功能按鈕 (絕對在面板之上)
+          
           Positioned(
-            top: MediaQuery.of(context).padding.top + 10,
+            top: 60,
             left: 20,
             child: FloatingActionButton.small(
-              heroTag: 'location',
-              backgroundColor: AppColors.primary,
-              onPressed: () => _handleLocationToggle(true),
+              heroTag: 'loc_btn',
+              onPressed: _handleLocationPress,
+              backgroundColor: Colors.white,
               child: Icon(
-                Icons.my_location,
-                color: appState.isFollowingUser ? Colors.white : Colors.black54,
+                appState.isFollowingUser ? Icons.my_location : Icons.location_on,
+                color: appState.isFollowingUser ? Colors.blue : Colors.black87,
               ),
             ),
           ),
-
           Positioned(
             bottom: 100,
             right: 20,
             child: FloatingActionButton.small(
-              heroTag: 'settings',
-              backgroundColor: AppColors.primary,
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-              child: const Icon(Icons.settings, color: Colors.white),
+              heroTag: 'set_btn',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsPage()),
+                );
+              },
+              backgroundColor: Colors.white,
+              child: const Icon(Icons.settings, color: Colors.black87),
             ),
           ),
-
           Positioned(
-            bottom: 20,
+            bottom: 100,
             left: 0,
             right: 0,
             child: Center(
               child: FloatingActionButton.small(
-                heroTag: 'refresh',
-                backgroundColor: AppColors.primary,
-                onPressed: () => appState.updateRealtimeData(),
-                child: const Icon(Icons.autorenew, color: Colors.white),
+                heroTag: 'ref_btn',
+                onPressed: () => appState.refreshStations(),
+                backgroundColor: Colors.white,
+                child: const Icon(Icons.refresh, color: Colors.black87),
               ),
             ),
           ),
-          
           Positioned(
-            bottom: 20,
+            bottom: 160,
             left: 20,
             child: FloatingActionButton.small(
-              heroTag: 'debug',
+              heroTag: 'dbg_btn',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const DebugScreen()),
+                );
+              },
               backgroundColor: Colors.redAccent,
-              onPressed: () => Navigator.push(
-                context, 
-                MaterialPageRoute(builder: (context) => const DebugScreen())
-              ),
               child: const Icon(Icons.bug_report, color: Colors.white),
             ),
           ),
-
-          // 3. 最頂層：載入遮罩 (覆蓋所有內容)
+          
           if (appState.isLoading)
-            const LoadingOverlay(),
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildPanelContent(BuildContext context, AppState appState) {
+  Widget _buildSearchAndRecentPanel(AppState appState) {
     return Container(
-      color: appState.isDarkMode ? AppColors.cardDark : AppColors.cardLight,
+      color: Colors.white,
       child: Column(
         children: [
-          Center(
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              width: 50, height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey[400],
-                borderRadius: BorderRadius.circular(10),
-              ),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  LanguageService.getText('title', appState.currentLang),
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(width: 10),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.all(16),
             child: TextField(
-              decoration: InputDecoration(
-                hintText: LanguageService.getText('search_placeholder', appState.currentLang),
-                prefixIcon: const Icon(Icons.search, color: AppColors.primary),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-                filled: true,
-                fillColor: appState.isDarkMode ? Colors.black26 : Colors.grey[100],
-              ),
               onChanged: (val) => appState.searchStations(val),
+              decoration: InputDecoration(
+                hintText: "搜尋站點名稱...",
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.grey[100],
+              ),
             ),
           ),
-          const SizedBox(height: 10),
           Expanded(
-            child: ListView.builder(
-              itemCount: appState.searchResults.length,
-              itemBuilder: (context, index) {
-                final s = appState.searchResults[index];
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: appState.isDarkMode ? Colors.white10 : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.withOpacity(0.2), width: 0.5),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    leading: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-                      child: const Icon(Icons.directions_bike, color: AppColors.primary, size: 20),
-                    ),
-                    title: Text(
-                      appState.currentLang == 'en' ? s.nameEn : s.nameTw,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                    ),
-                    subtitle: Text(
-                      appState.currentLang == 'en' ? s.addressEn : s.addressTw,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                    ),
-                    trailing: const Icon(Icons.chevron_right, size: 20),
-                    onTap: () => _onStationSelected(s),
-                  ),
-                );
-              },
-            ),
+            child: _buildResultsList(appState),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildResultsList(AppState appState) {
+    bool isSearching = appState.searchResults.isNotEmpty;
+    List<Station> displayList = isSearching 
+        ? appState.searchResults 
+        : appState.getClosestStations(appState.center);
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: displayList.length,
+      itemBuilder: (context, index) {
+        final s = displayList[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: StationCard(
+            station: s,
+            onTap: () {
+              _mapController.move(LatLng(s.lat, s.lng), 16.0);
+            },
+          ),
+        ),
       ),
     );
   }
