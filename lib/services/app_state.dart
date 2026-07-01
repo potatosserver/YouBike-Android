@@ -29,7 +29,7 @@ class AppState extends ChangeNotifier {
     'tainan': LatLng(22.99230083082, 120.18509419659),
     'kaohsiung': LatLng(22.631442, 120.301890),
     'pingtung': LatLng(22.683036253664, 120.48790854724),
-    'taitung': LatLng(22.755711056126138, 121.150353325875도),
+    'taitung': LatLng(22.755711056126138, 121.15035332587574),
     'custom': LatLng(22.631442, 120.301890),
   };
 
@@ -68,7 +68,6 @@ class AppState extends ChangeNotifier {
 
   Future<void> _initialize() async {
     try {
-      // 並行執行設定加載與數據加載
       await Future.wait([
         _initSettings(),
         loadBaseStations(),
