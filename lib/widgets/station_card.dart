@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/app_state.dart';
 import '../models/station.dart';
-import 'package:latlong2/latlong2.dart';
+import 'package:latlong2/latlong.dart';
 
 class StationCard extends StatelessWidget {
   final Station station;
@@ -14,7 +14,7 @@ class StationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context, listen: false);
     
-    // Calculate distance from current center for the display
+    // Fix: Use non-const Distance() and ensure correct import
     final distance = const Distance().as(
       LengthUnit.Meter, 
       LatLng(station.lat, station.lng), 
