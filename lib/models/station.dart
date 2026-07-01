@@ -27,26 +27,30 @@ class Station {
     this.totalElectricBikes = 0,
   });
 
-  // 使用 static method 代替 factory 以支持可空返回 (null if invalid)
   static Station? fromJson(Map<String, dynamic> json) {
     try {
-      // 嚴格檢查座標是否存在且為數字
+      // 兼容 YouBike API 不同版本的鍵名
+      final id = json['station_no'] ?? json['id'] ?? '';
+      final nameTw = json['name_tw'] ?? '';
+      final nameEn = json['name_en'] ?? '';
+      final addressTw = json['address_tw'] ?? '';
+      final addressEn = json['address_en'] ?? '';
+      
+      // 坐標處理
       final latRaw = json['lat'];
       final lngRaw = json['lng'];
-      
       if (latRaw == null || lngRaw == null) return null;
-      
+
       return Station(
-        id: json['id']?.toString() ?? '',
-        nameTw: json['name_tw']?.toString() ?? '',
-        nameEn: json['name_en']?.toString() ?? '',
-        addressTw: json['address_tw']?.toString() ?? '',
-        addressEn: json['address_en']?.toString() ?? '',
+        id: id.toString(),
+        nameTw: nameTw.toString(),
+        nameEn: nameEn.toString(),
+        addressTw: addressTw.toString(),
+        addressEn: addressEn.toString(),
         lat: (latRaw as num).toDouble(),
         lng: (lngRaw as num).toDouble(),
       );
     } catch (e) {
-      // 記錄單個站牌解析失敗，但不崩潰整個 App
       return null;
     }
   }
