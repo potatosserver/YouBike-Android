@@ -29,16 +29,16 @@ class Station {
 
   static Station? fromJson(Map<String, dynamic> json) {
     try {
-      // 1. 兼容 ID 鍵名
+      // 兼容 YouBike API 不同版本的鍵名
       final id = json['station_no'] ?? json['id'] ?? '';
       if (id == '') return null;
 
-      // 2. 解析坐標 (關鍵修復：處理 String 類型的坐標)
-      final latString = json['lat']?.toString() ?? '';
-      final lngString = json['lng']?.toString() ?? '';
+      // 關鍵修復：將所有坐標轉為 String 後再 tryParse，避免 String/Num 類型衝突
+      final latRaw = json['lat']?.toString() ?? '';
+      final lngRaw = json['lng']?.toString() ?? '';
       
-      final lat = double.tryParse(latString);
-      final lng = double.tryParse(lngString);
+      final lat = double.tryParse(latRaw);
+      final lng = double.tryParse(lngRaw);
       
       if (lat == null || lng == null) return null;
 
