@@ -1,19 +1,21 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../models/station.dart';
 import '../services/api_service.dart';
-
+import '../services/language_service.dart';
+import '../services/location_service.dart';
 import '../widgets/app_theme.dart';
 
 class AppState extends ChangeNotifier {
   final ApiService _apiService = ApiService();
+  final LocationService _locationService = LocationService();
   
-  // --- Config 翻譯 (來自 config.js) ---
   static const Map<String, LatLng> regionCoordinates = {
     'taipei': LatLng(25.047924, 121.517081),
     'newTaipei': LatLng(25.0215339197085, 121.4568090197085),
@@ -28,9 +30,9 @@ class AppState extends ChangeNotifier {
     'kaohsiung': LatLng(22.631442, 120.301890),
     'pingtung': LatLng(22.683036253664, 120.48790854724),
     'taitung': LatLng(22.755711056126138, 121.15035332587574),
+    'custom': LatLng(22.631442, 120.301890),
   };
 
-  // --- State 翻譯 (來自 config.js / main.js) ---
   String _currentRegion = 'kaohsiung';
   String _currentLang = 'zh';
   bool _isDarkMode = false;
@@ -44,8 +46,8 @@ class AppState extends ChangeNotifier {
   int _countdown = 60;
   Timer? _refreshTimer;
   bool _isLoading = true;
+  StreamSubscription<Position>? _locationSubscription;
 
-  // Getters
   String get currentRegion => _currentRegion;
   String get currentLang => _currentLang;
   bool get isDarkMode => _isDarkMode;
@@ -54,6 +56,7 @@ class AppState extends ChangeNotifier {
   List<Marker> get stationMarkers => _stationMarkers;
   int get countdown => _countdown;
   bool get isLoading => _isLoading;
+  
   LatLng get center => _currentRegion == 'custom' 
       ? (_customCenter ?? regionCoordinates['kaohsiung']!) 
       : (regionCoordinates[_currentRegion] ?? regionCoordinates['kaohsiung']!);
@@ -71,7 +74,6 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 翻譯自 main.js: initializeApp -> fetchBaseStationData
   Future<void> loadBaseStations() async {
     _isLoading = true;
     notifyListeners();
@@ -87,7 +89,6 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // 翻譯自 apiYoubike.js: queryVehicleData
   Future<void> updateRealtimeData() async {
     try {
       final data = await _apiService.fetchRealtimeVehicles();
@@ -103,24 +104,34 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // 翻譯自 mapService.js: renderMarkers
   void _generateMarkers() {
     _stationMarkers = _allStations.map((s) {
       return Marker(
         point: LatLng(s.lat, s.lng),
-        width: 30,
-        height: 30,
-        child: const Icon(
-          Icons.directions_bike, 
-          color: AppColors.primary, 
-          size: 30,
-          shadows: [Shadow(blurRadius: 2, color: Colors.black26)],
+        width: 36,
+        height: 36,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.directions_bike, 
+            color: Colors.white, 
+            size: 20,
+          ),
         ),
       );
     }).toList();
   }
 
-  // 翻譯自 main.js: 搜尋邏輯
   void searchStations(String query) {
     if (query.trim().isEmpty) {
       _searchResults = [];
@@ -137,35 +148,44 @@ class AppState extends ChangeNotifier {
   }
 
   void focusStation(Station station) {
-    // In a real app, you'd use a MapController to move the camera.
-    // For now, we'll just update the center to the station's position.
-    _currentRegion = 'custom'; // mark as custom center
-    // Note: For actual map moving, we'd need a MapController reference.
+    _currentRegion = 'custom';
+    _customCenter = LatLng(station.lat, station.lng);
     notifyListeners();
   }
 
-  Future<void> updateUserLocation() async {
-    // Mocking the location update as LocationService is defined but not integrated into AppState yet
-    // In full implementation, we'd inject LocationService here.
-    debugPrint("Updating user location...");
-    _isFollowingUser = true;
-    notifyListeners();
-  }
-
-  // Settings Updates
-  void _startRefreshCycle() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      _countdown--;
-      if (_countdown <= 0) {
-        _countdown = 60;
-        await updateRealtimeData();
+  // 模仿 locationTracker.js: 實作即時追蹤
+  Future<void> toggleUserTracking(bool enable) async {
+    _isFollowingUser = enable;
+    if (enable) {
+      try {
+        final status = await _locationService.requestPermission();
+        if (status == LocationPermissionStatus.granted) {
+          // 開始監聽位置流
+          _locationSubscription?.cancel();
+          _locationSubscription = _locationService.getPositionStream().listen((position) {
+            _currentRegion = 'custom';
+            _customCenter = LatLng(position.latitude, position.longitude);
+            notifyListeners();
+          });
+        } else {
+          _isFollowingUser = false;
+          // 這裡會在 UI 層觸發 PermissionModal
+        }
+      } catch (e) {
+        _isFollowingUser = false;
+        debugPrint("Location error: $e");
       }
-      notifyListeners();
-    });
+    } else {
+      _locationSubscription?.cancel();
+    }
+    notifyListeners();
   }
 
-  // Settings Updates
+  // 保留此方法以兼容舊版 UI 呼叫，但內部導向 toggleUserTracking
+  Future<void> updateUserLocation() async {
+    await toggleUserTracking(true);
+  }
+
   void setRegion(String region) {
     _currentRegion = region;
     notifyListeners();
@@ -190,9 +210,22 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _startRefreshCycle() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      _countdown--;
+      if (_countdown <= 0) {
+        _countdown = 60;
+        await updateRealtimeData();
+      }
+      notifyListeners();
+    });
+  }
+
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _locationSubscription?.cancel();
     super.dispose();
   }
 }

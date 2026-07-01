@@ -1,27 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-
 import 'package:provider/provider.dart';
 import '../services/app_state.dart';
 import '../services/language_service.dart';
+import '../services/location_service.dart';
 import '../widgets/app_theme.dart';
 import '../widgets/loading_overlay.dart';
 import '../widgets/settings_panel.dart';
+import '../widgets/permission_modal.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final LocationService _locationService = LocationService();
+
+  Future<void> _handleLocationToggle(bool enable) async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    if (enable) {
+      final status = await _locationService.requestPermission();
+      if (status == LocationPermissionStatus.granted) {
+        await appState.toggleUserTracking(true);
+      } else {
+        String msg = "";
+        switch (status) {
+          case LocationPermissionStatus.serviceDisabled: msg = "請開啟手機的定位服務"; break;
+          case LocationPermissionStatus.denied: msg = "請在設定中允許定位權限"; break;
+          case LocationPermissionStatus.permanentlyDenied: msg = "權限已被永久拒絕，請至設定頁面手動開啟"; break;
+          default: msg = "無法獲取位置權限";
+        }
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          builder: (context) => PermissionModal(message: msg, onConfirm: () => Navigator.pop(context)),
+        );
+      }
+    } else {
+      await appState.toggleUserTracking(false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
 
     return Scaffold(
-      // 1. 側邊設定面板 (還原 centralSettingsPanel)
       drawer: const SettingsPanel(),
-      
       body: Stack(
         children: [
-          // 2. 地圖層 (還原 map-wrapper)
+          // 1. 地圖層
           FlutterMap(
             options: MapOptions(
               initialCenter: appState.center,
@@ -39,17 +70,25 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
 
-          // 3. 頂部刷新計時器 (還原 updateCountdown)
+          // 2. 定位按鈕 -> 移至左上角 (模仿原版)
           Positioned(
-            top: 50,
-            right: 20,
-            child: _buildCountdownButton(context, appState),
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 20,
+            child: FloatingActionButton.small(
+              heroTag: 'location',
+              backgroundColor: AppColors.primary,
+              onPressed: () => _handleLocationToggle(true),
+              child: Icon(
+                Icons.my_location,
+                color: appState.isFollowingUser ? Colors.white : Colors.black54,
+              ),
+            ),
           ),
 
-          // 4. 設定按鈕 (還原 settingsButton)
+          // 3. 設定按鈕 -> 移至右下角
           Positioned(
-            top: 50,
-            left: 20,
+            bottom: 120, // 位於搜尋面板上方
+            right: 20,
             child: Builder(
               builder: (context) => FloatingActionButton.small(
                 heroTag: 'settings',
@@ -60,47 +99,17 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          // 5. 底部可拖拽搜尋面板 (還原 mainContent)
-          _buildBottomSearchPanel(context, appState),
+          // 4. 底部面板 (包含重新整理按鈕 + 搜尋)
+          _buildBottomPanel(context, appState),
 
-          // 6. 啟動遮罩 (還原 loadingOverlay)
+          // 5. 啟動遮罩
           const LoadingOverlay(),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => appState.updateUserLocation(),
-        backgroundColor: AppColors.primary,
-        child: Icon(
-          Icons.my_location,
-          color: appState.isFollowingUser ? Colors.white : Colors.black54,
-        ),
-      ),
     );
   }
 
-  Widget _buildCountdownButton(BuildContext context, AppState appState) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.autorenew, size: 16, color: AppColors.primary),
-          const SizedBox(width: 8),
-          Text(
-            "${appState.countdown} ${LanguageService.getText('update_countdown', appState.currentLang)}",
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomSearchPanel(BuildContext context, AppState appState) {
+  Widget _buildBottomPanel(BuildContext context, AppState appState) {
     return DraggableScrollableSheet(
       initialChildSize: 0.3,
       minChildSize: 0.15,
@@ -109,31 +118,68 @@ class HomeScreen extends StatelessWidget {
         return Container(
           decoration: BoxDecoration(
             color: appState.isDarkMode ? AppColors.cardDark : AppColors.cardLight,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, -2)),
+              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 15, offset: const Offset(0, -5)),
             ],
           ),
           child: Column(
             children: [
-              // 拖拽把手 (還原 dragHandle)
+              // 拖拽把手 (強化視覺)
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 12),
-                width: 40,
-                height: 4,
+                width: 50,
+                height: 5,
                 decoration: BoxDecoration(
                   color: Colors.grey[400],
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              // 搜尋框 (還原 searchContainer)
+              
+              // 重新整理按鈕 (移至底部面板頂端)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      LanguageService.getText('title', appState.currentLang),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    FilledButton.tonal(
+                      onPressed: () => appState.updateRealtimeData(),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary.withOpacity(0.2),
+                        foregroundColor: AppColors.primary,
+                        shape: const StadiumBorder(),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.autorenew, size: 16),
+                          const SizedBox(width: 8),
+                          Text(
+                            "${appState.countdown} ${LanguageService.getText('update_countdown', appState.currentLang)}",
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 搜尋框
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: LanguageService.getText('search_placeholder', appState.currentLang),
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+                    prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
                     filled: true,
                     fillColor: appState.isDarkMode ? Colors.black26 : Colors.grey[100],
                   ),
@@ -141,18 +187,42 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              // 結果列表 (還原 results)
+              
+              // 結果列表 (完全還原卡片樣式)
               Expanded(
                 child: ListView.builder(
                   controller: scrollController,
                   itemCount: appState.searchResults.length,
                   itemBuilder: (context, index) {
                     final s = appState.searchResults[index];
-                    return ListTile(
-                      leading: const Icon(Icons.directions_bike, color: AppColors.primary),
-                      title: Text(appState.currentLang == 'en' ? s.nameEn : s.nameTw),
-                      subtitle: Text(appState.currentLang == 'en' ? s.addressEn : s.addressTw),
-                      onTap: () => appState.focusStation(s),
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: appState.isDarkMode ? Colors.white10 : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.withOpacity(0.2), width: 0.5),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        leading: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.directions_bike, color: AppColors.primary, size: 20),
+                        ),
+                        title: Text(
+                          appState.currentLang == 'en' ? s.nameEn : s.nameTw,
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                        ),
+                        subtitle: Text(
+                          appState.currentLang == 'en' ? s.addressEn : s.addressTw,
+                          style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                        ),
+                        trailing: const Icon(Icons.chevron_right, size: 20),
+                        onTap: () => appState.focusStation(s),
+                      ),
                     );
                   },
                 ),
