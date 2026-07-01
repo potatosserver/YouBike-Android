@@ -1,36 +1,42 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import '../models/station.dart';
+import 'package:latlong2/latlong.dart';
+
+class RouteStep {
+  final String instruction;
+  final double distance;
+  final double duration;
+
+  RouteStep({
+    required this.instruction,
+    required this.distance,
+    required this.duration,
+  });
+
+  factory RouteStep.fromJson(Map<String, dynamic> json) {
+    return RouteStep(
+      instruction: json['instruction'] ?? '',
+      distance: (json['distance'] as num).toDouble(),
+      duration: (json['duration'] as num).toDouble(),
+    );
+  }
+}
 
 class RouteService {
-  // Translating apiRoute.js
-  // Using a public routing API like OSRM or GraphHopper (as seen in config.js)
-  final String _baseUrl = "https://router.project-osrm.org/route/v1/driving";
+  final String osrmUrl = "https://router.project-osrm.org/route/v1/walking/";
 
-  Future<List<RouteStep>> getRoute(double startLat, double startLng, double endLat, double endLng) async {
-    final url = "$_baseUrl/$startLng,$startLat;$endLng,$endLat?overview=full&geometries=geojson&steps=true";
+  Future<List<RouteStep>> getRoute(LatLng start, LatLng end) async {
+    final url = "$osrmUrl${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=false";
     
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final routes = data['routes'] as List;
-        if (routes.isEmpty) return [];
-        
-        final legs = routes[0]['legs'] as List;
-        final steps = legs[0]['steps'] as List;
-        
-        return steps.map((step) {
-          return RouteStep(
-            instruction: step['maneuver']['instruction'] ?? 'Continue',
-            distance: (step['distance'] as num).toDouble(),
-            duration: (step['duration'] as num).toInt(),
-          );
-        }).toList();
+        final steps = data['routes'][0]['legs'][0]['steps'] as List;
+        return steps.map((s) => RouteStep.fromJson(s)).toList();
       }
     } catch (e) {
-      debugPrint("Route Error: $e");
+      print("Route error: $e");
     }
     return [];
   }
