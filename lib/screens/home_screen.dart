@@ -36,6 +36,30 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _showStationDetails(Station station) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(station.nameTw),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("地址：${station.addressTw}"),
+            const SizedBox(height: 10),
+            const Text("即時車輛資訊", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text("YouBike 2.0: ${station.availableBikes} 輛"),
+            Text("YouBike 2.0E: ${station.availableElectricBikes} 輛"),
+            Text("可停空位數: ${station.emptySpaces}"),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("確定")),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
@@ -60,7 +84,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     MarkerLayer(
                       markers: [
-                        ...appState.stationMarkers,
+                        ...appState.stationMarkers.map((m) => Marker(
+                          point: m.point,
+                          width: 40,
+                          height: 40,
+                          child: GestureDetector(
+                            onTap: () {
+                              // Find the corresponding Station object
+                              final station = appState.allStations.firstWhere(
+                                (s) => s.lat == m.point.latitude && s.lng == m.point.longitude,
+                                orElse: () => Station.empty(),
+                              );
+                              _showStationDetails(station);
+                            },
+                          ),
+                        )),
                         Marker(
                           point: appState.center,
                           width: 40,
@@ -189,8 +227,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildResultsList(AppState appState) {
     bool isSearching = appState.searchResults.isNotEmpty;
     List<Station> displayList = isSearching 
-        ? appState.searchResults 
-        : appState.getClosestStations(appState.center);
+        ? appState.getSortedStations(appState.searchResults, appState.center)
+        : appState.getSortedStations(appState.allStations, appState.center);
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

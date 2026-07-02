@@ -3,17 +3,21 @@ import 'package:flutter_map/flutter_map.dart' as fm;
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/station.dart';
 
 class AppState extends ChangeNotifier {
-  // --- Settings & Preferences (Synced with web config.js) ---
+  // --- Settings & Preferences ---
   String currentRegion = 'kaohsiung';
   String currentLang = 'zh'; 
   bool isDarkMode = false;
   bool useLocation = true;
+  
+  // --- Pinned Stations ---
+  Set<String> pinnedStationIds = {};
 
-  // --- Location State (Synced with locationTracker.js) ---
+  // --- Location State ---
   LatLng center = const LatLng(22.6273, 120.3014); 
   bool isFollowingUser = false;
   bool hasObtainedRealLocation = false;
@@ -25,7 +29,7 @@ class AppState extends ChangeNotifier {
   // Use explicit fm.Marker to avoid name conflicts
   List<fm.Marker> stationMarkers = [];
 
-  // --- Log System (Requirement: Text-based logging) ---
+  // --- Log System ---
   final List<String> logs = [];
 
   void addLog(String message) {
@@ -55,7 +59,23 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> loadSettings() async {
-    addLog("Loading settings from storage...");
+    addLog("Loading settings from SharedPreferences...");
+    final prefs = await SharedPreferences.getInstance();
+    currentRegion = prefs.getString('currentRegion') ?? 'kaohsiung';
+    currentLang = prefs.getString('currentLang') ?? 'zh';
+    isDarkMode = prefs.getBool('isDarkMode') ?? false;
+    useLocation = prefs.getBool('useLocation') ?? true;
+    final pinnedList = prefs.getStringList('pinnedStations') ?? [];
+    pinnedStationIds = pinnedList.toSet();
+    addLog("Settings loaded: Region=$currentRegion, Lang=$currentLang");
+    notifyListeners();
+  }
+
+  Future<void> saveSetting(String key, dynamic value) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (value is String) await prefs.setString(key, value);
+    else if (value is bool) await prefs.setBool(key, value);
+    addLog("Setting saved: $key = $value");
   }
 
   // --- Location Methods ---
@@ -88,7 +108,6 @@ class AppState extends ChangeNotifier {
       _useDefaultLocation();
       return;
     }
-
     try {
       bool hasPermission = await requestPermission();
       if (!hasPermission) {
@@ -96,25 +115,14 @@ class AppState extends ChangeNotifier {
         _useDefaultLocation();
         return;
       }
-
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high
-      );
-      
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
       center = LatLng(position.latitude, position.longitude);
       hasObtainedRealLocation = true;
       isFollowingUser = true;
       addLog("Obtained real location: ${center.latitude}, ${center.longitude}");
-      
       Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 50,
-        ),
-      ).listen((Position pos) {
-        _handleLocationUpdate(pos);
-      });
-
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 50),
+      ).listen((Position pos) => _handleLocationUpdate(pos));
     } catch (e) {
       addLog("Location init error: $e");
       _useDefaultLocation();
@@ -143,6 +151,8 @@ class AppState extends ChangeNotifier {
     addLog("Using default region: $currentRegion");
   }
 
+  // --- Station Logic ---
+  
   Future<void> refreshStations() async {
     addLog("Refreshing stations for region: $currentRegion...");
     notifyListeners();
@@ -153,8 +163,32 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<Station> getClosestStations(LatLng userPos) {
-    return []; 
+  // Composite Sorting: Pinned first -> then Distance
+  List<Station> getSortedStations(List<Station> stations, LatLng userPos) {
+    if (stations.isEmpty) return [];
+    List<Station> sorted = List.from(stations);
+    sorted.sort((a, b) {
+      bool aPinned = pinnedStationIds.contains(a.id);
+      bool bPinned = pinnedStationIds.contains(b.id);
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      double distA = Geolocator.distanceBetween(userPos.latitude, userPos.longitude, a.lat, a.lng);
+      double distB = Geolocator.distanceBetween(userPos.latitude, userPos.longitude, b.lat, b.lng);
+      return distA.compareTo(distB);
+    });
+    return sorted;
+  }
+
+  void togglePinStation(String stationId) async {
+    if (pinnedStationIds.contains(stationId)) {
+      pinnedStationIds.remove(stationId);
+    } else {
+      pinnedStationIds.add(stationId);
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('pinnedStations', pinnedStationIds.toList());
+    addLog("Toggled pin for station: $stationId");
+    notifyListeners();
   }
 
   void toggleFollowing() {
@@ -165,18 +199,21 @@ class AppState extends ChangeNotifier {
 
   void toggleDarkMode() {
     isDarkMode = !isDarkMode;
+    saveSetting('isDarkMode', isDarkMode);
     addLog("Dark mode toggle: $isDarkMode");
     notifyListeners();
   }
 
   void toggleLanguage() {
     currentLang = currentLang == 'zh' ? 'en' : 'zh';
+    saveSetting('currentLang', currentLang);
     addLog("Language toggle: $currentLang");
     notifyListeners();
   }
 
   void setRegion(String region) {
     currentRegion = region;
+    saveSetting('currentRegion', region);
     _useDefaultLocation();
     refreshStations();
     addLog("Region set to: $region");

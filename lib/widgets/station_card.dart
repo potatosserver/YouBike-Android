@@ -1,116 +1,137 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../services/app_state.dart';
-import '../models/station.dart';
 import 'package:latlong2/latlong.dart';
+import '../models/station.dart';
 
 class StationCard extends StatelessWidget {
   final Station station;
   final VoidCallback onTap;
 
-  const StationCard({super.key, required this.station, required this.onTap});
+  const StationCard({
+    super.key, 
+    required this.station, 
+    required this.onTap
+  });
 
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context, listen: false);
-    
-    // Fix: Remove 'const' from Distance() and ensure correct types
-    final distance = Distance().as(
-      LengthUnit.Meter, 
-      LatLng(station.lat, station.lng), 
-      appState.center
-    );
-    final distText = distance < 1000 
-        ? "${distance.round()} m" 
-        : "${distance.toStringAsFixed(2)} km";
+    // Mirroring web CSS variables
+    final primaryColor = const Color(0xFFE44D26); // --primary-color
+    final borderColor = Colors.grey.shade300;    // --border-color
+    final bgColor = Colors.white;               // --bg-color
+    final textColor = Colors.black87;           // --text-color
+    final secondaryTextColor = Colors.grey.shade600;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 300,
-        margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey[300]!, width: 1),
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Left Accent Bar (Mirrors web .station::before)
+                Container(
+                  width: 6,
+                  color: primaryColor,
+                ),
                 Expanded(
-                  child: Text(
-                    station.nameTw,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                station.nameTw,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            _buildBikeCountChip(station),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          station.addressTw,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: secondaryTextColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(Icons.location_on, size: 14, color: primaryColor),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                "距離您的位置 ${station.distance} ${station.distanceUnit}",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: secondaryTextColor,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                _buildBikeCountChip(),
               ],
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    station.addressTw,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "Distance: $distText",
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.blue[700],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildBikeCountChip() {
+  Widget _buildBikeCountChip(Station station) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue[200]!, width: 1),
+        color: const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade300),
       ),
-      child: Text(
-        "${station.availableBikes} / ${station.totalBikes}",
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.blue,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.directions_bike, size: 14, color: Colors.grey.shade700),
+          const SizedBox(width: 4),
+          Text(
+            "${station.availableBikes} 輛",
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade700,
+            ),
+          ),
+        ],
       ),
     );
   }
