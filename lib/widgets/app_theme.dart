@@ -6,11 +6,14 @@ class AppColors {
   static const Color primaryDark = Color(0xFF0056B3);
   static const Color accent = Color(0xFFFFA000);
   
-  // Web specific colors
-  static const Color searchBg = Color(0xFFFFE8D6);
-  static const Color cardLightBg = Color(0xFFFFF2EC);
+  // Theme constants
+  static const Color primaryBlue = Color(0xFF007BFF);
+  static const Color peachBg = Color(0xFFFDCACB);
+  static const Color stationCardBg = Color(0xFFFFF2EC); // Web: .station { background-color: #fff2ec }
+  static const Color searchBg = Color(0xFFFFE8D6); // Web: #searchContainer { background-color: #ffe8d6 }
+  static const Color cardLightBg = Color(0xFFFFFFFF);
   static const Color mainBgLight = Color(0xFFF4F4F4);
-  
+
   // Light Mode
   static const Color bgLight = mainBgLight;
   static const Color cardLight = cardLightBg;

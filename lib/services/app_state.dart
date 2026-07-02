@@ -24,7 +24,6 @@ class AppState extends ChangeNotifier {
   // --- Pinned Stations ---
   Set<String> pinnedStationIds = {};
 
-
   // --- Location State ---
   LatLng center = const LatLng(22.6273, 120.3014); 
   bool isFollowingUser = false;
@@ -52,10 +51,7 @@ class AppState extends ChangeNotifier {
   Future<void> _init() async {
     addLog("Initializing AppState...");
     try {
-      // 1. 必須先載入設定，因為後續邏輯依賴 currentRegion 和 useLocation
       await loadSettings();
-      
-      // 2. 併發執行位置初始化與站點獲取，不再阻塞
       await Future.wait([
         initializeLocation(),
         refreshStations(),
@@ -90,8 +86,6 @@ class AppState extends ChangeNotifier {
     }
     addLog("Setting saved: $key = $value");
   }
-
-  // --- Location Methods ---
 
   Future<bool> requestPermission() async {
     addLog("Requesting location permission...");
@@ -166,21 +160,14 @@ class AppState extends ChangeNotifier {
     hasObtainedRealLocation = false;
   }
 
-  // --- Station Logic (Mirrors web apiYoubike.js) ---
-  
   Future<void> refreshStations() async {
     addLog("Refreshing stations for $currentRegion...");
     try {
       final api = ApiService();
-      
-      // 1. Fetch Base Station Data
       final baseStations = await api.fetchAllStations();
-      
-      // 2. Fetch Real-time Vehicle Data for a subset
       List<String> idsToQuery = baseStations.take(60).map((s) => s.id).toList();
       final realtimeData = await api.fetchRealtimeVehicles(idsToQuery);
       
-      // 3. MERGE DATA
       allStations = baseStations.map((s) {
         final vehicleInfo = realtimeData[s.id];
         if (vehicleInfo != null && vehicleInfo is Map) {
@@ -192,9 +179,7 @@ class AppState extends ChangeNotifier {
         return s;
       }).toList();
       
-      // 4. Generate Markers with Visual Offsets (Sync with web mapService.js)
       stationMarkers = _generateVisualMarkers(allStations);
-      
       addLog("Successfully loaded and merged ${allStations.length} stations.");
       notifyListeners();
     } catch (e) {
@@ -202,42 +187,35 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // 翻譯自 mapService.js: getVisualPosition
   List<fm.Marker> _generateVisualMarkers(List<Station> stations) {
     final Map<String, int> anchors = {};
     final List<fm.Marker> markers = [];
-
     for (var s in stations) {
       double lat = s.lat;
       double lng = s.lng;
-      
-      // 簡單偏移邏輯：若座標相同則環狀偏移
       final key = "${lat.toStringAsFixed(5)},${lng.toStringAsFixed(5)}";
       if (anchors.containsKey(key)) {
         int count = anchors[key]!;
         anchors[key] = count + 1;
-        
         const double angleStep = 2.399; 
         const double baseRadius = 0.00010;
         final angle = count * angleStep;
         final radius = baseRadius + (count * 0.00002);
-        
         lat += radius * (math.cos(angle));
         lng += radius * (math.sin(angle));
       } else {
         anchors[key] = 1;
       }
-
       markers.add(fm.Marker(
         point: LatLng(lat, lng),
         width: 30,
         height: 30,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.red,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+          color: const Color(0xFFFFD700),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
           ),
           child: const Center(child: Icon(Icons.directions_bike, color: Colors.white, size: 20)),
         ),
@@ -313,5 +291,14 @@ class AppState extends ChangeNotifier {
     _useDefaultLocation();
     refreshStations();
     addLog("Region set to: $region");
+  }
+
+  String getDistanceLabel(Station s) {
+    if (!hasObtainedRealLocation) return "N/A";
+    double dist = Geolocator.distanceBetween(
+      center.latitude, center.longitude, s.lat, s.lng);
+    if (dist < 100) return "${(dist).round()}m";
+    if (dist < 1000) return "${(dist / 100).toStringAsFixed(1)}km";
+    return "${(dist / 1000).toStringAsFixed(1)}km";
   }
 }

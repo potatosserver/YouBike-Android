@@ -207,7 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: _handleLocationPress,
               backgroundColor: Colors.white,
               child: Icon(
-                appState.isFollowingUser ? Icons.my_location : Icons.location_on,
+                appState.isFollowingUser ? Icons.my_location : Icons.my_location,
                 color: appState.isFollowingUser ? const Color(0xFF007BFF) : Colors.black87,
               ),
             ),
@@ -215,16 +215,20 @@ class _HomeScreenState extends State<HomeScreen> {
           Positioned(
             bottom: 100,
             right: 20,
-            child: FloatingActionButton.small(
-              heroTag: 'set_btn',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SettingsPage()),
-                );
-              },
-              backgroundColor: const Color(0xFFFDCACB),
-              child: const Icon(Icons.settings, color: Color(0xFF333333)),
+            child: SizedBox(
+              width: 56,
+              height: 56,
+              child: FloatingActionButton.small(
+                heroTag: 'set_btn',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SettingsPage()),
+                  );
+                },
+                backgroundColor: const Color(0xFFFDCACB),
+                child: const Icon(Icons.settings, color: Color(0xFF333333)),
+              ),
             ),
           ),
           Positioned(
@@ -289,8 +293,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 hintText: "搜尋站點名稱...",
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
                 ),
                 filled: true,
                 fillColor: Colors.grey[100],
