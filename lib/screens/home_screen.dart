@@ -31,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appState.toggleFollowing();
       final pos = await appState.getCurrentPosition();
       if (pos != null) {
-        _mapController.move(pos, 15.0);
+        _mapController.move(LatLng(pos.latitude, pos.longitude), 15.0);
       }
     }
   }
@@ -205,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _mapController.move(LatLng(s.lat, s.lng), 16.0);
             },
           ),
-        );
+        ),
       },
     );
   }
