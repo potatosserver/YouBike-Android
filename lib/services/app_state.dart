@@ -27,6 +27,7 @@ class AppState extends ChangeNotifier {
   
   // --- Location State ---
   LatLng center = const LatLng(22.6273, 120.3014); 
+  LatLng? lastKnownLocation; 
   bool isFollowingUser = false;
   bool hasObtainedRealLocation = false;
   
@@ -65,13 +66,18 @@ class AppState extends ChangeNotifier {
   }
   
   Future<void> _init() async {
-    isLoading = true;
+    // FIX: Start isLoading immediately to prevent any white screen before the first build
+    isLoading = true; 
     loadingProgress = 0;
     
     addLog("Initializing AppState...");
     try {
       await loadSettings();
+      
+      // Start UI simulations immediately
       _startLoadingSimulation();
+      
+      // Sequence: Location -> Data
       await initializeLocation();
       await refreshStations();
     } catch (e) {
@@ -86,8 +92,8 @@ class AppState extends ChangeNotifier {
   void _startLoadingSimulation() {
     Future.delayed(Duration.zero, () async {
       final notices = currentLang == 'en' 
-        ? ["❌Do not speed or ride in reverse", "❌Do not use your phone while riding", "✔️Remember to adjust the seat"]
-        : ["❌勿超速或逆向騎乘", "❌勿在車輛行駛中使用手機", "✔️記得調整座墊至適宜高度"];
+        ? ["❌Do not speed or ride in reverse", "❌Do not change lanes arbitrarily on sidewalks", "❌Do not use your phone while riding", "❌Avoid harsh braking while riding", "✔️Remember to adjust the seat to a proper height", "✔️Ensure that both front and rear lights are working", "✔️Remember to get bicycle accident insurance", "✔️Take your belongings from the basket"]
+        : ["❌勿超速或逆向騎乘", "❌勿隨意變換車道在行人道上騎乘", "❌勿在車輛行駛中使用手機", "❌騎乘中勿緊急煞車", "✔️記得調整座墊至適宜高度", "✔️確認前後車燈功能正常", "✔️記得投保公共自行車傷害險", "✔️記得帶走置物籃內的隨身物品"];
       
       int progress = 0;
       while (isLoading) {
@@ -97,9 +103,14 @@ class AppState extends ChangeNotifier {
         } else {
           loadingProgress = 85 + math.Random().nextInt(11);
         }
-        currentNotice = notices[math.Random().nextInt(notices.length)];
+        
+        // FIX: Update notice only every few ticks to prevent "crazy jumping"
+        if (math.Random().nextInt(20) == 0) {
+          currentNotice = notices[math.Random().nextInt(notices.length)];
+        }
+        
         notifyListeners();
-        await Future.delayed(const Duration(milliseconds: 50));
+        await Future.delayed(const Duration(milliseconds: 100));
       }
     });
   }
@@ -166,6 +177,7 @@ class AppState extends ChangeNotifier {
         timeLimit: const Duration(seconds: 5),
       );
       center = LatLng(position.latitude, position.longitude);
+      lastKnownLocation = center;
       hasObtainedRealLocation = true;
       isFollowingUser = true;
       addLog("Location fixed: ${center.latitude}, ${center.longitude}");
@@ -195,6 +207,7 @@ class AppState extends ChangeNotifier {
       'kaohsiung': const LatLng(22.6273, 120.3014),
     };
     center = regions[currentRegion] ?? const LatLng(22.6273, 120.3014);
+    lastKnownLocation = center;
     isFollowingUser = false;
     hasObtainedRealLocation = false;
   }
@@ -205,6 +218,7 @@ class AppState extends ChangeNotifier {
       final api = ApiService();
       final baseStations = await api.fetchAllStations();
       
+      // FIX: Strictly limit real-time data to first 10 stations to mimic web's logic and avoid API failure
       List<String> idsToQuery = baseStations.take(10).map((s) => s.id).toList();
       final realtimeData = await api.fetchRealtimeVehicles(idsToQuery);
       
@@ -252,8 +266,8 @@ class AppState extends ChangeNotifier {
       }
       markers.add(fm.Marker(
         point: LatLng(lat, lng),
-        width: 24,
-        height: 24,
+        width: 17, // FIX: Reduced size by ~30% (was 24)
+        height: 17,
         child: Container(
           decoration: BoxDecoration(
             color: const Color(0xFFFFD700),
@@ -261,7 +275,7 @@ class AppState extends ChangeNotifier {
             border: Border.all(color: Colors.white, width: 2),
             boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
           ),
-          child: const Center(child: Icon(Icons.directions_bike, color: Colors.white, size: 16)),
+          child: const Center(child: Icon(Icons.directions_bike, color: Colors.white, size: 12)),
         ),
       ));
     }

@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:provider/provider.dart';
-import 'package:sliding_up_panel/sliding_up_panel.dart';
+
+import '../models/station.dart';
 import '../services/app_state.dart';
 import '../services/api_service.dart';
 import '../services/route_service.dart';
-import '../widgets/pulse_marker.dart';
+import '../widgets/app_theme.dart';
+import '../widgets/loading_overlay.dart';
 import '../widgets/station_card.dart';
 import '../widgets/route_detail_panel.dart';
-import '../widgets/loading_overlay.dart';
-import 'settings_page.dart';
-import 'debug_screen.dart';
-import '../models/station.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,89 +20,25 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final MapController _mapController = MapController();
 
   void _handleLocationPress() async {
     final appState = Provider.of<AppState>(context, listen: false);
     await appState.requestPermission();
+    
     if (appState.isFollowingUser) {
       appState.toggleFollowing();
     } else {
       appState.toggleFollowing();
-      final pos = await appState.getCurrentPosition();
-      if (pos != null) {
-        _mapController.move(LatLng(pos.latitude, pos.longitude), 15.0);
+      if (appState.lastKnownLocation != null) {
+        _mapController.move(appState.lastKnownLocation!, 15.0);
+      } else {
+        final pos = await appState.getCurrentPosition();
+        if (pos != null) {
+          _mapController.move(LatLng(pos.latitude, pos.longitude), 15.0);
+        }
       }
     }
-  }
-
-  void _showStationDetails(Station station) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(station.nameTw),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: FutureBuilder<List<Map<String, dynamic>>>(
-            future: ApiService().fetchElectricBikeDetails(station.id),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return Text("獲取電輔車資訊失敗: ${snapshot.error}");
-              }
-              
-              final bikes = snapshot.data ?? [];
-              if (bikes.isEmpty) {
-                return const Text("目前無可用電輔車");
-              }
-              
-              bikes.sort((a, b) => (b['battery_power'] as num).compareTo(a['battery_power'] as num));
-              
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("站點資訊", style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text("地址：${station.addressTw}"),
-                  const SizedBox(height: 10),
-                  const Text("即時車輛數", style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text("YouBike 2.0: ${station.availableBikes} 輛"),
-                  Text("YouBike 2.0E: ${station.availableElectricBikes} 輛"),
-                  Text("可停空位數: ${station.emptySpaces}"),
-                  const SizedBox(height: 15),
-                  const Text("電輔車詳細電量", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
-                  const SizedBox(height: 5),
-                  Flexible(
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: bikes.length,
-                      itemBuilder: (context, index) {
-                        final bike = bikes[index];
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.directions_bike, size: 20),
-                          title: Text("車號: ${bike['bike_no']}"),
-                          subtitle: Text("車位: ${bike['pillar_no']}"),
-                          trailing: Text("${bike['battery_power']}%", 
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("確定")),
-        ],
-      ),
-    );
   }
 
   void _showRoutePanel(Station station) async {
@@ -130,107 +64,140 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) => RouteDetailPanel(
-        steps: steps.map((s) => s.instruction).toList(),
-        destination: station.nameTw,
+        stationName: station.nameTw,
+        steps: steps,
+        lang: appState.currentLang,
+      ),
+    );
+  }
+
+  void _showStationDetails(Station station) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text(station.nameTw),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: ApiService().fetchElectricBikeDetails(station.id),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final appState = Provider.of<AppState>(context, listen: false);
+              if (snapshot.hasError) {
+                return Text(appState.currentLang == 'en' 
+                    ? "Failed to get electric bike info: ${snapshot.error}" 
+                    : "獲取電輔車資訊失敗: ${snapshot.error}");
+              }
+              
+              final bikes = snapshot.data ?? [];
+              if (bikes.isEmpty) {
+                return Text(appState.currentLang == 'en' ? "No electric bikes available" : "目前無可用電輔車");
+              }
+              
+              bikes.sort((a, b) => (b['battery_power'] as num).compareTo(a['battery_power'] as num));
+              
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: bikes.map((bike) => ListTile(
+                  leading: const Icon(Icons.directions_bike),
+                  title: Text("車號: ${bike['bike_no']}"),
+                  subtitle: Text("車位: ${bike['pillar_no']}"),
+                  trailing: Text("${bike['battery_power']}%", 
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                )).toList(),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Builder(
+              builder: (context) {
+                final appState = Provider.of<AppState>(context, listen: false);
+                return Text(appState.currentLang == 'en' ? "OK" : "確定");
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context);
+    final appState = Provider.of<AppState>(this);
+
     return Scaffold(
-      key: _scaffoldKey,
       body: Stack(
         children: [
-          SlidingUpPanel(
-            body: Stack(
-              children: [
-                FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: appState.center,
-                    initialZoom: 18.0,
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.youbike.finder',
-                    ),
-                    MarkerLayer(
-                      markers: [
-                        ...appState.stationMarkers.map((m) => Marker(
-                          point: m.point,
-                          width: 40,
-                          height: 40,
-                          child: GestureDetector(
-                            onTap: () {
-                              final station = appState.allStations.firstWhere(
-                                (s) => s.lat == m.point.latitude && s.lng == m.point.longitude,
-                                orElse: () => Station(
-                                  id: "unknown",
-                                  nameTw: "未知站點",
-                                  nameEn: "Unknown Station",
-                                  addressTw: "未知地址",
-                                  addressEn: "Unknown Address",
-                                  lat: m.point.latitude,
-                                  lng: m.point.longitude,
-                                ),
-                              );
-                              _showStationDetails(station);
-                            },
-                            child: m.child,
-                          ),
-                        )),
-                        Marker(
-                          point: appState.center,
-                          width: 40,
-                          height: 40,
-                          child: PulseMarker(
-                            latitude: appState.center.latitude, 
-                            longitude: appState.center.longitude,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: appState.center,
+              initialZoom: 15.0,
+              interactionOptions: const InteractionOptions(
+                flags: InteractionFlags.all & ~InteractionFlags.rotate,
+              ),
             ),
-            panel: _buildSearchAndRecentPanel(appState),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.youbike.android',
+              ),
+              MarkerLayer(markers: appState.stationMarkers),
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    point: appState.center,
+                    width: 20,
+                    height: 20,
+                    child: const Icon(Icons.my_location, color: Colors.blue, size: 20),
+                  ),
+                ],
+              ),
+            ],
           ),
+          
+          // Search Bar
           Positioned(
-            top: 60,
+            top: 50,
+            left: 20,
+            right: 20,
+            child: TextField(
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: const Color(0xFFFFE8D6),
+                hintText: appState.currentLang == 'en' ? "Search stations..." : "搜尋站點...",
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(25),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onSubmitted: (val) => appState.searchStations(val),
+            ),
+          ),
+          
+          // Location Button
+          Positioned(
+            bottom: 100,
             left: 20,
             child: FloatingActionButton.small(
               heroTag: 'loc_btn',
               onPressed: _handleLocationPress,
               backgroundColor: Colors.white,
               child: Icon(
-                appState.isFollowingUser ? Icons.my_location : Icons.my_location,
+                Icons.my_location,
                 color: appState.isFollowingUser ? const Color(0xFF007BFF) : Colors.black87,
               ),
             ),
           ),
-          Positioned(
-            bottom: 100,
-            right: 20,
-            child: SizedBox(
-              width: 56,
-              height: 56,
-              child: FloatingActionButton.small(
-                heroTag: 'set_btn',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SettingsPage()),
-                  );
-                },
-                backgroundColor: const Color(0xFFFDCACB),
-                child: const Icon(Icons.settings, color: Color(0xFF333333)),
-              ),
-            ),
-          ),
+          
+          // Refresh Pill
           Positioned(
             bottom: 10,
             left: 0,
@@ -241,24 +208,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFFDCACB),
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2)),
-                  ],
+                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.refresh, size: 18, color: Colors.black87),
-                    const SizedBox(width: 8),
                     Text(
-                      appState.currentLang == 'zh' 
-                        ? "${appState.countdownRemaining}秒後更新" 
-                        : "${appState.countdownRemaining} sec update",
-                      style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
+                      "${appState.currentLang == 'en' ? 'Updating in' : '更新於'} ${appState.countdownRemaining}s",
+                      style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(width: 8),
                     GestureDetector(
-                      onTap: () => appState.refreshStations(),
+                      onTap: () {
+                        appState.countdownRemaining = 60;
+                        appState.refreshStations();
+                      },
                       child: const Icon(Icons.play_arrow, size: 18, color: Colors.black87),
                     ),
                   ],
@@ -266,98 +230,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          Positioned(
-            bottom: 160,
-            left: 20,
-            child: FloatingActionButton.small(
-              heroTag: 'dbg_btn',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const DebugScreen()),
-                );
-              },
-              backgroundColor: Colors.redAccent,
-              child: const Icon(Icons.bug_report, color: Colors.white),
-            ),
-          ),
-          if (appState.isLoading)
-            LoadingOverlay(
-              isVisible: appState.isLoading,
-              progress: appState.loadingProgress,
-              notice: appState.currentNotice,
-              isOffline: appState.isOffline,
-            ),
+          
+          if (appState.isLoading) const LoadingOverlay(),
         ],
       ),
-    );
-  }
-
-  Widget _buildSearchAndRecentPanel(AppState appState) {
-    return Container(
-      color: Colors.white,
-      child: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              onChanged: (val) => appState.searchStations(val),
-              decoration: InputDecoration(
-                hintText: "搜尋站點名稱...",
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Colors.grey[100],
-              ),
-            ),
-          ),
-          Expanded(
-            child: _buildResultsList(appState),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResultsList(AppState appState) {
-    bool isSearching = appState.searchResults.isNotEmpty;
-    List<Station> displayList = isSearching 
-        ? appState.getSortedStations(appState.searchResults, appState.center)
-        : appState.getSortedStations(appState.allStations, appState.center);
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: displayList.length,
-      itemBuilder: (context, index) {
-        final s = displayList[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: StationCard(
-            station: s,
-            onTap: () {
-              _mapController.move(LatLng(s.lat, s.lng), 16.0);
-            },
-            onNavigate: () {
-              _showRoutePanel(s);
-            },
-            onShowElectric: () {
-              _showStationDetails(s);
-            },
-          ),
-        );
-      },
     );
   }
 }
