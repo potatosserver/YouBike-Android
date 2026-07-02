@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../services/app_state.dart';
-import '../services/location_service.dart';
-import '../services/language_service.dart';
 import '../widgets/app_theme.dart';
 
 class PermissionModal extends StatelessWidget {

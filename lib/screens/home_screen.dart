@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import '../services/app_state.dart';
+import '../services/api_service.dart';
 import '../widgets/pulse_marker.dart';
 import '../widgets/station_card.dart';
 import 'settings_page.dart';
@@ -38,19 +39,64 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showStationDetails(Station station) async {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: Text(station.nameTw),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("地址：${station.addressTw}"),
-            const SizedBox(height: 10),
-            const Text("即時車輛資訊", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text("YouBike 2.0: ${station.availableBikes} 輛"),
-            Text("YouBike 2.0E: ${station.availableElectricBikes} 輛"),
-            Text("可停空位數: ${station.emptySpaces}"),
-          ],
+        content: SizedBox(
+          width: double.maxFinite,
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: ApiService().fetchElectricBikeDetails(station.id),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Text("獲取電輔車資訊失敗: ${snapshot.error}");
+              }
+              
+              final bikes = snapshot.data ?? [];
+              if (bikes.isEmpty) {
+                return const Text("目前無可用電輔車");
+              }
+              
+              // 按電量排序 (同步網頁版)
+              bikes.sort((a, b) => (b['battery_power'] as num).compareTo(a['battery_power'] as num));
+              
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("站點資訊", style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text("地址：${station.addressTw}"),
+                  const SizedBox(height: 10),
+                  const Text("即時車輛數", style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text("YouBike 2.0: ${station.availableBikes} 輛"),
+                  Text("YouBike 2.0E: ${station.availableElectricBikes} 輛"),
+                  Text("可停空位數: ${station.emptySpaces}"),
+                  const SizedBox(height: 15),
+                  const Text("電輔車詳細電量", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                  const SizedBox(height: 5),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: bikes.length,
+                      itemBuilder: (context, index) {
+                        final bike = bikes[index];
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.directions_bike, size: 20),
+                          title: Text("車號: ${bike['bike_no']}"),
+                          subtitle: Text("車位: ${bike['pillar_no']}"),
+                          trailing: Text("${bike['battery_power']}%", 
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("確定")),

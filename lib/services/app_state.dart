@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart' as fm;
 import 'package:latlong2/latlong.dart';
-import 'package:provider/provider.dart';
+import 'dart:math' as math;
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -72,8 +72,11 @@ class AppState extends ChangeNotifier {
 
   Future<void> saveSetting(String key, dynamic value) async {
     final prefs = await SharedPreferences.getInstance();
-    if (value is String) await prefs.setString(key, value);
-    else if (value is bool) await prefs.setBool(key, value);
+    if (value is String) {
+      await prefs.setString(key, value);
+    } else if (value is bool) {
+      await prefs.setBool(key, value);
+    }
     addLog("Setting saved: $key = $value");
   }
 
@@ -152,34 +155,70 @@ class AppState extends ChangeNotifier {
     hasObtainedRealLocation = false;
   }
 
-  // --- Station Logic (DEEP MERGE IMPLEMENTATION) ---
+  // --- Station Logic (Mirrors web apiYoubike.js) ---
   
   Future<void> refreshStations() async {
     addLog("Refreshing stations for $currentRegion...");
     try {
       final api = ApiService();
       
-      // 1. Fetch Base Station Data (Name, Address, Lat/Lng)
+      // 1. Fetch Base Station Data
       final baseStations = await api.fetchAllStations();
       
-      // 2. Fetch Real-time Vehicle Data (Bike counts)
-      final realtimeData = await api.fetchRealtimeVehicles();
+      // 2. Fetch Real-time Vehicle Data for a subset
+      List<String> idsToQuery = baseStations.take(60).map((s) => s.id).toList();
+      final realtimeData = await api.fetchRealtimeVehicles(idsToQuery);
       
-      // 3. MERGE DATA (Mirrors web apiYoubike.js)
+      // 3. MERGE DATA
       allStations = baseStations.map((s) {
         final vehicleInfo = realtimeData[s.id];
         if (vehicleInfo != null && vehicleInfo is Map) {
-          s.availableBikes = int.tryParse(vehicleInfo['available']?.toString() ?? '0') ?? 0;
-          s.availableElectricBikes = int.tryParse(vehicleInfo['available_e']?.toString() ?? '0') ?? 0;
-          s.emptySpaces = int.tryParse(vehicleInfo['empty']?.toString() ?? '0') ?? 0;
+          s.availableBikes = vehicleInfo['available_2_0'] ?? 0;
+          s.availableElectricBikes = vehicleInfo['available_e'] ?? 0;
+          s.emptySpaces = vehicleInfo['empty_spaces'] ?? 0;
           s.totalBikes = s.availableBikes + s.emptySpaces;
         }
         return s;
       }).toList();
       
-      // 4. Generate Markers (Now with guaranteed data)
-      stationMarkers = allStations.map((s) => fm.Marker(
-        point: LatLng(s.lat, s.lng),
+      // 4. Generate Markers with Visual Offsets (Sync with web mapService.js)
+      stationMarkers = _generateVisualMarkers(allStations);
+      
+      addLog("Successfully loaded and merged ${allStations.length} stations.");
+      notifyListeners();
+    } catch (e) {
+      addLog("refreshStations Error: $e");
+    }
+  }
+
+  // 翻譯自 mapService.js: getVisualPosition
+  List<fm.Marker> _generateVisualMarkers(List<Station> stations) {
+    final Map<String, int> anchors = {};
+    final List<fm.Marker> markers = [];
+
+    for (var s in stations) {
+      double lat = s.lat;
+      double lng = s.lng;
+      
+      // 簡單偏移邏輯：若座標相同則環狀偏移
+      final key = "${lat.toStringAsFixed(5)},${lng.toStringAsFixed(5)}";
+      if (anchors.containsKey(key)) {
+        int count = anchors[key]!;
+        anchors[key] = count + 1;
+        
+        const double angleStep = 2.399; 
+        const double baseRadius = 0.00010;
+        final angle = count * angleStep;
+        final radius = baseRadius + (count * 0.00002);
+        
+        lat += radius * (math.cos(angle));
+        lng += radius * (math.sin(angle));
+      } else {
+        anchors[key] = 1;
+      }
+
+      markers.add(fm.Marker(
+        point: LatLng(lat, lng),
         width: 30,
         height: 30,
         child: Container(
@@ -187,17 +226,13 @@ class AppState extends ChangeNotifier {
             color: Colors.red,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
-            boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
+            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
           ),
           child: const Center(child: Icon(Icons.location_on, color: Colors.white, size: 20)),
         ),
-      )).toList();
-      
-      addLog("Successfully loaded and merged ${allStations.length} stations.");
-      notifyListeners();
-    } catch (e) {
-      addLog("refreshStations Error: $e");
+      ));
     }
+    return markers;
   }
 
   void searchStations(String query) {

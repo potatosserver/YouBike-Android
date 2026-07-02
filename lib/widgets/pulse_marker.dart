@@ -24,7 +24,7 @@ class PulseMarker extends StatelessWidget {
               height: 20 * value * 2,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.blue.withOpacity(1.0 - value),
+                color: Colors.blue.withValues(alpha: 1.0 - value),
                 border: Border.all(color: Colors.blue, width: 2),
               ),
             ),

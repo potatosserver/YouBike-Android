@@ -23,7 +23,7 @@ class RouteDetailPanel extends StatelessWidget {
         color: appState.isDarkMode ? AppColors.cardDark : AppColors.cardLight,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, -5)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, -5)),
         ],
       ),
       child: Column(
@@ -89,7 +89,7 @@ class RouteDetailPanel extends StatelessWidget {
                 ],
               ),
             );
-          }).toList(),
+          }),
           const SizedBox(height: 24),
         ],
       ),

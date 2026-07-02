@@ -6,37 +6,47 @@ class RouteStep {
   final String instruction;
   final double distance;
   final double duration;
+  final int sign; // GraphHopper sign for icons
 
   RouteStep({
     required this.instruction,
     required this.distance,
     required this.duration,
+    required this.sign,
   });
 
   factory RouteStep.fromJson(Map<String, dynamic> json) {
     return RouteStep(
-      instruction: json['instruction'] ?? '',
+      instruction: json['text'] ?? '',
       distance: (json['distance'] as num).toDouble(),
-      duration: (json['duration'] as num).toDouble(),
+      duration: (json['time'] as num).toDouble(),
+      sign: json['sign'] ?? 0,
     );
   }
 }
 
 class RouteService {
-  final String osrmUrl = "https://router.project-osrm.org/route/v1/walking/";
+  // 使用 GraphHopper API (同步網頁版)
+  static const String baseUrl = "https://graphhopper.com/api/1/route";
+  static const String apiKey = "7cb46967-7111-4d41-8836-5209c820139c"; // From web config.js
 
-  Future<List<RouteStep>> getRoute(LatLng start, LatLng end) async {
-    final url = "$osrmUrl${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=false";
+  Future<List<RouteStep>> getRoute(LatLng start, LatLng end, String lang) async {
+    final locale = lang == 'en' ? 'en' : 'zh-TW';
+    const profile = 'foot';
+    
+    final url = "${RouteService.baseUrl}?profile=$profile&locale=$locale&key=${RouteService.apiKey}&elevation=false&instructions=true&point=${start.longitude},${start.latitude}&point=${end.longitude},${end.latitude}";
     
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final steps = data['routes'][0]['legs'][0]['steps'] as List;
-        return steps.map((s) => RouteStep.fromJson(s)).toList();
+        if (data['paths'] != null && (data['paths'] as List).isNotEmpty) {
+          final steps = data['paths'][0]['instructions'] as List;
+          return steps.map((s) => RouteStep.fromJson(s)).toList();
+        }
       }
     } catch (e) {
-      print("Route error: $e");
+      // Log: GraphHopper Route error: $e
     }
     return [];
   }

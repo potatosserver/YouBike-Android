@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart';
 import '../models/station.dart';
 
 class StationCard extends StatelessWidget {
@@ -15,11 +14,11 @@ class StationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Mirroring web CSS variables
-    final primaryColor = const Color(0xFFE44D26); // --primary-color
-    final borderColor = Colors.grey.shade300;    // --border-color
-    final bgColor = Colors.white;               // --bg-color
-    final textColor = Colors.black87;           // --text-color
-    final secondaryTextColor = Colors.grey.shade600;
+    const primaryColor = Color(0xFFE44D26); // --primary-color
+    const borderColor = Color(0xFFE0E0E0);    // --border-color (Approx Colors.grey.shade300)
+    const bgColor = Color(0xFFFFFFFF);       // --bg-color
+    const textColor = Color(0xFF333333);     // --text-color (Approx Colors.black87)
+    const secondaryTextColor = Color(0xFF757575); // (Approx Colors.grey.shade600)
 
     return GestureDetector(
       onTap: onTap,
@@ -43,7 +42,6 @@ class StationCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Left Accent Bar (Mirrors web .station::before)
                 Container(
                   width: 6,
                   color: primaryColor,
@@ -68,7 +66,7 @@ class StationCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            _buildBikeCountChip(station),
+                            _buildBikeCountRow(station),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -110,25 +108,45 @@ class StationCard extends StatelessWidget {
     );
   }
 
-  Widget _buildBikeCountChip(Station station) {
+  Widget _buildBikeCountRow(Station station) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildBikeCountItem("2.0", station.availableBikes),
+        const SizedBox(width: 8),
+        _buildBikeCountItem("2.0E", station.availableElectricBikes, isElectric: true),
+        const SizedBox(width: 8),
+        _buildBikeCountItem("空位", station.emptySpaces),
+      ],
+    );
+  }
+
+  Widget _buildBikeCountItem(String label, int count, {bool isElectric = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.circular(20),
+        color: isElectric ? const Color(0xFFFFF3E0) : const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: Colors.grey.shade300),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.directions_bike, size: 14, color: Colors.grey.shade700),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: isElectric ? Colors.orange.shade800 : Colors.grey.shade600,
+            ),
+          ),
           const SizedBox(width: 4),
           Text(
-            "${station.availableBikes} 輛",
+            "$count",
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
+              color: Colors.grey.shade800,
             ),
           ),
         ],

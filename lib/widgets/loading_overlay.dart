@@ -67,7 +67,7 @@ class _LoadingOverlayState extends State<LoadingOverlay> {
             decoration: BoxDecoration(
               color: appState.isDarkMode ? AppColors.cardDark : Colors.white,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.withOpacity(0.3)),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
             ),
             child: Text(
               _currentNotice,
