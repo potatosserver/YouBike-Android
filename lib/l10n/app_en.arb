@@ -9,5 +9,22 @@
   "recentStations": "Recent Stations",
   "darkMode": "Dark Mode",
   "language": "Language",
-  "about": "About"
+  "about": "About",
+  "updatingIn": "Updating in {seconds}s",
+  "electricBikeDetailsTitle": "Electric Bike Details: {name}",
+  "gettingBikeData": "Fetching bike data...",
+  "bikeNumber": "Bike No: {no}",
+  "pillarNumber": "Pillar No: {no}",
+  "batteryPower": "Battery: {power}%",
+  "noElectricBikes": "No electric bikes available",
+  "electricBikeError": "Failed to get electric bike info: {error}",
+  "routeTo": "Route to {name}",
+  "calculatingRoute": "Calculating route...",
+  "routeNotFound": "Route not found",
+  "distance": "Distance: {dist}",
+  "estimatedTime": "Estimated Time: {time} minutes",
+  "retry": "Retry",
+  "ok": "OK",
+  "loading": "Loading: {progress}%",
+  "loadingNotice": "Notice: {notice}"
 }

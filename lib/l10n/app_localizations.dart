@@ -163,6 +163,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'About'**
   String get about;
+
+  /// No description provided for @updatingIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating in {seconds}s'**
+  String updatingIn(Object seconds);
+
+  /// No description provided for @electricBikeDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Electric Bike Details: {name}'**
+  String electricBikeDetailsTitle(Object name);
+
+  /// No description provided for @gettingBikeData.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetching bike data...'**
+  String get gettingBikeData;
+
+  /// No description provided for @bikeNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike No: {no}'**
+  String bikeNumber(Object no);
+
+  /// No description provided for @pillarNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Pillar No: {no}'**
+  String pillarNumber(Object no);
+
+  /// No description provided for @batteryPower.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery: {power}%'**
+  String batteryPower(Object power);
+
+  /// No description provided for @noElectricBikes.
+  ///
+  /// In en, this message translates to:
+  /// **'No electric bikes available'**
+  String get noElectricBikes;
+
+  /// No description provided for @electricBikeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to get electric bike info: {error}'**
+  String electricBikeError(Object error);
+
+  /// No description provided for @routeTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Route to {name}'**
+  String routeTo(Object name);
+
+  /// No description provided for @calculatingRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculating route...'**
+  String get calculatingRoute;
+
+  /// No description provided for @routeNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Route not found'**
+  String get routeNotFound;
+
+  /// No description provided for @distance.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance: {dist}'**
+  String distance(Object dist);
+
+  /// No description provided for @estimatedTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated Time: {time} minutes'**
+  String estimatedTime(Object time);
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading: {progress}%'**
+  String loading(Object progress);
+
+  /// No description provided for @loadingNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Notice: {notice}'**
+  String loadingNotice(Object notice);
 }
 
 class _AppLocalizationsDelegate

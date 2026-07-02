@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../services/app_state.dart';
 
 class LoadingOverlay extends StatelessWidget {
@@ -8,6 +9,7 @@ class LoadingOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Material(
       color: Colors.black.withOpacity(0.8),
@@ -22,7 +24,7 @@ class LoadingOverlay extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              "${appState.currentLang == 'en' ? 'Loading' : '載入中'}: ${appState.loadingProgress}%",
+              l10n.loading.replaceFirst('{progress}', appState.loadingProgress.toString()),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -56,7 +58,7 @@ class LoadingOverlay extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
               ),
-              child: Text(appState.currentLang == 'en' ? "Retry" : "重整"),
+              child: Text(l10n.retry),
             ),
           ],
         ),

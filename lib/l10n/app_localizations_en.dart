@@ -49,4 +49,77 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get about => 'About';
+
+  @override
+  String updatingIn(Object seconds) {
+    return 'Updating in ${seconds}s';
+  }
+
+  @override
+  String electricBikeDetailsTitle(Object name) {
+    return 'Electric Bike Details: $name';
+  }
+
+  @override
+  String get gettingBikeData => 'Fetching bike data...';
+
+  @override
+  String bikeNumber(Object no) {
+    return 'Bike No: $no';
+  }
+
+  @override
+  String pillarNumber(Object no) {
+    return 'Pillar No: $no';
+  }
+
+  @override
+  String batteryPower(Object power) {
+    return 'Battery: $power%';
+  }
+
+  @override
+  String get noElectricBikes => 'No electric bikes available';
+
+  @override
+  String electricBikeError(Object error) {
+    return 'Failed to get electric bike info: $error';
+  }
+
+  @override
+  String routeTo(Object name) {
+    return 'Route to $name';
+  }
+
+  @override
+  String get calculatingRoute => 'Calculating route...';
+
+  @override
+  String get routeNotFound => 'Route not found';
+
+  @override
+  String distance(Object dist) {
+    return 'Distance: $dist';
+  }
+
+  @override
+  String estimatedTime(Object time) {
+    return 'Estimated Time: $time minutes';
+  }
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String loading(Object progress) {
+    return 'Loading: $progress%';
+  }
+
+  @override
+  String loadingNotice(Object notice) {
+    return 'Notice: $notice';
+  }
 }

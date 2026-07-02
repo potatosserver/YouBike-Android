@@ -9,5 +9,22 @@
   "recentStations": "最近站牌",
   "darkMode": "深色模式",
   "language": "語言",
-  "about": "關於"
+  "about": "關於",
+  "updatingIn": "更新於 {seconds}s",
+  "electricBikeDetailsTitle": "電輔車詳細資訊: {name}",
+  "gettingBikeData": "正在獲取車輛資料...",
+  "bikeNumber": "車號: {no}",
+  "pillarNumber": "車位: {no}",
+  "batteryPower": "電量: {power}%",
+  "noElectricBikes": "目前無可用電輔車",
+  "electricBikeError": "獲取電輔車資訊失敗: {error}",
+  "routeTo": "前往 {name} 的路線",
+  "calculatingRoute": "計算路線中...",
+  "routeNotFound": "找不到路線",
+  "distance": "距離: {dist}",
+  "estimatedTime": "預計時間: {time} 分鐘",
+  "retry": "重整",
+  "ok": "確定",
+  "loading": "載入中：{progress}%",
+  "loadingNotice": "通知: {notice}"
 }

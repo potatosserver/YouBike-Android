@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../models/station.dart';
 import '../services/app_state.dart';
@@ -55,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (steps.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(appState.currentLang == 'zh' ? "找不到路線" : "Route not found"))
+        SnackBar(content: Text(AppLocalizations.of(context)!.routeNotFound)),
       );
       return;
     }
@@ -85,15 +86,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 return const Center(child: CircularProgressIndicator());
               }
               final appState = Provider.of<AppState>(context, listen: false);
+              final l10n = AppLocalizations.of(context)!;
               if (snapshot.hasError) {
-                return Text(appState.currentLang == 'en' 
-                    ? "Failed to get electric bike info: ${snapshot.error}" 
-                    : "獲取電輔車資訊失敗: ${snapshot.error}");
+                return Text(l10n.electricBikeError.replaceFirst('{error}', snapshot.error.toString()));
               }
               
               final bikes = snapshot.data ?? [];
               if (bikes.isEmpty) {
-                return Text(appState.currentLang == 'en' ? "No electric bikes available" : "目前無可用電輔車");
+                return Text(l10n.noElectricBikes);
               }
               
               bikes.sort((a, b) => (b['battery_power'] as num).compareTo(a['battery_power'] as num));
@@ -102,8 +102,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: bikes.map((bike) => ListTile(
                   leading: const Icon(Icons.directions_bike),
-                  title: Text("車號: ${bike['bike_no']}"),
-                  subtitle: Text("車位: ${bike['pillar_no']}"),
+                  title: Text("${l10n.bikeNumber} ${bike['bike_no']}"),
+                  subtitle: Text("${l10n.pillarNumber} ${bike['pillar_no']}"),
                   trailing: Text("${bike['battery_power']}%", 
                     style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
                 )).toList(),
@@ -114,12 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Builder(
-              builder: (context) {
-                final appState = Provider.of<AppState>(context, listen: false);
-                return Text(appState.currentLang == 'en' ? "OK" : "確定");
-              },
-            ),
+            child: Text(AppLocalizations.of(context)!.ok),
           ),
         ],
       ),
@@ -129,10 +124,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: Stack(
-
         children: [
           FlutterMap(
             mapController: _mapController,
@@ -168,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: const Color(0xFFFFE8D6),
-                hintText: appState.currentLang == 'en' ? "Search stations..." : "搜尋站點...",
+                hintText: l10n.searchPlaceholder,
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25),
@@ -211,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      "${appState.currentLang == 'en' ? 'Updating in' : '更新於'} ${appState.countdownRemaining}s",
+                      l10n.updatingIn.replaceFirst('{seconds}', appState.countdownRemaining.toString()),
                       style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(width: 8),

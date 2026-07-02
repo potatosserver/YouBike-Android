@@ -49,4 +49,77 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get about => '關於';
+
+  @override
+  String updatingIn(Object seconds) {
+    return '更新於 ${seconds}s';
+  }
+
+  @override
+  String electricBikeDetailsTitle(Object name) {
+    return '電輔車詳細資訊: $name';
+  }
+
+  @override
+  String get gettingBikeData => '正在獲取車輛資料...';
+
+  @override
+  String bikeNumber(Object no) {
+    return '車號: $no';
+  }
+
+  @override
+  String pillarNumber(Object no) {
+    return '車位: $no';
+  }
+
+  @override
+  String batteryPower(Object power) {
+    return '電量: $power%';
+  }
+
+  @override
+  String get noElectricBikes => '目前無可用電輔車';
+
+  @override
+  String electricBikeError(Object error) {
+    return '獲取電輔車資訊失敗: $error';
+  }
+
+  @override
+  String routeTo(Object name) {
+    return '前往 $name 的路線';
+  }
+
+  @override
+  String get calculatingRoute => '計算路線中...';
+
+  @override
+  String get routeNotFound => '找不到路線';
+
+  @override
+  String distance(Object dist) {
+    return '距離: $dist';
+  }
+
+  @override
+  String estimatedTime(Object time) {
+    return '預計時間: $time 分鐘';
+  }
+
+  @override
+  String get retry => '重整';
+
+  @override
+  String get ok => '確定';
+
+  @override
+  String loading(Object progress) {
+    return '載入中：$progress%';
+  }
+
+  @override
+  String loadingNotice(Object notice) {
+    return '通知: $notice';
+  }
 }
