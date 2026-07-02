@@ -64,9 +64,8 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) => RouteDetailPanel(
-        stationName: station.nameTw,
-        steps: steps,
-        lang: appState.currentLang,
+        destination: station.nameTw,
+        steps: steps.map((s) => "${s.instruction} (${(s.distance / 1000).toStringAsFixed(2)} km)").toList(),
       ),
     );
   }
@@ -129,19 +128,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(this);
+    final appState = Provider.of<AppState>(context);
 
     return Scaffold(
       body: Stack(
+
         children: [
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
               initialCenter: appState.center,
               initialZoom: 15.0,
-              interactionOptions: const InteractionOptions(
-                flags: InteractionFlags.all & ~InteractionFlags.rotate,
-              ),
             ),
             children: [
               TileLayer(
