@@ -90,10 +90,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           height: 40,
                           child: GestureDetector(
                             onTap: () {
-                              // Find the corresponding Station object
                               final station = appState.allStations.firstWhere(
                                 (s) => s.lat == m.point.latitude && s.lng == m.point.longitude,
-                                orElse: () => Station.empty(),
+                                orElse: () => Station(
+                                  id: "unknown",
+                                  nameTw: "未知站點",
+                                  nameEn: "Unknown Station",
+                                  addressTw: "未知地址",
+                                  addressEn: "Unknown Address",
+                                  lat: m.point.latitude,
+                                  lng: m.point.longitude,
+                                ),
                               );
                               _showStationDetails(station);
                             },
