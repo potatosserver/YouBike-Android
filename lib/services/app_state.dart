@@ -15,15 +15,16 @@ class AppState extends ChangeNotifier {
   bool isDarkMode = false;
   bool useLocation = true;
   
-  // --- Loading State (Mirrors web loadingService.js) ---
+  // --- Loading State ---
   bool isLoading = true;
   int loadingProgress = 0;
   String currentNotice = "";
   bool isOffline = false;
+  int countdownRemaining = 60; 
   
   // --- Pinned Stations ---
   Set<String> pinnedStationIds = {};
-
+  
   // --- Location State ---
   LatLng center = const LatLng(22.6273, 120.3014); 
   bool isFollowingUser = false;
@@ -33,29 +34,46 @@ class AppState extends ChangeNotifier {
   List<Station> allStations = [];
   List<Station> searchResults = [];
   List<fm.Marker> stationMarkers = [];
-
+  
   // --- Log System ---
   final List<String> logs = [];
-
+  
   void addLog(String message) {
     final timestamp = DateTime.now().toIso8601String();
     logs.add('[$timestamp] $message');
     if (logs.length > 500) logs.removeAt(0);
     notifyListeners();
   }
-
+  
   AppState() {
     _init();
+    _startGlobalCountdown();
   }
-
+  
+  void _startGlobalCountdown() {
+    Future.delayed(Duration.zero, () async {
+      while (true) {
+        await Future.delayed(const Duration(seconds: 1));
+        countdownRemaining--;
+        if (countdownRemaining <= 0) {
+          countdownRemaining = 60;
+          await refreshStations();
+        }
+        notifyListeners();
+      }
+    });
+  }
+  
   Future<void> _init() async {
+    isLoading = true;
+    loadingProgress = 0;
+    
     addLog("Initializing AppState...");
     try {
       await loadSettings();
-      await Future.wait([
-        initializeLocation(),
-        refreshStations(),
-      ]);
+      _startLoadingSimulation();
+      await initializeLocation();
+      await refreshStations();
     } catch (e) {
       addLog("Critical Init Error: $e");
     } finally {
@@ -65,6 +83,27 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  void _startLoadingSimulation() {
+    Future.delayed(Duration.zero, () async {
+      final notices = currentLang == 'en' 
+        ? ["❌Do not speed or ride in reverse", "❌Do not use your phone while riding", "✔️Remember to adjust the seat"]
+        : ["❌勿超速或逆向騎乘", "❌勿在車輛行駛中使用手機", "✔️記得調整座墊至適宜高度"];
+      
+      int progress = 0;
+      while (isLoading) {
+        if (progress < 85) {
+          progress++;
+          loadingProgress = progress;
+        } else {
+          loadingProgress = 85 + math.Random().nextInt(11);
+        }
+        currentNotice = notices[math.Random().nextInt(notices.length)];
+        notifyListeners();
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+    });
+  }
+  
   Future<void> loadSettings() async {
     addLog("Loading settings...");
     final prefs = await SharedPreferences.getInstance();
@@ -76,7 +115,7 @@ class AppState extends ChangeNotifier {
     pinnedStationIds = pinnedList.toSet();
     notifyListeners();
   }
-
+  
   Future<void> saveSetting(String key, dynamic value) async {
     final prefs = await SharedPreferences.getInstance();
     if (value is String) {
@@ -86,7 +125,7 @@ class AppState extends ChangeNotifier {
     }
     addLog("Setting saved: $key = $value");
   }
-
+  
   Future<bool> requestPermission() async {
     addLog("Requesting location permission...");
     LocationPermission permission = await Geolocator.checkPermission();
@@ -95,7 +134,7 @@ class AppState extends ChangeNotifier {
     }
     return permission == LocationPermission.always || permission == LocationPermission.whileInUse;
   }
-
+  
   Future<Position?> getCurrentPosition() async {
     addLog("Fetching current position...");
     try {
@@ -108,7 +147,7 @@ class AppState extends ChangeNotifier {
       return null;
     }
   }
-
+  
   Future<void> initializeLocation() async {
     addLog("Initializing location services...");
     if (!useLocation) {
@@ -139,7 +178,7 @@ class AppState extends ChangeNotifier {
       _useDefaultLocation();
     }
   }
-
+  
   void _handleLocationUpdate(Position pos) {
     final newCenter = LatLng(pos.latitude, pos.longitude);
     if (isFollowingUser) {
@@ -147,7 +186,7 @@ class AppState extends ChangeNotifier {
       notifyListeners();
     }
   }
-
+  
   void _useDefaultLocation() {
     final regions = {
       'taipei': const LatLng(25.0330, 121.5654),
@@ -159,13 +198,14 @@ class AppState extends ChangeNotifier {
     isFollowingUser = false;
     hasObtainedRealLocation = false;
   }
-
+  
   Future<void> refreshStations() async {
     addLog("Refreshing stations for $currentRegion...");
     try {
       final api = ApiService();
       final baseStations = await api.fetchAllStations();
-      List<String> idsToQuery = baseStations.take(60).map((s) => s.id).toList();
+      
+      List<String> idsToQuery = baseStations.take(10).map((s) => s.id).toList();
       final realtimeData = await api.fetchRealtimeVehicles(idsToQuery);
       
       allStations = baseStations.map((s) {
@@ -175,6 +215,10 @@ class AppState extends ChangeNotifier {
           s.availableElectricBikes = vehicleInfo['available_e'] ?? 0;
           s.emptySpaces = vehicleInfo['empty_spaces'] ?? 0;
           s.totalBikes = s.availableBikes + s.emptySpaces;
+        } else {
+          s.availableBikes = 0;
+          s.availableElectricBikes = 0;
+          s.emptySpaces = 0;
         }
         return s;
       }).toList();
@@ -186,7 +230,7 @@ class AppState extends ChangeNotifier {
       addLog("refreshStations Error: $e");
     }
   }
-
+  
   List<fm.Marker> _generateVisualMarkers(List<Station> stations) {
     final Map<String, int> anchors = {};
     final List<fm.Marker> markers = [];
@@ -208,22 +252,22 @@ class AppState extends ChangeNotifier {
       }
       markers.add(fm.Marker(
         point: LatLng(lat, lng),
-        width: 30,
-        height: 30,
+        width: 24,
+        height: 24,
         child: Container(
           decoration: BoxDecoration(
-          color: const Color(0xFFFFD700),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 2),
-          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+            color: const Color(0xFFFFD700),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
+            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
           ),
-          child: const Center(child: Icon(Icons.directions_bike, color: Colors.white, size: 20)),
+          child: const Center(child: Icon(Icons.directions_bike, color: Colors.white, size: 16)),
         ),
       ));
     }
     return markers;
   }
-
+  
   void searchStations(String query) {
     addLog("Searching for: $query");
     if (query.isEmpty) {
@@ -237,7 +281,7 @@ class AppState extends ChangeNotifier {
     addLog("Search found ${searchResults.length} results.");
     notifyListeners();
   }
-
+  
   List<Station> getSortedStations(List<Station> stations, LatLng userPos) {
     if (stations.isEmpty) return [];
     List<Station> sorted = List.from(stations);
@@ -252,7 +296,7 @@ class AppState extends ChangeNotifier {
     });
     return sorted;
   }
-
+  
   void togglePinStation(String stationId) async {
     if (pinnedStationIds.contains(stationId)) {
       pinnedStationIds.remove(stationId);
@@ -264,35 +308,36 @@ class AppState extends ChangeNotifier {
     addLog("Toggled pin: $stationId");
     notifyListeners();
   }
-
+  
   void toggleFollowing() {
     isFollowingUser = !isFollowingUser;
     addLog("Following user: $isFollowingUser");
     notifyListeners();
   }
-
+  
   void toggleDarkMode() {
     isDarkMode = !isDarkMode;
     saveSetting('isDarkMode', isDarkMode);
     addLog("Dark mode toggle: $isDarkMode");
     notifyListeners();
   }
-
+  
   void toggleLanguage() {
     currentLang = currentLang == 'zh' ? 'en' : 'zh';
     saveSetting('currentLang', currentLang);
     addLog("Language toggle: $currentLang");
     notifyListeners();
   }
-
+  
   void setRegion(String region) {
     currentRegion = region;
     saveSetting('currentRegion', region);
     _useDefaultLocation();
     refreshStations();
     addLog("Region set to: $region");
+    notifyListeners();
   }
-
+  
   String getDistanceLabel(Station s) {
     if (!hasObtainedRealLocation) return "N/A";
     double dist = Geolocator.distanceBetween(

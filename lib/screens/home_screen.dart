@@ -232,15 +232,37 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Positioned(
-            bottom: 100,
+            bottom: 10,
             left: 0,
             right: 0,
             child: Center(
-              child: FloatingActionButton.small(
-                heroTag: 'ref_btn',
-                onPressed: () => appState.refreshStations(),
-                backgroundColor: Colors.white,
-                child: const Icon(Icons.refresh, color: Colors.black87),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFDCACB),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2)),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.refresh, size: 18, color: Colors.black87),
+                    const SizedBox(width: 8),
+                    Text(
+                      appState.currentLang == 'zh' 
+                        ? "${appState.countdownRemaining}秒後更新" 
+                        : "${appState.countdownRemaining} sec update",
+                      style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => appState.refreshStations(),
+                      child: const Icon(Icons.play_arrow, size: 18, color: Colors.black87),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -329,6 +351,9 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             onNavigate: () {
               _showRoutePanel(s);
+            },
+            onShowElectric: () {
+              _showStationDetails(s);
             },
           ),
         );

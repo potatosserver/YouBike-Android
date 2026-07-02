@@ -8,12 +8,14 @@ class StationCard extends StatelessWidget {
   final Station station;
   final VoidCallback onTap;
   final VoidCallback onNavigate;
+  final VoidCallback onShowElectric;
 
   const StationCard({
     super.key,
     required this.station,
     required this.onTap,
     required this.onNavigate,
+    required this.onShowElectric,
   });
 
   @override
@@ -58,6 +60,14 @@ class StationCard extends StatelessWidget {
                 ),
                 Row(
                   children: [
+                    // Electric bikes button - Added to the left of the star as requested
+                    IconButton(
+                      icon: const Icon(Icons.electric_bike, color: Colors.green, size: 22),
+                      onPressed: onShowElectric,
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                    ),
+                    const SizedBox(width: 8),
                     IconButton(
                       icon: Icon(
                         isPinned ? Icons.star : Icons.star_border,
@@ -69,7 +79,7 @@ class StationCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.directions, color: AppColors.primary),
+                      icon: const Icon(Icons.navigation, color: AppColors.primary),
                       onPressed: onNavigate,
                       constraints: const BoxConstraints(),
                       padding: EdgeInsets.zero,
@@ -79,49 +89,37 @@ class StationCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              isEn ? station.addressEn : station.addressTw,
-              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildInfoItem(
-                  isEn ? "Bikes" : "車輛", 
-                  "${station.availableBikes}", 
-                  Icons.directions_bike,
-                ),
-                _buildInfoItem(
-                  isEn ? "Spaces" : "空位", 
-                  "${station.emptySpaces}", 
-                  Icons.place,
-                ),
-                _buildInfoItem(
-                  isEn ? "Dist" : "距離", 
-                  appState.getDistanceLabel(station), 
-                  Icons.straighten,
-                ),
-              ],
-            ),
+            // Strict vertical layout mirroring the web's detailed list
+            _buildTextRow(isEn ? "Distance" : "距離", appState.getDistanceLabel(station)),
+            _buildTextRow(isEn ? "Address" : "地址", isEn ? station.addressEn : station.addressTw),
+            _buildTextRow(isEn ? "YouBike 2.0" : "YouBike 2.0", "${station.availableBikes}"),
+            _buildTextRow(isEn ? "YouBike 2.0E" : "YouBike 2.0E", "${station.availableElectricBikes}"),
+            _buildTextRow(isEn ? "Empty Spaces" : "可停空位數", "${station.emptySpaces}"),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildInfoItem(String label, String value, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: Colors.grey[500]),
-        const SizedBox(width: 4),
-        Text(
-          "$label: $value",
-          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-        ),
-      ],
+  Widget _buildTextRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Text(
+            "$label : ",
+            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 13, color: Colors.black87),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

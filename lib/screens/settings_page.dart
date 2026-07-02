@@ -8,59 +8,60 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final isEn = appState.currentLang == 'en';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("設定"),
+        title: Text(isEn ? "Settings" : "設定"),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const SectionTitle(title: "區域設定"),
+          SectionTitle(title: isEn ? "Region Settings" : "區域設定"),
           DropdownButtonFormField<String>(
             initialValue: appState.currentRegion,
-            decoration: const InputDecoration(
-              labelText: "選擇區域",
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: isEn ? "Select Region" : "選擇區域",
+              border: const OutlineInputBorder(),
             ),
             items: const [
-              DropdownMenuItem(value: 'taipei', child: Text("台北市")),
-              DropdownMenuItem(value: 'newTaipei', child: Text("新北市")),
-              DropdownMenuItem(value: 'taoyuan', child: Text("桃園市")),
-              DropdownMenuItem(value: 'kaohsiung', child: Text("高雄市")),
+              DropdownMenuItem(value: 'taipei', child: Text("台北市 / Taipei")),
+              DropdownMenuItem(value: 'newTaipei', child: Text("新北市 / New Taipei")),
+              DropdownMenuItem(value: 'taoyuan', child: Text("桃園市 / Taoyuan")),
+              DropdownMenuItem(value: 'kaohsiung', child: Text("高雄市 / Kaohsiung")),
             ],
             onChanged: (val) {
               if (val != null) appState.setRegion(val);
             },
           ),
           const SizedBox(height: 24),
-          const SectionTitle(title: "語言設定"),
+          SectionTitle(title: isEn ? "Language Settings" : "語言設定"),
           SwitchListTile(
             title: Text(appState.currentLang == 'zh' ? "中文" : "English"),
-            subtitle: const Text("切換顯示語言"),
+            subtitle: Text(isEn ? "Switch display language" : "切換顯示語言"),
             value: appState.currentLang == 'zh',
             onChanged: (val) {
               appState.toggleLanguage();
             },
           ),
           const SizedBox(height: 24),
-          const SectionTitle(title: "外觀設定"),
+          SectionTitle(title: isEn ? "Appearance Settings" : "外觀設定"),
           SwitchListTile(
-            title: const Text("深色模式"),
-            subtitle: const Text("切換地圖與介面配色"),
+            title: Text(isEn ? "Dark Mode" : "深色模式"),
+            subtitle: Text(isEn ? "Switch map and UI colors" : "切切地圖與介面配色"),
             value: appState.isDarkMode,
             onChanged: (val) {
               appState.toggleDarkMode();
             },
           ),
           const SizedBox(height: 24),
-          const SectionTitle(title: "定位設定"),
+          SectionTitle(title: isEn ? "Location Settings" : "定位設定"),
           SwitchListTile(
-            title: const Text("啟用自動定位"),
-            subtitle: const Text("啟動後地圖將自動跟隨您的位置"),
+            title: Text(isEn ? "Enable Auto-location" : "啟用自動定位"),
+            subtitle: Text(isEn ? "Map will automatically follow your position" : "啟動後地圖將自動跟隨您的位置"),
             value: appState.useLocation,
             onChanged: (val) {
-              // Logic for updating useLocation should be in AppState
+              // Logic handled in AppState
             },
           ),
         ],
