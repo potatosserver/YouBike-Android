@@ -46,19 +46,12 @@ class AppState extends ChangeNotifier {
   Future<void> _init() async {
     addLog("Initializing AppState...");
     try {
-      // 1. 快速載入設定 (必須在最前面)
       await loadSettings();
-      
-      // 2. 啟動定位 (非阻塞 UI)
       initializeLocation(); 
-      
-      // 3. 獲取初始資料 (非阻塞 UI)
       refreshStations();
-      
     } catch (e) {
       addLog("Critical Init Error: $e");
     } finally {
-      // 立即關閉白屏，讓用戶先進入地圖，資料在背景跑
       isLoading = false;
       addLog("Initial UI ready.");
       notifyListeners();
@@ -100,7 +93,7 @@ class AppState extends ChangeNotifier {
     try {
       return await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 5), // 縮短超時時間
+        timeLimit: const Duration(seconds: 5),
       );
     } catch (e) {
       addLog("getCurrentPosition error: $e");
@@ -159,17 +152,16 @@ class AppState extends ChangeNotifier {
     hasObtainedRealLocation = false;
   }
 
-  // --- Station Logic (RESTORED API CALLS) ---
+  // --- Station Logic (RESTORED & CORRECTED) ---
   
   Future<void> refreshStations() async {
     addLog("Refreshing stations for $currentRegion...");
     try {
       final api = ApiService();
-      // 1. 獲取基礎站點
-      final stations = await api.fetchStations(currentRegion, currentLang);
+      // CORRECTED METHOD NAME: fetchAllStations
+      final stations = await api.fetchAllStations();
       allStations = stations;
       
-      // 2. 生成地圖圖釘
       stationMarkers = allStations.map((s) => fm.Marker(
         point: LatLng(s.lat, s.lng),
         width: 40,
@@ -184,21 +176,19 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  void searchStations(String query) async {
+  void searchStations(String query) {
     addLog("Searching for: $query");
     if (query.isEmpty) {
       searchResults = [];
       notifyListeners();
       return;
     }
-    try {
-      final api = ApiService();
-      searchResults = await api.searchStations(query, currentRegion, currentLang);
-      addLog("Search found ${searchResults.length} results.");
-      notifyListeners();
-    } catch (e) {
-      addLog("searchStations Error: $e");
-    }
+    // CLIENT-SIDE SEARCH (since ApiService has no search endpoint)
+    searchResults = allStations.where((s) {
+      return s.nameTw.contains(query) || s.addressTw.contains(query);
+    }).toList();
+    addLog("Search found ${searchResults.length} results.");
+    notifyListeners();
   }
 
   List<Station> getSortedStations(List<Station> stations, LatLng userPos) {

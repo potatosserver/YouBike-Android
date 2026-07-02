@@ -20,9 +20,11 @@ class DebugScreen extends StatelessWidget {
             onPressed: () async {
               final allLogs = appState.logs.join('\n');
               await Clipboard.setData(ClipboardData(text: allLogs));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("日誌已複製到剪貼簿")),
-              );
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("日誌已複製到剪貼簿")),
+                );
+              }
             },
           ),
         ],
