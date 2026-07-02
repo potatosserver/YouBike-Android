@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/station.dart';
+import '../services/api_service.dart';
 
 class AppState extends ChangeNotifier {
   // --- Settings & Preferences ---
@@ -26,7 +27,6 @@ class AppState extends ChangeNotifier {
   // --- Data State ---
   List<Station> allStations = [];
   List<Station> searchResults = [];
-  // Use explicit fm.Marker to avoid name conflicts
   List<fm.Marker> stationMarkers = [];
 
   // --- Log System ---
@@ -46,20 +46,27 @@ class AppState extends ChangeNotifier {
   Future<void> _init() async {
     addLog("Initializing AppState...");
     try {
+      // 1. 快速載入設定 (必須在最前面)
       await loadSettings();
-      await initializeLocation();
-      await refreshStations();
+      
+      // 2. 啟動定位 (非阻塞 UI)
+      initializeLocation(); 
+      
+      // 3. 獲取初始資料 (非阻塞 UI)
+      refreshStations();
+      
     } catch (e) {
       addLog("Critical Init Error: $e");
     } finally {
+      // 立即關閉白屏，讓用戶先進入地圖，資料在背景跑
       isLoading = false;
-      addLog("Initialization complete.");
+      addLog("Initial UI ready.");
       notifyListeners();
     }
   }
 
   Future<void> loadSettings() async {
-    addLog("Loading settings from SharedPreferences...");
+    addLog("Loading settings...");
     final prefs = await SharedPreferences.getInstance();
     currentRegion = prefs.getString('currentRegion') ?? 'kaohsiung';
     currentLang = prefs.getString('currentLang') ?? 'zh';
@@ -67,7 +74,6 @@ class AppState extends ChangeNotifier {
     useLocation = prefs.getBool('useLocation') ?? true;
     final pinnedList = prefs.getStringList('pinnedStations') ?? [];
     pinnedStationIds = pinnedList.toSet();
-    addLog("Settings loaded: Region=$currentRegion, Lang=$currentLang");
     notifyListeners();
   }
 
@@ -94,7 +100,7 @@ class AppState extends ChangeNotifier {
     try {
       return await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
+        timeLimit: const Duration(seconds: 5), // 縮短超時時間
       );
     } catch (e) {
       addLog("getCurrentPosition error: $e");
@@ -111,15 +117,19 @@ class AppState extends ChangeNotifier {
     try {
       bool hasPermission = await requestPermission();
       if (!hasPermission) {
-        addLog("Location permission denied. Using default region.");
+        addLog("Location permission denied.");
         _useDefaultLocation();
         return;
       }
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 5),
+      );
       center = LatLng(position.latitude, position.longitude);
       hasObtainedRealLocation = true;
       isFollowingUser = true;
-      addLog("Obtained real location: ${center.latitude}, ${center.longitude}");
+      addLog("Location fixed: ${center.latitude}, ${center.longitude}");
+      
       Geolocator.getPositionStream(
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 50),
       ).listen((Position pos) => _handleLocationUpdate(pos));
@@ -135,7 +145,6 @@ class AppState extends ChangeNotifier {
       center = newCenter;
       notifyListeners();
     }
-    addLog("Real-time location update: ${newCenter.latitude}, ${newCenter.longitude}");
   }
 
   void _useDefaultLocation() {
@@ -148,22 +157,50 @@ class AppState extends ChangeNotifier {
     center = regions[currentRegion] ?? const LatLng(22.6273, 120.3014);
     isFollowingUser = false;
     hasObtainedRealLocation = false;
-    addLog("Using default region: $currentRegion");
   }
 
-  // --- Station Logic ---
+  // --- Station Logic (RESTORED API CALLS) ---
   
   Future<void> refreshStations() async {
-    addLog("Refreshing stations for region: $currentRegion...");
-    notifyListeners();
+    addLog("Refreshing stations for $currentRegion...");
+    try {
+      final api = ApiService();
+      // 1. 獲取基礎站點
+      final stations = await api.fetchStations(currentRegion, currentLang);
+      allStations = stations;
+      
+      // 2. 生成地圖圖釘
+      stationMarkers = allStations.map((s) => fm.Marker(
+        point: LatLng(s.lat, s.lng),
+        width: 40,
+        height: 40,
+        child: const Icon(Icons.location_on, color: Colors.red),
+      )).toList();
+      
+      addLog("Successfully loaded ${allStations.length} stations.");
+      notifyListeners();
+    } catch (e) {
+      addLog("refreshStations Error: $e");
+    }
   }
 
-  void searchStations(String query) {
+  void searchStations(String query) async {
     addLog("Searching for: $query");
-    notifyListeners();
+    if (query.isEmpty) {
+      searchResults = [];
+      notifyListeners();
+      return;
+    }
+    try {
+      final api = ApiService();
+      searchResults = await api.searchStations(query, currentRegion, currentLang);
+      addLog("Search found ${searchResults.length} results.");
+      notifyListeners();
+    } catch (e) {
+      addLog("searchStations Error: $e");
+    }
   }
 
-  // Composite Sorting: Pinned first -> then Distance
   List<Station> getSortedStations(List<Station> stations, LatLng userPos) {
     if (stations.isEmpty) return [];
     List<Station> sorted = List.from(stations);
@@ -187,7 +224,7 @@ class AppState extends ChangeNotifier {
     }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('pinnedStations', pinnedStationIds.toList());
-    addLog("Toggled pin for station: $stationId");
+    addLog("Toggled pin: $stationId");
     notifyListeners();
   }
 

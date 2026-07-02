@@ -13,44 +13,33 @@ class DebugScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("System Debug Logs"),
-        backgroundColor: Colors.redAccent,
-      ),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.grey[200],
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Log Entries: ${appState.logs.length}"),
-                TextButton(
-                  onPressed: () {
-                    // Log clearing logic can be added here
-                  },
-                  child: const Text("Clear Logs"),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(8),
-              itemCount: appState.logs.length,
-              itemBuilder: (context, index) {
-                return Text(
-                  appState.logs[index],
-                  style: const TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 12,
-                    color: Colors.black87,
-                  ),
-                );
-              },
-            ),
+        title: const Text("系統偵錯日誌"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.copy),
+            onPressed: () async {
+              final allLogs = appState.logs.join('\n');
+              await Clipboard.setData(ClipboardData(text: allLogs));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("日誌已複製到剪貼簿")),
+              );
+            },
           ),
         ],
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: appState.logs.length,
+        itemBuilder: (context, index) {
+          final log = appState.logs[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              log,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+          );
+        },
       ),
     );
   }
