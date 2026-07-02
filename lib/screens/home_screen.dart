@@ -3,7 +3,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
-import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import '../services/app_state.dart';
 import '../widgets/pulse_marker.dart';
 import '../widgets/station_card.dart';
@@ -59,25 +58,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.youbike.finder',
                     ),
-                    MarkerClusterLayer(
-                      markers: appState.stationMarkers,
-                      clusterBuilder: (context, count, index) => Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.blue,
-                          border: Border.all(color: Colors.white, width: 2),
-                          boxShadow: const [BoxShadow(blurRadius: 4, color: Colors.black26)],
-                        ),
-                        child: Center(
-                          child: Text(
-                            '$count',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ),
                     MarkerLayer(
                       markers: [
+                        ...appState.stationMarkers,
                         Marker(
                           point: appState.center,
                           width: 40,
