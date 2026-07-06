@@ -1,58 +1,92 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:youbike_android/services/app_state.dart';
 import 'package:youbike_android/services/language_service.dart';
-import 'package:youbike_android/widgets/app_theme.dart';
+import 'package:youbike_android/services/theme_provider.dart';
 import 'package:youbike_android/screens/home_screen.dart';
 import 'package:youbike_android/screens/settings_screen.dart';
+import 'package:youbike_android/widgets/loading_overlay.dart';
 import 'package:youbike_android/l10n/app_localizations.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize instances but DO NOT await init() here.
+  // We let MainWrapper handle init() to ensure LoadingOverlay is visible.
+  final appState = AppState();
+  final langService = LanguageService();
+  
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AppState()..init()),
-        ChangeNotifierProvider(create: (_) => LanguageService()),
+        ChangeNotifierProvider<AppState>.value(value: appState),
+        ChangeNotifierProvider<LanguageService>.value(value: langService),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: const YouBikeApp(),
+      child: const MyApp(),
     ),
   );
 }
 
-class YouBikeApp extends StatelessWidget {
-  const YouBikeApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return Consumer<LanguageService>(
-          builder: (context, languageService, child) {
+          builder: (context, langService, child) {
             return MaterialApp(
-              title: 'YouBike',
+              title: 'YouBike Android',
+              debugShowCheckedModeBanner: false,
+              themeMode: themeProvider.themeMode,
+              
               theme: ThemeData(
                 useMaterial3: true,
-                colorSchemeSeed: Colors.blue,
                 brightness: Brightness.light,
+                scaffoldBackgroundColor: const Color(0xFFF4F4F4),
+                colorScheme: ColorScheme.light(
+                  primary: const Color(0xFF007BFF),
+                  onPrimary: Colors.white,
+                  surface: Colors.white,
+                  onSurface: const Color(0xFF333333),
+                ),
+                appBarTheme: const AppBarTheme(
+                  backgroundColor: Color(0xFF007BFF),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                ),
               ),
+              
               darkTheme: ThemeData(
                 useMaterial3: true,
-                colorSchemeSeed: Colors.blue,
                 brightness: Brightness.dark,
+                scaffoldBackgroundColor: const Color(0xFF333333),
+                colorScheme: ColorScheme.dark(
+                  primary: const Color(0xFF90CAF9),
+                  onPrimary: const Color(0xFF121212),
+                  surface: const Color(0xFF222222),
+                  onSurface: Colors.white,
+                ),
+                appBarTheme: const AppBarTheme(
+                  backgroundColor: Color(0xFF222222),
+                  foregroundColor: Color(0xFF90CAF9),
+                  elevation: 0,
+                ),
               ),
-              themeMode: themeProvider.themeMode,
-              locale: languageService.appLocale,
-              localizationsDelegates: const [
+              
+              locale: langService.appLocale,
+              supportedLocales: AppLocalizations.supportedLocales,
+              localizationsDelegates: [
                 AppLocalizations.delegate,
                 GlobalMaterialLocalizations.delegate,
                 GlobalWidgetsLocalizations.delegate,
                 GlobalCupertinoLocalizations.delegate,
               ],
-              supportedLocales: AppLocalizations.supportedLocales,
-              home: const HomeScreen(),
+              
+              home: const MainWrapper(),
               routes: {
                 '/settings': (context) => const SettingsScreen(),
               },
@@ -60,6 +94,34 @@ class YouBikeApp extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class MainWrapper extends StatefulWidget {
+  const MainWrapper({super.key});
+
+  @override
+  State<MainWrapper> createState() => _MainWrapperState();
+}
+
+class _MainWrapperState extends State<MainWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<AppState>(context, listen: false).init();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = Provider.of<AppState>(context);
+    return Stack(
+      children: [
+        const HomeScreen(),
+        if (appState.isLoading) const LoadingOverlay(),
+      ],
     );
   }
 }

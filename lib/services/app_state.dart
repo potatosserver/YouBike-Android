@@ -41,12 +41,14 @@ class AppState extends ChangeNotifier {
   LatLng? lastKnownLocation;
   String currentLang = 'zh_TW';
   bool isDarkMode = false;
+  bool useLocation = true; // Added: alignment with web's useLocation
   int countdownRemaining = 60;
   String selectedRegion = 'kaohsiung';
   Set<String> pinnedStationIds = {};
   StreamSubscription<Position>? _locationSubscription;
   SharedPreferences? _prefs;
 
+  Map<String, Map<String, dynamic>> get regions => _regions;
   final Map<String, Map<String, dynamic>> _regions = {
     "taipei": {"name": "台北市", "lat": 25.047924, "lng": 121.517081},
     "newTaipei": {"name": "新北市", "lat": 25.0215339197085, "lng": 121.4568090197085},
@@ -118,6 +120,7 @@ class AppState extends ChangeNotifier {
     isDarkMode = _prefs?.getBool('isDarkMode') ?? false;
     currentLang = _prefs?.getString('currentLang') ?? 'zh_TW';
     selectedRegion = _prefs?.getString('selectedRegion') ?? 'kaohsiung';
+    useLocation = _prefs?.getBool('useLocation') ?? true;
     final pinnedList = _prefs?.getStringList('pinnedStations') ?? [];
     pinnedStationIds = pinnedList.map((id) => id.trim()).toSet();
     
@@ -151,7 +154,16 @@ class AppState extends ChangeNotifier {
     try {
       currentNotice = "正在定位您的位置...";
       notifyListeners();
-      await _initializeLocation();
+      
+      if (useLocation) {
+        await _initializeLocation();
+      } else {
+        debugPrint("[INIT] ⚠️ 禁用定位 -> 使用區域預設中心");
+        final region = _regions[selectedRegion]!;
+        center = LatLng(region['lat'] as double, region['lng'] as double);
+        lastKnownLocation = center;
+        initialSnapPoint = center;
+      }
       
       currentNotice = "正在同步站點數據...";
       notifyListeners();
@@ -329,6 +341,12 @@ class AppState extends ChangeNotifier {
   void setLanguage(String lang) {
     currentLang = lang;
     _prefs?.setString('currentLang', lang);
+    notifyListeners();
+  }
+
+  void setUseLocation(bool value) {
+    useLocation = value;
+    _prefs?.setBool('useLocation', value);
     notifyListeners();
   }
 

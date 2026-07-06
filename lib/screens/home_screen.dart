@@ -109,7 +109,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               children: [
-                TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.youbike.android'),
+                TileLayer(
+                  urlTemplate: Theme.of(context).brightness == Brightness.dark 
+                      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png' 
+                      : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', 
+                  userAgentPackageName: 'com.youbike.android',
+                ),
                 MarkerLayer(
                   markers: appState.allStations.map((s) => Marker(
                     point: LatLng(s.lat, s.lng),
@@ -136,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: const BoxDecoration(boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)]),
               child: TextField(
                 decoration: InputDecoration(
-                  filled: true, fillColor: Colors.white, hintText: "搜尋場站...",
+                  filled: true, fillColor: Theme.of(context).colorScheme.surface, hintText: "搜尋場站...",
                   prefixIcon: const Icon(Icons.search, color: Colors.grey),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(25), borderSide: BorderSide.none),
                 ),
@@ -149,8 +154,8 @@ class _HomeScreenState extends State<HomeScreen> {
             child: FloatingActionButton.small(
               heroTag: 'loc_btn',
               onPressed: _handleLocationPress,
-              backgroundColor: Colors.white,
-              child: Icon(Icons.my_location, color: appState.isFollowingUser ? const Color(0xFF007BFF) : Colors.black87),
+              backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF222222) : Theme.of(context).scaffoldBackgroundColor,
+              child: Icon(Icons.my_location, color: appState.isFollowingUser ? const Color(0xFF007BFF) : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF90CAF9) : Colors.black87)),
             ),
           ),
           Positioned(
@@ -158,8 +163,8 @@ class _HomeScreenState extends State<HomeScreen> {
             child: FloatingActionButton.small(
               heroTag: 'settings_btn',
               onPressed: () => Navigator.pushNamed(context, '/settings'),
-              backgroundColor: const Color(0xFFFDCACB),
-              child: const Icon(Icons.settings, color: Color(0xFF333333)),
+              backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF222222) : const Color(0xFFFDCACB),
+              child: Icon(Icons.settings, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF90CAF9) : const Color(0xFF333333)),
             ),
           ),
           Positioned(
@@ -167,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Container(
               height: screenHeight * _panelHeight,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 15, offset: const Offset(0, -5))],
               ),
@@ -196,21 +201,21 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFDCACB),
+                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF4A4A4A) : const Color(0xFFFDCACB),
                   borderRadius: BorderRadius.circular(50),
                   boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text("${appState.countdownRemaining} 秒後更新", style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text("${appState.countdownRemaining} 秒後更新", style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87, fontWeight: FontWeight.bold, fontSize: 13)),
                     const SizedBox(width: 8),
                     GestureDetector(
                       onTap: () {
                       appState.countdownRemaining = 60;
                       appState.refreshStations();
                     },
-                      child: const Icon(Icons.play_arrow, size: 20, color: Colors.black87),
+                      child: Icon(Icons.play_arrow, size: 20, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87),
                     ),
                   ],
                 ),

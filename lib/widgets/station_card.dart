@@ -21,9 +21,9 @@ class StationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final theme = Theme.of(context);
     final isPinned = appState.pinnedStationIds.contains(station.id);
     final hasElectric = station.availableElectricBikes > 0;
-
     final double distValue = station.distance;
 
     return GestureDetector(
@@ -32,7 +32,7 @@ class StationCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFFDF5E6),
+          color: theme.brightness == Brightness.dark ? const Color(0xFF444444) : const Color(0xFFFDF5E6),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -51,10 +51,10 @@ class StationCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     appState.currentLang == 'en' ? station.nameEn : station.nameTw,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF4A90E2),
+                      color: theme.brightness == Brightness.dark ? const Color(0xFF90CAF9) : const Color(0xFF4A90E2),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -72,14 +72,18 @@ class StationCard extends StatelessWidget {
                       onTap: () => appState.togglePinStation(station.id),
                       child: Icon(
                         isPinned ? Icons.star : Icons.star_border,
-                        color: isPinned ? Colors.amber : Colors.grey[600],
+                        color: isPinned ? Colors.amber : (theme.brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[600]),
                         size: 22,
                       ),
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: onNavigate,
-                      child: const Icon(Icons.navigation, color: Color(0xFF4A90E2), size: 22),
+                      child: Icon(
+                        Icons.navigation, 
+                        color: theme.brightness == Brightness.dark ? const Color(0xFF90CAF9) : const Color(0xFF4A90E2), 
+                        size: 22
+                      ),
                     ),
                   ],
                 ),
@@ -88,27 +92,27 @@ class StationCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               "${L10n.t(context, 'distance')} ${appState.getDistanceLabel(distValue)}",
-              style: const TextStyle(fontSize: 15, color: Colors.black87),
+              style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
             const SizedBox(height: 4),
             Text(
               "地址: ${appState.currentLang == 'en' ? station.addressEn : station.addressTw}",
-              style: const TextStyle(fontSize: 15, color: Colors.black87),
+              style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
             const SizedBox(height: 4),
             Text(
               "YouBike 2.0: ${station.availableBikes}",
-              style: const TextStyle(fontSize: 15, color: Colors.black87),
+              style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
             const SizedBox(height: 4),
             Text(
               "YouBike 2.0E: ${station.availableElectricBikes}",
-              style: const TextStyle(fontSize: 15, color: Colors.black87),
+              style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
             const SizedBox(height: 4),
             Text(
               "可停空位數: ${station.emptySpaces}",
-              style: const TextStyle(fontSize: 15, color: Colors.black87),
+              style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
           ],
         ),

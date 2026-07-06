@@ -16,7 +16,7 @@ void main() {
           ChangeNotifierProvider(create: (_) => LanguageService()),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ],
-        child: const YouBikeApp(),
+        child: const MyApp(),
       ),
     );
 
