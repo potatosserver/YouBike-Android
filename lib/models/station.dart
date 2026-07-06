@@ -15,8 +15,7 @@ class Station {
   int totalBikes = 0; 
 
   // Distance data (calculated dynamically)
-  String distance = "0";
-  String distanceUnit = "m";
+  double distance = 0.0;
   
   Station({
     required this.id,

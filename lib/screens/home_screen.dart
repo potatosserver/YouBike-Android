@@ -21,38 +21,39 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final MapController _mapController = MapController();
   double _panelHeight = 0.15;
+  LatLng? _lastSyncedCenter; 
 
   void _handleLocationPress() async {
+    print("[UI] 📍 定位按鈕被按下");
     final appState = Provider.of<AppState>(context, listen: false);
     await appState.requestPermission();
+    final pos = await appState.getCurrentPosition();
     if (appState.isFollowingUser) {
       appState.toggleFollowing();
     } else {
       appState.toggleFollowing();
-      LatLng? targetPos = appState.lastKnownLocation;
-      if (targetPos == null) {
-        final pos = await appState.getCurrentPosition();
-        if (pos != null) {
-          targetPos = LatLng(pos.latitude, pos.longitude);
-        }
-      }
-      if (targetPos != null) {
-        _mapController.move(targetPos, 18.0);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("定位權限被拒絕")),
-        );
-      }
+      LatLng targetPos = pos != null 
+          ? LatLng(pos.latitude, pos.longitude) 
+          : appState.getEffectiveLocation();
+      appState.lastKnownLocation = targetPos;
+      appState.center = targetPos;
+      _mapController.move(targetPos, 18.0);
     }
   }
 
   void _showRoutePanel(Station station) async {
     final appState = Provider.of<AppState>(context, listen: false);
     final routeService = RouteService();
-    LatLng startPoint = appState.lastKnownLocation ?? appState.center;
+    LatLng startPoint;
+    final pos = await appState.getCurrentPosition();
+    if (pos != null) {
+      startPoint = LatLng(pos.latitude, pos.longitude);
+    } else {
+      startPoint = appState.getEffectiveLocation();
+    }
     if (appState.lastKnownLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("使用區域中心進行導航")),
+        const SnackBar(content: Text("使用預設位置進行導航")),
       );
     }
     final steps = await routeService.getRoute(startPoint, LatLng(station.lat, station.lng), appState.currentLang);
@@ -82,6 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
+          // 1. 底層：地圖
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(initialCenter: appState.center, initialZoom: 18.0),
@@ -108,6 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
+          // 2. 搜索欄
           Positioned(
             top: 50, left: 20, right: 20,
             child: Container(
@@ -122,6 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          // 3. 定位按鈕
           Positioned(
             top: 110, left: 20,
             child: FloatingActionButton.small(
@@ -131,6 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Icon(Icons.my_location, color: appState.isFollowingUser ? const Color(0xFF007BFF) : Colors.black87),
             ),
           ),
+          // 4. 設置按鈕
           Positioned(
             top: 110, right: 20,
             child: FloatingActionButton.small(
@@ -140,26 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Icon(Icons.settings, color: Color(0xFF333333)),
             ),
           ),
-          Positioned(
-            bottom: 10, left: 0, right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(color: const Color(0xFFFDCACB), borderRadius: BorderRadius.circular(20), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)]),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text("${appState.countdownRemaining} 秒後更新", style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500)),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () { appState.countdownRemaining = 60; appState.refreshStations(); },
-                      child: const Icon(Icons.play_arrow, size: 18, color: Colors.black87),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          // 5. 底部站點面板 (高度可調)
           Positioned(
             bottom: 0, left: 0, right: 0,
             child: Container(
@@ -196,6 +182,38 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          // 6. 【修復】更新按鈕：移到最上層，絕對不會被遮擋
+          Positioned(
+            bottom: 30, // 固定在底部 30px
+            left: 0, right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFDCACB),
+                  borderRadius: BorderRadius.circular(50), // 膠囊造型
+                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: const Offset(0, 4))],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("${appState.countdownRemaining} 秒後更新", 
+                         style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                      print("[UI] 🔄 更新按鈕被按下");
+                      appState.countdownRemaining = 60;
+                      appState.refreshStations();
+                    },
+                      child: const Icon(Icons.play_arrow, size: 20, color: Colors.black87),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // 7. 最頂層遮罩
           if (appState.isLoading) const LoadingOverlay(),
         ],
       ),

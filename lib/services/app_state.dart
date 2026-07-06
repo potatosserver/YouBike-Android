@@ -17,27 +17,20 @@ class _VisualAnchor {
 
 class AppState extends ChangeNotifier {
   LatLng center = const LatLng(22.631442, 120.301890);
-  
-  // 【關鍵修復】區分 數據緩存 與 UI 顯示列表
-  List<Station> _fullStationList = []; // 存儲 9300+ 站點，絕不參與渲染
-  List<Station> allStations = [];     // 僅存儲篩選後的 10-50 個站點，用於渲染
-  
+  List<Station> _fullStationList = []; 
+  List<Station> allStations = [];     
   Station? selectedStation;
-  
   bool _isLoading = true;
   bool _isInitialLoadComplete = false;
-  
   bool get isLoading => _isLoading;
   set isLoading(bool value) {
     if (_isInitialLoadComplete && value == true) return;
     _isLoading = value;
     notifyListeners();
   }
-
   int loadingProgress = 0;
   String currentNotice = "正在啟動...";
   List<String> logs = [];
-  
   bool isFollowingUser = false;
   bool hasObtainedRealLocation = false;
   LatLng? lastKnownLocation;
@@ -46,8 +39,8 @@ class AppState extends ChangeNotifier {
   int countdownRemaining = 60;
   String selectedRegion = 'kaohsiung';
   Set<String> pinnedStationIds = {};
+  StreamSubscription<Position>? _locationSubscription;
   SharedPreferences? _prefs;
-
   final List<_VisualAnchor> _anchors = [];
 
   final Map<String, Map<String, dynamic>> _regions = {
@@ -77,39 +70,39 @@ class AppState extends ChangeNotifier {
     return earthRadius * c;
   }
 
-  List<Marker> get stationMarkers {
-    _anchors.clear();
-    // 現在 allStations 只有 10-50 個，渲染壓力極低
-    return allStations.map((s) {
-      final visualPos = _getVisualPosition(s.lat, s.lng);
-      return Marker(
-        point: visualPos,
-        width: 30,
-        height: 30,
-        child: Icon(
-          Icons.location_on,
-          color: pinnedStationIds.contains(s.id.trim()) ? Colors.amber : Colors.blue,
-          size: 30,
-        ),
-      );
-    }).toList();
+  LatLng getEffectiveLocation() {
+    if (lastKnownLocation != null) return lastKnownLocation!;
+    final region = _regions[selectedRegion]!;
+    return LatLng(region['lat'] as double, region['lng'] as double);
   }
 
-  LatLng _getVisualPosition(double lat, double lng) {
-    const double threshold = 0.00009;
-    for (var anchor in _anchors) {
-      final dLat = lat - anchor.lat;
-      final dLon = lng - anchor.lon;
-      final distSq = (dLat * dLat) + (dLon * dLon);
-      if (distSq < (threshold * threshold)) {
-        anchor.count++;
-        final angle = anchor.count * 2.399;
-        final radius = 0.00010 + (anchor.count * 0.00002);
-        return LatLng(anchor.lat + (radius * math.cos(angle)), anchor.lon + (radius * math.sin(angle)));
+    void startTracking() {
+    if (_locationSubscription != null) return;
+    stopTracking();
+    _locationSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+      ),
+    ).listen((Position position) {
+      lastKnownLocation = LatLng(position.latitude, position.longitude);
+      center = lastKnownLocation!;
+      
+      if (isFollowingUser) {
+        notifyListeners();
       }
-    }
-    _anchors.add(_VisualAnchor(lat, lng));
-    return LatLng(lat, lng);
+      
+      for (var s in allStations) {
+        final d = _calculateDistance(center.latitude, center.longitude, s.lat, s.lng);
+        s.distance = d;
+      }
+      notifyListeners();
+    });
+  }
+
+  void stopTracking() {
+    _locationSubscription?.cancel();
+    _locationSubscription = null;
   }
 
   Future<void> init() async {
@@ -119,7 +112,6 @@ class AppState extends ChangeNotifier {
     selectedRegion = _prefs?.getString('selectedRegion') ?? 'kaohsiung';
     final pinnedList = _prefs?.getStringList('pinnedStations') ?? [];
     pinnedStationIds = pinnedList.map((id) => id.trim()).toSet();
-    
     final cachedLat = _prefs?.getDouble('last_lat');
     final cachedLng = _prefs?.getDouble('last_lng');
     if (cachedLat != null && cachedLng != null) {
@@ -137,11 +129,14 @@ class AppState extends ChangeNotifier {
     isLoading = true;
     _simulateLoadingProgress();
     _simulateRandomNotices();
-    
     try {
-      await _initializeCoreLogic().timeout(const Duration(seconds: 20));
+      await fetchBaseData();
+      await Future.wait([
+        _initializeLocation(),
+        refreshStations(isInitial: true),
+      ]);
     } catch (e) {
-      addLog("初始化超時或失敗: $e");
+      addLog("初始化失敗: $e");
     } finally {
       isLoading = false;
       _isInitialLoadComplete = true;
@@ -151,44 +146,86 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> _initializeCoreLogic() async {
-    try {
-      await fetchBaseData();
-    } catch (e) {
-      addLog("警告：基礎數據獲取失敗");
-    }
-    
+  Future<void> _initializeLocation() async {
+    addLog("[LOC] 開始初始化位置...");
     try {
       final pos = await getCurrentPosition();
       if (pos != null) {
+        addLog("[LOC] 成功獲取位置: ${pos.latitude}, ${pos.longitude}");
         lastKnownLocation = LatLng(pos.latitude, pos.longitude);
         center = lastKnownLocation!;
         _prefs?.setDouble('last_lat', lastKnownLocation!.latitude);
         _prefs?.setDouble('last_lng', lastKnownLocation!.longitude);
         hasObtainedRealLocation = true;
       } else {
+        addLog("[LOC] 獲取位置返回 null，使用預設位置");
         useDefaultLocation();
       }
     } catch (e) {
+      addLog("[LOC] 獲取位置發生異常: $e");
       useDefaultLocation();
-    }
-    
-    try {
-      await refreshStations(isInitial: false);
-    } catch (e) {
-      addLog("警告：即時數據刷新失敗");
     }
   }
 
   Future<void> fetchBaseData() async {
     try {
       final api = ApiService();
-      // 【關鍵修復】存入隱藏緩存，不直接更新 UI 列表
       _fullStationList = await api.fetchAllStations();
-      // 不要在這裡調用 notifyListeners()，防止 9000 個站點觸發地圖重繪
     } catch (e) {
       addLog("基礎數據獲取失敗: $e");
-      rethrow;
+    }
+  }
+
+  Future<void> refreshStations({bool isInitial = false}) async {
+    final sw = Stopwatch()..start();
+    print("[API] 🌐 開始刷新站點數據...");
+    try {
+      final api = ApiService();
+      if (_fullStationList.isEmpty) {
+        _fullStationList = await api.fetchAllStations();
+      }
+      
+      // 嘗試獲取最新位置
+      final pos = await getCurrentPosition();
+      final LatLng referencePoint = pos != null ? LatLng(pos.latitude, pos.longitude) : getEffectiveLocation();
+      
+      if (pos != null) {
+        lastKnownLocation = referencePoint;
+        hasObtainedRealLocation = true;
+      }
+      
+      final sorted = List<Station>.from(_fullStationList);
+      sorted.sort((a, b) {
+        final distA = _calculateDistance(referencePoint.latitude, referencePoint.longitude, a.lat, a.lng);
+        final distB = _calculateDistance(referencePoint.latitude, referencePoint.longitude, b.lat, b.lng);
+        return distA.compareTo(distB);
+      });
+      
+      allStations = [...sorted.where((s) => pinnedStationIds.contains(s.id.trim())), ...sorted.where((s) => !pinnedStationIds.contains(s.id.trim()))].take(10).toList();
+      
+      for (var s in allStations) {
+        final d = _calculateDistance(referencePoint.latitude, referencePoint.longitude, s.lat, s.lng);
+        s.distance = d;
+      }
+      
+      final vehicleData = await api.fetchRealtimeVehicles(allStations.map((s) => s.id).toList());
+      for (var s in allStations) {
+        if (vehicleData.containsKey(s.id)) {
+          final data = vehicleData[s.id] as Map<String, dynamic>;
+          s.availableBikes = data['available_2_0'] ?? 0;
+          s.availableElectricBikes = data['available_e'] ?? 0;
+          s.emptySpaces = data['empty_spaces'] ?? 0;
+        }
+      }
+    } catch (e) {
+      addLog("刷新出錯: $e");
+    } finally {
+      print("[API] ✅ 站點數據更新完成. 花費時間: ${sw.elapsedMilliseconds}ms");
+      if (!isInitial) {
+        isLoading = false;
+        countdownRemaining = 60;
+        notifyListeners();
+      }
     }
   }
 
@@ -209,37 +246,13 @@ class AppState extends ChangeNotifier {
 
   Future<void> _simulateRandomNotices() async {
     final notices = currentLang.startsWith('en') 
-      ? [
-          "❌Do not speed or ride in reverse",
-          "❌Do not change lanes arbitrarily on sidewalks",
-          "❌Do not use your phone while riding",
-          "❌Avoid harsh braking while riding",
-          "✔️Remember to adjust the seat to a proper height",
-          "✔️Ensure that both front and rear lights are working",
-          "✔️Remember to get bicycle accident insurance",
-          "✔️Take your belongings from the basket"
-        ]
-      : [
-          "❌勿超速或逆向騎乘",
-          "❌勿隨意變換車道在行人道上騎乘",
-          "❌勿在車輛行駛中使用手機",
-          "❌騎乘中勿緊急煞車",
-          "✔️記得調整座墊至適宜高度",
-          "✔️確認前後車燈功能正常",
-          "✔️記得投保公共自行車傷害險",
-          "✔️記得帶走置物籃內的隨身物品"
-        ];
+      ? ["❌Do not speed", "❌Do not use phone", "✔️Check lights"]
+      : ["❌勿超速", "❌勿使用手機", "✔️確認車燈"];
     while (isLoading) {
       currentNotice = notices[math.Random().nextInt(notices.length)];
       notifyListeners();
       await Future.delayed(const Duration(seconds: 2));
     }
-  }
-
-  void addLog(String msg) {
-    logs.add("[${DateTime.now().toString().split('.').first}] $msg");
-    if (logs.length > 100) logs.removeAt(0);
-    notifyListeners();
   }
 
   void setRegion(String regionId) {
@@ -249,11 +262,6 @@ class AppState extends ChangeNotifier {
     center = LatLng(region['lat'] as double, region['lng'] as double);
     _prefs?.setString('selectedRegion', regionId);
     addLog("切換區域至: ${region['name']}");
-    notifyListeners();
-  }
-
-  void setSelectedStation(Station s) {
-    selectedStation = s;
     notifyListeners();
   }
 
@@ -271,6 +279,11 @@ class AppState extends ChangeNotifier {
 
   void toggleFollowing() {
     isFollowingUser = !isFollowingUser;
+    if (isFollowingUser) {
+      startTracking();
+    } else {
+      stopTracking();
+    }
     notifyListeners();
   }
 
@@ -287,11 +300,13 @@ class AppState extends ChangeNotifier {
 
   String getDistanceLabel(double distance) {
     if (distance < 100) return "${distance.toStringAsFixed(0)}m";
-    if (distance < 1000) return "${(distance / 100).toStringAsFixed(1)}km";
+    if (distance < 1000) return "${(distance / 1000).toStringAsFixed(1)}km";
     return "${(distance / 1000).toStringAsFixed(2)}km";
   }
 
   Future<Position?> getCurrentPosition() async {
+    final sw = Stopwatch()..start();
+    print("[LOC] 📡 發送定位請求中...");
     try {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -299,11 +314,13 @@ class AppState extends ChangeNotifier {
         if (permission == LocationPermission.denied) return null;
       }
       if (permission == LocationPermission.deniedForever) return null;
-
-      return await Geolocator.getCurrentPosition(
+      
+      // 增加超時時間到 20s，防止模擬器冷啟動 GPS 過慢導致返回 null
+          print("[LOC] ✅ 定位成功! 花費時間: ${sw.elapsedMilliseconds}ms");
+    return await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.low,
-        timeLimit: const Duration(seconds: 10),
-      ).timeout(const Duration(seconds: 11)); 
+        timeLimit: const Duration(seconds: 5),
+      ).timeout(const Duration(seconds: 6)); 
     } catch (e) {
       return null;
     }
@@ -319,56 +336,10 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> requestPermission() async {
-    await Geolocator.requestPermission();
-  }
-
-  Future<void> refreshStations({bool isInitial = false}) async {
-    isLoading = true;
-    try {
-      final api = ApiService();
-      if (_fullStationList.isEmpty) {
-        _fullStationList = await api.fetchAllStations();
-      }
-      
-      final pos = await getCurrentPosition();
-      final LatLng referencePoint = pos != null 
-          ? LatLng(pos.latitude, pos.longitude) 
-          : center;
-          
-      if (pos != null) {
-        lastKnownLocation = referencePoint;
-        hasObtainedRealLocation = true;
-      }
-      
-      // 排序邏輯：對全量數據進行計算，但結果只取 10 個
-      final sorted = List<Station>.from(_fullStationList);
-      sorted.sort((a, b) {
-        final distA = _calculateDistance(referencePoint.latitude, referencePoint.longitude, a.lat, a.lng);
-        final distB = _calculateDistance(referencePoint.latitude, referencePoint.longitude, b.lat, b.lng);
-        return distA.compareTo(distB);
-      });
-      
-      final pinned = sorted.where((s) => pinnedStationIds.contains(s.id.trim())).toList();
-      final unpinned = sorted.where((s) => !pinnedStationIds.contains(s.id.trim())).toList();
-      
-      // 【關鍵修復】只將極小量數據賦值給 allStations，保證地圖渲染絕對流暢
-      allStations = [...pinned, ...unpinned].take(10).toList();
-      
-      final vehicleData = await api.fetchRealtimeVehicles(allStations.map((s) => s.id).toList());
-      for (var s in allStations) {
-        if (vehicleData.containsKey(s.id)) {
-          final data = vehicleData[s.id] as Map<String, dynamic>;
-          s.availableBikes = data['available_2_0'] ?? 0;
-          s.availableElectricBikes = data['available_e'] ?? 0;
-          s.emptySpaces = data['empty_spaces'] ?? 0;
-        }
-      }
-    } catch (e) {
-      addLog("刷新出錯: $e");
-    } finally {
-      isLoading = false;
-      countdownRemaining = 60;
-      notifyListeners();
+    print("[LOC] 🛡️ 請求定位權限...");
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      await Geolocator.requestPermission();
     }
   }
 
@@ -390,25 +361,33 @@ class AppState extends ChangeNotifier {
       if (_fullStationList.isEmpty) {
         _fullStationList = await api.fetchAllStations();
       }
-      
       final filtered = _fullStationList.where((s) => 
         s.nameTw.contains(query) || 
         s.addressTw.contains(query) || 
         s.nameEn.toLowerCase().contains(query.toLowerCase()) || 
         s.addressEn.toLowerCase().contains(query.toLowerCase())
       ).toList();
-      
-      final LatLng referencePoint = lastKnownLocation ?? center;
+      final LatLng referencePoint = getEffectiveLocation();
       filtered.sort((a, b) => 
         _calculateDistance(referencePoint.latitude, referencePoint.longitude, a.lat, a.lng)
         .compareTo(_calculateDistance(referencePoint.latitude, referencePoint.longitude, b.lat, b.lng))
       );
-      
       final limit = query.isEmpty ? 10 : 50;
       final pinned = filtered.where((s) => pinnedStationIds.contains(s.id.trim())).toList();
       final unpinned = filtered.where((s) => !pinnedStationIds.contains(s.id.trim())).toList();
       allStations = [...pinned, ...unpinned].take(limit).toList();
-    } catch (e) {
-    }
+      
+      for (var s in allStations) {
+        final d = _calculateDistance(referencePoint.latitude, referencePoint.longitude, s.lat, s.lng);
+        s.distance = d;
+      }
+      notifyListeners();
+    } catch (e) {}
+  }
+
+  void addLog(String msg) {
+    logs.add("[${DateTime.now().toString().split('.').first}] $msg");
+    if (logs.length > 100) logs.removeAt(0);
+    notifyListeners();
   }
 }

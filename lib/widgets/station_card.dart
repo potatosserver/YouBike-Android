@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/station.dart';
 import '../services/app_state.dart';
+import '../l10n/l10n_helper.dart';
 
 class StationCard extends StatelessWidget {
   final Station station;
@@ -23,8 +24,7 @@ class StationCard extends StatelessWidget {
     final isPinned = appState.pinnedStationIds.contains(station.id);
     final hasElectric = station.availableElectricBikes > 0;
 
-    // Safely parse distance string back to double for formatting
-    final double distValue = double.tryParse(station.distance) ?? 0.0;
+    final double distValue = station.distance;
 
     return GestureDetector(
       onTap: onTap,
@@ -63,7 +63,10 @@ class StationCard extends StatelessWidget {
                 Row(
                   children: [
                     if (hasElectric)
-                      const Icon(Icons.electric_bolt, color: Colors.green, size: 22),
+                      GestureDetector(
+                        onTap: onShowElectric,
+                        child: const Icon(Icons.electric_bolt, color: Colors.green, size: 22),
+                      ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () => appState.togglePinStation(station.id),
@@ -84,7 +87,7 @@ class StationCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              "距離： ${appState.getDistanceLabel(distValue)}",
+              "${L10n.t(context, 'distance')} ${appState.getDistanceLabel(distValue)}",
               style: const TextStyle(fontSize: 15, color: Colors.black87),
             ),
             const SizedBox(height: 4),
