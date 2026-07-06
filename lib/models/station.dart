@@ -1,4 +1,3 @@
-
 class Station {
   final String id;
   final String nameTw;
@@ -58,5 +57,18 @@ class Station {
     } catch (e) {
       return null;
     }
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'station_no': id,
+      'name_tw': nameTw,
+      'name_en': nameEn,
+      'address_tw': addressTw,
+      'address_en': addressEn,
+      'lat': lat,
+      'lng': lng,
+      'total_spaces': totalBikes,
+    };
   }
 }
