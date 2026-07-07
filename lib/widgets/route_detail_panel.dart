@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../services/app_state.dart';
 import '../widgets/app_theme.dart';
 
 class RouteDetailPanel extends StatelessWidget {
@@ -15,12 +13,12 @@ class RouteDetailPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context);
+    final theme = Theme.of(context);
     
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: appState.isDarkMode ? AppColors.cardDark : AppColors.cardLight,
+        color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, -5)),
@@ -44,11 +42,18 @@ class RouteDetailPanel extends StatelessWidget {
               Expanded(
                 child: Text(
                   "前往 $destination",
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 20, 
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close),
+                icon: Icon(
+                  Icons.close, 
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -83,7 +88,11 @@ class RouteDetailPanel extends StatelessWidget {
                   Expanded(
                     child: Text(
                       step,
-                      style: const TextStyle(fontSize: 15, height: 1.5),
+                      style: TextStyle(
+                        fontSize: 15, 
+                        height: 1.5,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                      ),
                     ),
                   ),
                 ],

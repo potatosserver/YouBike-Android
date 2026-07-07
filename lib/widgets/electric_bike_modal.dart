@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../l10n/l10n_helper.dart';
 
-
 class ElectricBikeDetailsModal extends StatelessWidget {
   final String stationId;
   final String stationName;
@@ -20,13 +19,15 @@ class ElectricBikeDetailsModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: _fetchBikes(),
       builder: (context, snapshot) {
         return Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
+            color: theme.colorScheme.surface,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -38,7 +39,7 @@ class ElectricBikeDetailsModal extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[400],
+                    color: theme.dividerColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -46,7 +47,11 @@ class ElectricBikeDetailsModal extends StatelessWidget {
               const SizedBox(height: 20),
               Text(
                 "${L10n.t(context, 'electricBikeDetailsTitle')} $stationName",
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 20, 
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
@@ -54,9 +59,14 @@ class ElectricBikeDetailsModal extends StatelessWidget {
                 Center(
                   child: Column(
                     children: [
-                      const CircularProgressIndicator(),
+                      CircularProgressIndicator(
+                        color: theme.colorScheme.primary,
+                      ),
                       const SizedBox(height: 16),
-                      Text(L10n.t(context, 'loading')),
+                      Text(
+                        L10n.t(context, 'loading'),
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                      ),
                     ],
                   ),
                 )
@@ -72,7 +82,10 @@ class ElectricBikeDetailsModal extends StatelessWidget {
                 Center(
                   child: Text(
                     L10n.t(context, 'noElectricBikes'),
-                    style: const TextStyle(fontSize: 16),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
                 )
               else
@@ -83,11 +96,22 @@ class ElectricBikeDetailsModal extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final bike = snapshot.data![index];
                     return Card(
+                      color: theme.cardColor,
                       margin: const EdgeInsets.symmetric(vertical: 8),
                       child: ListTile(
                         leading: const Icon(Icons.electric_bike, color: Colors.green),
-                        title: Text("${L10n.t(context, 'bikeNumber')} ${bike['bike_no']}"),
-                        subtitle: Text("${L10n.t(context, 'pillarNumber')} ${bike['pillar_no']}"),
+                        title: Text(
+                          "${L10n.t(context, 'bikeNumber')} ${bike['bike_no']}",
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        subtitle: Text(
+                          "${L10n.t(context, 'pillarNumber')} ${bike['pillar_no']}",
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
                         trailing: Text(
                           "${bike['battery_power']}%",
                           style: const TextStyle(

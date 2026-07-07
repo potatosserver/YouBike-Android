@@ -1,3 +1,5 @@
+import 'package:latlong2/latlong.dart';
+
 class Station {
   final String id;
   final String nameTw;
@@ -6,16 +8,12 @@ class Station {
   final String addressEn;
   final double lat;
   final double lng;
-  
-  // Real-time data
-  int availableBikes = 0;
-  int availableElectricBikes = 0;
-  int emptySpaces = 0;
-  int totalBikes = 0; 
+  int availableBikes;
+  int availableElectricBikes;
+  int emptySpaces;
+  double distance;
+  LatLng? visualPosition; // Added for visual offsetting
 
-  // Distance data (calculated dynamically)
-  double distance = 0.0;
-  
   Station({
     required this.id,
     required this.nameTw,
@@ -24,51 +22,45 @@ class Station {
     required this.addressEn,
     required this.lat,
     required this.lng,
+    this.availableBikes = 0,
+    this.availableElectricBikes = 0,
+    this.emptySpaces = 0,
+    this.distance = 0.0,
   });
-
-  factory Station.empty() {
-    return Station(
-      id: '',
-      nameTw: '',
-      nameEn: '',
-      addressTw: '',
-      addressEn: '',
-      lat: 0.0,
-      lng: 0.0,
-    );
-  }
-
-  static Station? fromJson(Map<String, dynamic> json) {
-    try {
-      final id = (json['station_no'] ?? json['id'] ?? '').toString();
-      if (id.isEmpty) return null;
-
-      return Station(
-        id: id,
-        nameTw: json['name_tw']?.toString() ?? '',
-        nameEn: json['name_en']?.toString() ?? '',
-        addressTw: json['address_tw']?.toString() ?? '',
-        addressEn: json['address_en']?.toString() ?? '',
-        lat: double.tryParse(json['lat']?.toString() ?? '') ?? 0.0,
-        lng: double.tryParse(json['lng']?.toString() ?? '') ?? 0.0,
-      )..totalBikes = json['total_spaces']?.toString().isNotEmpty == true 
-          ? int.tryParse(json['total_spaces'].toString()) ?? 0 
-          : 0;
-    } catch (e) {
-      return null;
-    }
-  }
 
   Map<String, dynamic> toJson() {
     return {
-      'station_no': id,
-      'name_tw': nameTw,
-      'name_en': nameEn,
-      'address_tw': addressTw,
-      'address_en': addressEn,
-      'lat': lat,
-      'lng': lng,
-      'total_spaces': totalBikes,
+      "id": id,
+      "nameTw": nameTw,
+      "nameEn": nameEn,
+      "lat": lat,
+      "lng": lng,
+      "addressTw": addressTw,
+      "addressEn": addressEn,
+      "availableBikes": availableBikes,
+      "availableElectricBikes": availableElectricBikes,
+      "emptySpaces": emptySpaces,
     };
+  }
+
+  factory Station.fromJson(Map<String, dynamic> json) {
+    return Station(
+      id: (json["station_no"] ?? json["id"] ?? "").toString(),
+      nameTw: json["name_tw"] ?? json["station_name"] ?? json["nameTw"] ?? json["name"] ?? "",
+      nameEn: json["name_en"] ?? json["station_name_en"] ?? json["nameEn"] ?? "",
+      lat: double.tryParse(json["lat"]?.toString() ?? "") ?? 0.0,
+      lng: double.tryParse(json["lng"]?.toString() ?? "") ?? 0.0,
+      addressTw: json["address_tw"] ?? json["address"] ?? json["addressTw"] ?? json["addr"] ?? "",
+      addressEn: json["address_en"] ?? json["address_en"] ?? json["addressEn"] ?? "",
+      availableBikes: _parseInt(json["available_bikes"]),
+      availableElectricBikes: _parseInt(json["available_electric_bikes"]),
+      emptySpaces: _parseInt(json["empty_spaces"]),
+    );
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
   }
 }

@@ -11,6 +11,7 @@ import '../widgets/electric_bike_modal.dart';
 import '../widgets/loading_overlay.dart';
 import '../widgets/pulse_marker.dart';
 import '../services/notification_service.dart';
+import '../l10n/l10n_helper.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -40,7 +41,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onAppStateChanged() {
     final appState = Provider.of<AppState>(context, listen: false);
     if (appState.isFollowingUser && appState.center != null) {
-      debugPrint("[MAP-MOVE] 🛰️ 自動跟隨移動至: ${appState.center}");
       _mapController.move(appState.center!, 18.0);
     }
   }
@@ -48,16 +48,17 @@ class _HomeScreenState extends State<HomeScreen> {
   void _handleLocationPress() async {
     final appState = Provider.of<AppState>(context, listen: false);
     LatLng snapPos = appState.lastKnownLocation ?? appState.getEffectiveLocation();
-    debugPrint("[MAP-MOVE] 🖐️ 手動觸發移動至: $snapPos");
     _mapController.move(snapPos, 18.0);
-    NotificationService.instance.show(message: "已開啟位置追蹤功能", type: NotificationType.success);
+    NotificationService.instance.show(
+      message: L10n.t(context, 'locationTrackingEnabled'), 
+      type: NotificationType.success
+    );
     appState.setFollowing(true);
     try {
       await appState.requestPermission();
       final pos = await appState.getCurrentPosition();
       if (pos != null && mounted) {
         final target = LatLng(pos.latitude, pos.longitude);
-        debugPrint("[MAP-MOVE] 📡 定位成功，精確移動至: $target");
         _mapController.move(target, 18.0);
       }
     } catch (e) {
@@ -85,8 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     } catch (e) {
       if (mounted) {
-        debugPrint("[ROUTE-ERROR] $e");
-        NotificationService.instance.show(message: "導航服務不可用", type: NotificationType.error);
+        NotificationService.instance.show(message: L10n.t(context, 'navigationUnavailable'), type: NotificationType.error);
       }
     }
   }
@@ -122,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 MarkerLayer(
                   markers: appState.allStations.map((s) => Marker(
-                    point: LatLng(s.lat, s.lng),
+                    point: s.visualPosition ?? LatLng(s.lat, s.lng),
                     width: 40, height: 50,
                     child: _buildRoadSignPin(appState.pinnedStationIds.contains(s.id.trim())),
                   )).toList(),
@@ -146,7 +146,8 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: const BoxDecoration(boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)]),
               child: TextField(
                 decoration: InputDecoration(
-                  filled: true, fillColor: Theme.of(context).colorScheme.surface, hintText: "搜尋場站...",
+                  filled: true, fillColor: Theme.of(context).colorScheme.surface, 
+                  hintText: L10n.t(context, 'searchPlaceholder'),
                   prefixIcon: const Icon(Icons.search, color: Colors.grey),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(25), borderSide: BorderSide.none),
                 ),
@@ -200,44 +201,34 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          Positioned(
+          const Positioned(
             bottom: 30, left: 0, right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF4A4A4A) : const Color(0xFFFDCACB),
-                  borderRadius: BorderRadius.circular(50),
-                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text("${appState.countdownRemaining} 秒後更新", style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87, fontWeight: FontWeight.bold, fontSize: 13)),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {
-                      appState.countdownRemaining = 60;
-                      appState.refreshStations();
-                    },
-                      child: Icon(Icons.play_arrow, size: 20, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            child: HomeUpdateButton(),
           ),
           if (appState.isLoading) const LoadingOverlay(),
         ],
       ),
     );
   }
+
   Widget _buildStationPanel() {
     final appState = Provider.of<AppState>(context);
     return SizedBox(
       width: double.infinity,
       child: appState.allStations.isEmpty 
-          ? Container(padding: const EdgeInsets.all(40), child: const Center(child: Text("正在載入...", style: TextStyle(color: Colors.grey))))
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  Text(
+                    L10n.t(context, 'noStationsFound'),
+                    style: const TextStyle(color: Colors.grey, fontSize: 16),
+                  ),
+                ],
+              ),
+            )
           : ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               itemCount: appState.allStations.length,
@@ -271,6 +262,85 @@ class _HomeScreenState extends State<HomeScreen> {
         Container(width: 26, height: 26, decoration: BoxDecoration(color: circleColor, shape: BoxShape.circle)),
         const Icon(Icons.directions_bike, color: Colors.black, size: 18),
       ],
+    );
+  }
+}
+
+class HomeUpdateButton extends StatefulWidget {
+  const HomeUpdateButton({super.key});
+  @override
+  State<HomeUpdateButton> createState() => _HomeUpdateButtonState();
+}
+
+class _HomeUpdateButtonState extends State<HomeUpdateButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = Provider.of<AppState>(context);
+    final theme = Theme.of(context);
+
+    if (appState.isUpdating) {
+      _controller.repeat();
+    } else {
+      _controller.stop();
+      _controller.reset();
+    }
+
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: theme.brightness == Brightness.dark ? const Color(0xFF4A4A4A) : const Color(0xFFFDCACB),
+          borderRadius: BorderRadius.circular(50),
+          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              appState.isUpdating 
+                  ? L10n.t(context, 'updating') 
+                  : "${L10n.t(context, 'autoRefresh')} ${appState.countdownRemaining} ${L10n.t(context, 'sec')}",
+              style: TextStyle(
+                color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: appState.isUpdating ? null : () {
+                appState.countdownRemaining = 60;
+                appState.refreshStations();
+              },
+              child: RotationTransition(
+                turns: _controller,
+                child: Icon(
+                  appState.isUpdating ? Icons.sync : Icons.refresh, 
+                  size: 20, 
+                  color: appState.isUpdating ? Colors.grey : (theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

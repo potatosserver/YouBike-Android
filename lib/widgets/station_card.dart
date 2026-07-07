@@ -96,22 +96,22 @@ class StationCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              "地址: ${appState.currentLang == 'en' ? station.addressEn : station.addressTw}",
+              "${L10n.t(context, 'address')} ${appState.currentLang == 'en' ? station.addressEn : station.addressTw}",
               style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
             const SizedBox(height: 4),
             Text(
-              "YouBike 2.0: ${station.availableBikes}",
+              "${L10n.t(context, 'availableBikes')} ${station.availableBikes}",
               style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
             const SizedBox(height: 4),
             Text(
-              "YouBike 2.0E: ${station.availableElectricBikes}",
+              "${L10n.t(context, 'availableElectricBikes')} ${station.availableElectricBikes}",
               style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
             const SizedBox(height: 4),
             Text(
-              "可停空位數: ${station.emptySpaces}",
+              "${L10n.t(context, 'emptySpaces')} ${station.emptySpaces}",
               style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
           ],

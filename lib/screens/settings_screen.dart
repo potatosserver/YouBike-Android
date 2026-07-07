@@ -104,10 +104,7 @@ class SettingsScreen extends StatelessWidget {
             color: theme.brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
             borderRadius: BorderRadius.circular(16),
             clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.05)),
-            ),
+            // Removed 'shape' to fix the Material assertion crash
             child: Column(
               children: children,
             ),
