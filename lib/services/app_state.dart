@@ -34,14 +34,14 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
   int loadingProgress = 0;
-  String currentNotice = "正在啟動...";
+  String currentNotice = "init_starting";
   String loadingNotice = "";
   List<String> logs = [];
   bool isFollowingUser = false;
   bool hasObtainedRealLocation = false;
   LatLng? lastKnownLocation;
   String currentLang = 'zh_TW';
-  bool isDarkMode = false;
+  ThemeMode themeMode = ThemeMode.system;
   bool isUpdating = false; 
   int countdownRemaining = 60;
   bool isOffline = false; 
@@ -143,7 +143,8 @@ class AppState extends ChangeNotifier {
 
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
-    isDarkMode = _prefs?.getBool('isDarkMode') ?? false;
+    final themeIndex = _prefs?.getInt('themeMode') ?? 0;
+    themeMode = ThemeMode.values[themeIndex];
     currentLang = _prefs?.getString('currentLang') ?? 'zh_TW';
     selectedRegion = _prefs?.getString('selectedRegion') ?? 'kaohsiung';
     useLocation = _prefs?.getBool('useLocation') ?? true;
@@ -385,9 +386,9 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleDarkMode() {
-    isDarkMode = !isDarkMode;
-    _prefs?.setBool('isDarkMode', isDarkMode);
+  void setThemeMode(ThemeMode mode) {
+    themeMode = mode;
+    _prefs?.setInt('themeMode', mode.index);
     notifyListeners();
   }
 
@@ -441,9 +442,9 @@ class AppState extends ChangeNotifier {
 
   String getDistanceLabel(double distance) {
     if (distance < 1000) {
-      return "${distance.toStringAsFixed(0)}m";
+      return "${distance.toStringAsFixed(0)} dist_m";
     }
-    return "${(distance / 1000).toStringAsFixed(2)}km";
+    return "${(distance / 1000).toStringAsFixed(2)} dist_km";
   }
 
   Future<Position?> getCurrentPosition() async {

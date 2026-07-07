@@ -271,12 +271,37 @@ class _HomeUpdateButtonState extends State<HomeUpdateButton> with SingleTickerPr
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1),
+      duration: const Duration(milliseconds: 500),
+      upperBound: 0.5,
     );
+    
+    // 將動畫觸發邏輯從 build 移至監聽器，確保動畫穩定
+    final appState = Provider.of<AppState>(context, listen: false);
+    appState.addListener(_handleUpdateAnimation);
+    // 初始化狀態
+    _wasUpdating = appState.isUpdating;
+  }
+
+  void _handleUpdateAnimation() {
+    final appState = Provider.of<AppState>(context, listen: false);
+    if (appState.isUpdating) {
+      if (!_wasUpdating) {
+        _controller.forward(from: 0.0);
+        _wasUpdating = true;
+      }
+    } else {
+      if (_wasUpdating) {
+        _controller.stop();
+        _controller.reset();
+        _wasUpdating = false;
+      }
+    }
   }
 
   @override
   void dispose() {
+    final appState = Provider.of<AppState>(context, listen: false);
+    appState.removeListener(_handleUpdateAnimation);
     _controller.dispose();
     super.dispose();
   }
@@ -292,20 +317,7 @@ class _HomeUpdateButtonState extends State<HomeUpdateButton> with SingleTickerPr
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     final theme = Theme.of(context);
-
-    // 模擬網頁版行為：更新時旋轉一圈後停止，而非持續旋轉
-    if (appState.isUpdating) {
-      if (!_wasUpdating) {
-        _controller.forward(from: 0.0); // 僅旋轉一圈 (0.0 -> 1.0)
-        _wasUpdating = true;
-      }
-    } else {
-      if (_wasUpdating) {
-        _controller.stop();
-        _controller.reset();
-        _wasUpdating = false;
-      }
-    }
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: GestureDetector(
@@ -322,21 +334,21 @@ class _HomeUpdateButtonState extends State<HomeUpdateButton> with SingleTickerPr
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              RotationTransition(
+                turns: _controller,
+                child: Icon(
+                  Icons.autorenew, 
+                  size: 20, 
+                  color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87,
+                ),
+              ),
+              const SizedBox(width: 8),
               Text(
-                "${appState.countdownRemaining}秒後更新",
+                "${appState.countdownRemaining}${l10n.countdown_unit} ${l10n.countdown_text}",
                 style: TextStyle(
                   color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87,
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
-                ),
-              ),
-              const SizedBox(width: 8),
-              RotationTransition(
-                turns: _controller,
-                child: Icon(
-                  appState.isUpdating ? Icons.sync : Icons.refresh, 
-                  size: 20, 
-                  color: appState.isUpdating ? Colors.grey : (theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
                 ),
               ),
             ],

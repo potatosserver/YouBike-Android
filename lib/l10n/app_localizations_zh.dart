@@ -9,7 +9,10 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get app_title => 'YouBike 站點搜尋';
+  String get init_starting => '啟動中...';
+
+  @override
+  String get init_locating => '定位中...';
 
   @override
   String get app_full_title => 'YouBike 站點搜尋 : 一個簡單、美觀、低流量的YouBike站點搜尋器';
@@ -39,22 +42,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settings_dark_mode => '深色模式';
 
   @override
-  String get settings_language => '中文/English';
+  String get settings_language => '語言';
 
   @override
-  String get settings_language_title => '語言設定';
+  String get settings_language_title => '語言';
 
   @override
-  String get settings_theme => '主題模式';
+  String get lang_zh => '繁體中文';
 
   @override
-  String get settings_debug => '系統偵錯日誌';
+  String get lang_en => 'English';
 
   @override
-  String get log_copied => '日誌已複製到剪貼簿';
+  String get settings_theme => '主題';
 
   @override
   String get settings_region => '地區選擇';
+
+  @override
+  String get countdown_unit => '秒後';
+
+  @override
+  String get countdown_text => '更新';
+
+  @override
+  String get dist_m => '公尺';
+
+  @override
+  String get dist_km => '公里';
 
   @override
   String get electric_bike_details_title => '電輔車列表 - ';

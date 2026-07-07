@@ -22,11 +22,11 @@ class ThemeSelectionScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         children: [
-          _buildOption(context, title: "系統預設", mode: ThemeMode.system, isSelected: appState.isDarkMode == false), // Simplified logic for demo
+          _buildOption(context, title: "系統預設", mode: ThemeMode.system, isSelected: appState.themeMode == ThemeMode.system),
           const SizedBox(height: 24),
-          _buildOption(context, title: "淺色模式", mode: ThemeMode.light, isSelected: appState.isDarkMode == false),
+          _buildOption(context, title: "淺色模式", mode: ThemeMode.light, isSelected: appState.themeMode == ThemeMode.light),
           const SizedBox(height: 24),
-          _buildOption(context, title: "深色模式", mode: ThemeMode.dark, isSelected: appState.isDarkMode == true),
+          _buildOption(context, title: "深色模式", mode: ThemeMode.dark, isSelected: appState.themeMode == ThemeMode.dark),
         ],
       ),
     );
@@ -36,8 +36,7 @@ class ThemeSelectionScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return InkWell(
       onTap: () {
-        Provider.of<AppState>(context, listen: false).toggleDarkMode();
-        Navigator.pop(context);
+        Provider.of<AppState>(context, listen: false).setThemeMode(mode);
       },
       child: Row(
         children: [

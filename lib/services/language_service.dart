@@ -19,11 +19,18 @@ class LanguageService with ChangeNotifier {
     // Check if a supported locale's language code matches the determined locale's language code.
     for (var supportedLocale in AppLocalizations.supportedLocales) {
       if (supportedLocale.languageCode == localeToUse.languageCode) {
-        return supportedLocale; // Return the supported locale (e.g., 'zh' instead of 'zh_CN')
+        return supportedLocale; 
       }
     }
 
-    // If no match is found, fall back to the first supported locale (usually English).
+    // Special handling for Chinese: map 'zh_TW', 'zh_CN' etc. to the supported 'zh' locale
+    if (localeToUse.languageCode.startsWith('zh')) {
+      return AppLocalizations.supportedLocales.firstWhere(
+        (l) => l.languageCode == 'zh', 
+        orElse: () => AppLocalizations.supportedLocales.first
+      );
+    }
+
     return AppLocalizations.supportedLocales.first;
   }
 

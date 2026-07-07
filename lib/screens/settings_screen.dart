@@ -27,33 +27,33 @@ class SettingsScreen extends StatelessWidget {
           children: [
             _buildSettingsGroup(
               context,
-              title: "參數設定",
+              title: l10n.param_settings,
               children: [
                 _buildWalkGoItem(
                   context,
                   icon: Icons.palette_outlined,
-                  title: "主題模式",
+                  title: l10n.settings_theme,
                   trailing: const Icon(Icons.chevron_right, size: 22, color: Colors.grey),
                   onTap: () => Navigator.pushNamed(context, '/theme-selection'),
                 ),
                 _buildWalkGoItem(
                   context,
                   icon: Icons.map_outlined,
-                  title: "預設區域",
+                  title: l10n.settings_region,
                   trailing: const Icon(Icons.chevron_right, size: 22, color: Colors.grey),
                   onTap: () => Navigator.pushNamed(context, '/region-selection'),
                 ),
                 _buildWalkGoItem(
                   context,
                   icon: Icons.language_outlined,
-                  title: "語言設定",
+                  title: l10n.settings_language,
                   trailing: const Icon(Icons.chevron_right, size: 22, color: Colors.grey),
                   onTap: () => Navigator.pushNamed(context, '/language-selection'),
                 ),
                 _buildWalkGoItem(
                   context,
                   icon: Icons.location_on_outlined,
-                  title: "啟用啟動自動定位",
+                  title: l10n.settings_location,
                   trailing: Switch(
                     value: appState.useLocation,
                     onChanged: (val) => appState.setUseLocation(val),

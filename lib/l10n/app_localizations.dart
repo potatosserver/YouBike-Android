@@ -95,11 +95,17 @@ abstract class AppLocalizations {
     Locale('zh')
   ];
 
-  /// No description provided for @app_title.
+  /// No description provided for @init_starting.
   ///
   /// In en, this message translates to:
-  /// **'YouBike Station Search'**
-  String get app_title;
+  /// **'Starting...'**
+  String get init_starting;
+
+  /// No description provided for @init_locating.
+  ///
+  /// In en, this message translates to:
+  /// **'Locating...'**
+  String get init_locating;
 
   /// No description provided for @app_full_title.
   ///
@@ -116,7 +122,7 @@ abstract class AppLocalizations {
   /// No description provided for @input_placeholder.
   ///
   /// In en, this message translates to:
-  /// **'Please enter station name or address'**
+  /// **'Enter station name or address'**
   String get input_placeholder;
 
   /// No description provided for @countdown_suffix.
@@ -158,38 +164,62 @@ abstract class AppLocalizations {
   /// No description provided for @settings_language.
   ///
   /// In en, this message translates to:
-  /// **'Chinese/English'**
+  /// **'Language'**
   String get settings_language;
 
   /// No description provided for @settings_language_title.
   ///
   /// In en, this message translates to:
-  /// **'Language Settings'**
+  /// **'Language'**
   String get settings_language_title;
+
+  /// No description provided for @lang_zh.
+  ///
+  /// In en, this message translates to:
+  /// **'Traditional Chinese'**
+  String get lang_zh;
+
+  /// No description provided for @lang_en.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get lang_en;
 
   /// No description provided for @settings_theme.
   ///
   /// In en, this message translates to:
-  /// **'Theme Mode'**
+  /// **'Theme'**
   String get settings_theme;
-
-  /// No description provided for @settings_debug.
-  ///
-  /// In en, this message translates to:
-  /// **'System Debug Logs'**
-  String get settings_debug;
-
-  /// No description provided for @log_copied.
-  ///
-  /// In en, this message translates to:
-  /// **'Logs copied to clipboard'**
-  String get log_copied;
 
   /// No description provided for @settings_region.
   ///
   /// In en, this message translates to:
   /// **'Region'**
   String get settings_region;
+
+  /// No description provided for @countdown_unit.
+  ///
+  /// In en, this message translates to:
+  /// **' sec'**
+  String get countdown_unit;
+
+  /// No description provided for @countdown_text.
+  ///
+  /// In en, this message translates to:
+  /// **'update'**
+  String get countdown_text;
+
+  /// No description provided for @dist_m.
+  ///
+  /// In en, this message translates to:
+  /// **'meters'**
+  String get dist_m;
+
+  /// No description provided for @dist_km.
+  ///
+  /// In en, this message translates to:
+  /// **'km'**
+  String get dist_km;
 
   /// No description provided for @electric_bike_details_title.
   ///

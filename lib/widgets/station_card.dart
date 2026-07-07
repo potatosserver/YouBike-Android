@@ -92,7 +92,7 @@ class StationCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              "${l10n.distance} ${appState.getDistanceLabel(distValue)}",
+              "${l10n.distance} ${appState.getDistanceLabel(distValue).replaceAll('dist_m', l10n.dist_m).replaceAll('dist_km', l10n.dist_km)}",
               style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
             const SizedBox(height: 4),

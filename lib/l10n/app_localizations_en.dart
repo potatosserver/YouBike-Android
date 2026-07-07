@@ -9,7 +9,10 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get app_title => 'YouBike Station Search';
+  String get init_starting => 'Starting...';
+
+  @override
+  String get init_locating => 'Locating...';
 
   @override
   String get app_full_title => 'YouBike Site Search : A simple, beautiful site search engine';
@@ -18,7 +21,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get use_location => 'Use Location';
 
   @override
-  String get input_placeholder => 'Please enter station name or address';
+  String get input_placeholder => 'Enter station name or address';
 
   @override
   String get countdown_suffix => ' sec update';
@@ -39,22 +42,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_dark_mode => 'Dark Mode';
 
   @override
-  String get settings_language => 'Chinese/English';
+  String get settings_language => 'Language';
 
   @override
-  String get settings_language_title => 'Language Settings';
+  String get settings_language_title => 'Language';
 
   @override
-  String get settings_theme => 'Theme Mode';
+  String get lang_zh => 'Traditional Chinese';
 
   @override
-  String get settings_debug => 'System Debug Logs';
+  String get lang_en => 'English';
 
   @override
-  String get log_copied => 'Logs copied to clipboard';
+  String get settings_theme => 'Theme';
 
   @override
   String get settings_region => 'Region';
+
+  @override
+  String get countdown_unit => ' sec';
+
+  @override
+  String get countdown_text => 'update';
+
+  @override
+  String get dist_m => 'meters';
+
+  @override
+  String get dist_km => 'km';
 
   @override
   String get electric_bike_details_title => 'Electric Bikes - ';

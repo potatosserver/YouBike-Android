@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/app_state.dart';
+import '../l10n/app_localizations.dart';
 
 class LoadingOverlay extends StatelessWidget {
   const LoadingOverlay({super.key});
@@ -8,6 +9,7 @@ class LoadingOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     
     return Material(
@@ -19,7 +21,7 @@ class LoadingOverlay extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              "${appState.currentLang.startsWith('en') ? 'Loading' : '載入中'}：${appState.loadingProgress}%",
+              l10n.loading_prefix(appState.loadingProgress.toString()),
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w500,
@@ -40,7 +42,7 @@ class LoadingOverlay extends StatelessWidget {
                 ),
               ),
               child: Text(
-                appState.loadingNotice,
+                _translateNotice(context, appState.loadingNotice),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -52,5 +54,24 @@ class LoadingOverlay extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _translateNotice(BuildContext context, String key) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (key) {
+      case 'init_locating': return l10n.updating; // 或自定義定位中
+      case 'init_syncing': return "同步中..."; // 建議補上 .arb
+      case 'init_updating': return l10n.updating;
+      case 'init_success': return l10n.init_success;
+      case 'notice_no_speed': return l10n.notice_no_speed;
+      case 'notice_no_sidewalk': return l10n.notice_no_sidewalk;
+      case 'notice_no_phone': return l10n.notice_no_phone;
+      case 'notice_no_brake': return l10n.notice_no_brake;
+      case 'notice_seat_height': return l10n.notice_seat_height;
+      case 'notice_lights_work': return l10n.notice_lights_work;
+      case 'notice_insurance': return l10n.notice_insurance;
+      case 'notice_take_belongings': return l10n.notice_take_belongings;
+      default: return key;
+    }
   }
 }

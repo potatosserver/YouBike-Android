@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../services/app_state.dart';
+import '../services/language_service.dart';
 
 class LanguageSelectionScreen extends StatelessWidget {
   const LanguageSelectionScreen({super.key});
@@ -30,7 +31,7 @@ class LanguageSelectionScreen extends StatelessWidget {
             child: InkWell(
               onTap: () {
                 appState.setLanguage(locale.languageCode == 'zh' ? 'zh_TW' : 'en');
-                Navigator.pop(context);
+                Provider.of<LanguageService>(context, listen: false).setLocale(locale);
               },
               child: Row(
                 children: [
