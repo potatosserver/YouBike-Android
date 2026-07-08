@@ -2,14 +2,15 @@ name: Generate Taiwan Map Tiles
 
 on:
   schedule:
-    - cron: '0 0 * * 0' # 每週日執行
-  workflow_dispatch:     # 讓你隨時可以手動點擊執行
+    - cron: '0 0 * * 0' # 每週日午夜執行
+  workflow_dispatch:     # 允許手動點擊執行
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up JDK 21
         uses: actions/setup-java@v3
@@ -17,15 +18,29 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Download and Build
+      - name: Download Planetiler and Build Map
         run: |
-          wget https://download.geofabrik.de/asia/taiwan-latest.osm.pbf
+          # 1. 下載 Planetiler 最新版
           wget https://github.com/onthegomap/planetiler/releases/latest/download/planetiler.jar
-          java -Xmx4g -jar planetiler.jar --osm-path=taiwan-latest.osm.pbf --output=taiwan.pmtiles
+          
+          # 2. 下載台灣 OSM 原始資料
+          wget https://download.geofabrik.de/asia/taiwan-latest.osm.pbf
+          
+          # 3. 執行打包 (加入 --download 自動抓取輔助圖層)
+          # 注意：-Xmx4g 設定 4GB 記憶體，台灣範圍已足夠
+          java -Xmx4g -jar planetiler.jar \
+            --osm-path=taiwan-latest.osm.pbf \
+            --output=taiwan.pmtiles \
+            --download \
+            --force \
+            --maxzoom=14
+          
+          # 檢查是否生成成功
+          ls -lh taiwan.pmtiles
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: taiwan-map-tiles
           path: taiwan.pmtiles
-          retention-days: 7 # 設定 7 天後自動刪除
+          retention-days: 7
