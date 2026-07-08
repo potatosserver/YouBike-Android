@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:latlong2/latlong.dart' as ll;
 import '../models/station.dart';
 import '../services/app_state.dart';
 import '../widgets/station_card.dart';
 import '../widgets/route_detail_panel.dart';
 import '../widgets/electric_bike_modal.dart';
 import '../widgets/loading_overlay.dart';
-import '../widgets/pulse_marker.dart';
 import '../services/notification_service.dart';
 import '../l10n/app_localizations.dart';
 
@@ -19,20 +18,22 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final MapController _mapController = MapController();
-  double? _panelHeight; // Dynamic height for draggability
+  MapLibreMapController? _mapController;
+  double? _panelHeight; 
+  bool _isMapLoaded = false; 
+  List<Station>? _lastRenderedStations; 
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final screenHeight = MediaQuery.of(context).size.height;
+      setState(() {
+        _panelHeight = screenHeight * 0.35;
+      });
+      
       final appState = Provider.of<AppState>(context, listen: false);
       appState.addListener(_onAppStateChanged);
-      
-      // Initialize panel height to 35% of screen
-      setState(() {
-        _panelHeight = MediaQuery.of(context).size.height * 0.35;
-      });
     });
   }
 
@@ -42,18 +43,70 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  void _updateStationMarkers() {
+    if (_mapController == null || !_isMapLoaded) {
+      debugPrint("[MAP-SYNC] Skipping markers: Controller null or Map not loaded");
+      return;
+    }
+    
+    final appState = Provider.of<AppState>(context, listen: false);
+    final stations = appState.allStations;
+    
+    if (_lastRenderedStations != null && 
+        _lastRenderedStations!.length == stations.length &&
+        _lastRenderedStations!.every((s) => s.id == stations[appState.allStations.indexOf(s)].id)) {
+      return;
+    }
+
+    debugPrint("[MAP-SYNC] Rendering ${stations.length} stations...");
+    _mapController!.clearSymbols();
+    _mapController!.clearCircles();
+
+    for (var s in stations) {
+      // 1. Add a visible gold circle as the "pin" base
+      _mapController!.addCircle(CircleOptions(
+        geometry: LatLng(s.lat, s.lng),
+        circleRadius: 5.0,
+        circleColor: '#FFD700', // Gold
+        circleStrokeColor: '#FFFFFF',
+        circleStrokeWidth: 2.0,
+      ));
+
+      // 2. Add the text label above the circle
+      _mapController!.addSymbol(SymbolOptions(
+        geometry: LatLng(s.lat, s.lng),
+        textField: s.nameTw,
+        textOffset: const Offset(0, 12),
+        textSize: 12.0,
+        textColor: '#000000',
+      ));
+    }
+    _lastRenderedStations = List.from(stations);
+    debugPrint("[MAP-SYNC] Rendering complete.");
+  }
+
   void _onAppStateChanged() {
     final appState = Provider.of<AppState>(context, listen: false);
     if (appState.isFollowingUser && appState.center != null) {
-      _mapController.move(appState.center!, 18.0);
+      _animateMapTo(appState.center!);
     }
+    _updateStationMarkers();
+  }
+
+  void _animateMapTo(ll.LatLng position, {double zoom = 18.0}) {
+    _mapController?.animateCamera(CameraUpdate.newLatLngZoom(
+      LatLng(position.latitude, position.longitude), 
+      zoom
+    ));
   }
 
   void _handleLocationPress() async {
     final appState = Provider.of<AppState>(context, listen: false);
     final l10n = AppLocalizations.of(context)!;
-    LatLng snapPos = appState.lastKnownLocation ?? appState.getEffectiveLocation();
-    _mapController.move(snapPos, 18.0);
+    ll.LatLng snapPos = appState.lastKnownLocation ?? appState.getEffectiveLocation();
+    
+    _animateMapTo(snapPos);
+    
     NotificationService.instance.show(
       message: l10n.locationTrackingEnabled, 
       type: NotificationType.success
@@ -63,8 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
       await appState.requestPermission();
       final pos = await appState.getCurrentPosition();
       if (pos != null && mounted) {
-        final target = LatLng(pos.latitude, pos.longitude);
-        _mapController.move(target, 18.0);
+        _animateMapTo(ll.LatLng(pos.latitude, pos.longitude));
       }
     } catch (e) {
       debugPrint("[LOC-ERROR] $e");
@@ -90,72 +142,48 @@ class _HomeScreenState extends State<HomeScreen> {
     final l10n = AppLocalizations.of(context)!;
     final screenHeight = MediaQuery.of(context).size.height;
     final theme = Theme.of(context);
+    final currentPanelHeight = _panelHeight != null && _panelHeight! > 0 
+        ? _panelHeight! 
+        : (screenHeight * 0.35 > 0 ? screenHeight * 0.35 : 300.0);
 
     return Scaffold(
       backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
       body: Stack(
         children: [
-          // --- Layer 1: Map with Bottom Rounding (Positioned to end exactly at the top of the panel) ---
           if (appState.center != null)
             Positioned(
               top: 0,
               left: 0,
               right: 0,
-              bottom: (_panelHeight ?? screenHeight * 0.35), // Map ends exactly where the handle starts
+              bottom: currentPanelHeight + 8, 
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-                child: FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: appState.center!,
-                    initialZoom: 18.0,
-                    onPositionChanged: (pos, hasMoved) {
-                      if (appState.isFollowingUser && pos.center != null && appState.center != null) {
-                        if ((pos.center!.latitude - appState.center!.latitude).abs() + (pos.center!.longitude - appState.center!.longitude).abs() > 0.0001) {
-                          appState.setFollowing(false);
-                        }
-                      }
-                    },
+                child: MapLibreMap(
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(appState.center!.latitude, appState.center!.longitude),
+                    zoom: 18.0,
                   ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: theme.brightness == Brightness.dark 
-                          ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png' 
-                          : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', 
-                      userAgentPackageName: 'com.youbike.android',
-                    ),
-                    MarkerLayer(
-                      markers: appState.allStations.map((s) => Marker(
-                        point: s.visualPosition ?? LatLng(s.lat, s.lng),
-                        width: 40, height: 50,
-                        child: _buildRoadSignPin(appState.pinnedStationIds.contains(s.id.trim())),
-                      )).toList(),
-                    ),
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                            point: appState.center!,
-                            width: 40, height: 40,
-                            child: PulseMarker(latitude: appState.center!.latitude, longitude: appState.center!.longitude),
-                          ),
-                      ],
-                    ),
-                  ],
+                  styleString: 'https://tiles.openfreemap.org/styles/liberty',
+                  myLocationEnabled: true,
+                  onMapCreated: (controller) {
+                    _mapController = controller;
+                  },
+                  onStyleLoadedCallback: () {
+                    _isMapLoaded = true;
+                    _updateStationMarkers();
+                  },
                 ),
               ),
             )
           else
             const Center(child: CircularProgressIndicator()),
-          // --- Layer 2: Control Overlays (M3 Square Style) ---
-          
-          // Settings Button: Top-Right, pure white circular button with refined size
           Positioned(
             top: 40, 
             right: 15,
             child: GestureDetector(
               onTap: () => Navigator.pushNamed(context, '/settings'),
               child: Container(
-                width: 32, // Increased from 24 for better visibility
+                width: 32,
                 height: 32,
                 decoration: const BoxDecoration(
                   color: Colors.white,
@@ -164,21 +192,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Center(
                   child: Icon(
                     Icons.settings, 
-                    size: 22, // Increased from 18 to match the larger white area
+                    size: 22, 
                     color: theme.brightness == Brightness.dark ? const Color(0xFF90CAF9) : Colors.black87
                   ),
                 ),
               ),
             ),
           ),
-
-          // Location Button: Bottom-Right of Map, restored to original Settings-style color
           Positioned(
             right: 20,
-            bottom: (_panelHeight ?? screenHeight * 0.35) + 20, 
+            bottom: currentPanelHeight + 20, 
             child: Container(
               decoration: BoxDecoration(
-                color: theme.brightness == Brightness.dark ? const Color(0xFF222222) : const Color(0xFFFDCACB), // Original color palette
+                color: theme.brightness == Brightness.dark ? const Color(0xFF222222) : const Color(0xFFFDCACB),
                 borderRadius: BorderRadius.circular(12), 
                 boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
               ),
@@ -186,76 +212,69 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icon(
                   Icons.my_location, 
                   size: 22, 
-                  color: theme.brightness == Brightness.dark ? const Color(0xFF90CAF9) : Colors.black87, // Original icon color
+                  color: theme.brightness == Brightness.dark ? const Color(0xFF90CAF9) : Colors.black87,
                 ),
                 onPressed: _handleLocationPress,
               ),
             ),
           ),
-
-          // --- Layer 3: Station Panel (Draggable & Separated) ---
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            height: _panelHeight,
-            child: Column(
-              children: [
-                // Bridge-Style Drag Handle: Precision compact symmetry (Balanced for visibility)
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onVerticalDragUpdate: (details) {
-                    setState(() {
-                      _panelHeight = (_panelHeight ?? screenHeight * 0.35) - details.delta.dy;
-                      _panelHeight = _panelHeight!.clamp(screenHeight * 0.2, screenHeight * 0.8);
-                    });
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    height: 24, // Restored to a more comfortable height for visual balance
-                    padding: const EdgeInsets.symmetric(vertical: 9), // (24-6)/2 = 9px symmetric gap
-                    child: Center(
-                      child: Container(
-                        width: MediaQuery.of(context).size.width * 0.4, 
-                        height: 6, 
-                        decoration: BoxDecoration(
-                          color: theme.brightness == Brightness.dark ? Colors.white38 : const Color(0xFFBBBBBB), 
-                          borderRadius: BorderRadius.circular(3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 3,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
+            height: currentPanelHeight,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.brightness == Brightness.dark ? const Color(0xFF1E1E1E) : const Color(0xFFFFF5F0),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1), 
+                    blurRadius: 15, 
+                    offset: const Offset(0, -5)
+                  )
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.max, // FIX: Fill the bounded Positioned height
+                children: [
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onVerticalDragUpdate: (details) {
+                      setState(() {
+                        _panelHeight = (currentPanelHeight) - details.delta.dy;
+                        _panelHeight = _panelHeight!.clamp(screenHeight * 0.2, screenHeight * 0.8);
+                      });
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: 24,
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                      child: Center(
+                        child: Container(
+                          width: MediaQuery.of(context).size.width * 0.4, 
+                          height: 6, 
+                          decoration: BoxDecoration(
+                            color: theme.brightness == Brightness.dark ? Colors.white38 : const Color(0xFFBBBBBB), 
+                            borderRadius: BorderRadius.circular(3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 3,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                
-                // 2. THE GAP: Provided by the bottom padding of the handle container
-                
-                // 3. THE PANEL: The rounded container holding the content
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: theme.brightness == Brightness.dark ? const Color(0xFF1E1E1E) : const Color(0xFFFFF5F0),
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1), 
-                          blurRadius: 15, 
-                          offset: const Offset(0, -5)
-                        )
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        // Search Bar integrated into the panel top (Tighter padding to save room for cards)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                          child: TextField(
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      child: Column(
+                        children: [
+                          TextField(
                             decoration: InputDecoration(
                               filled: true, 
                               fillColor: theme.brightness == Brightness.dark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF),
@@ -270,17 +289,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             onSubmitted: (val) => appState.searchStations(val),
                             style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface),
                           ),
-                        ),
-                        Expanded(child: _buildStationPanel()),
-                      ],
+                          const SizedBox(height: 12),
+                          Expanded(child: _buildStationPanel()),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-
-          // --- Layer 4: Floating Action Button ---
           Positioned(
             bottom: 30, left: 0, right: 0,
             child: const HomeUpdateButton(),
@@ -294,57 +312,44 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildStationPanel() {
     final appState = Provider.of<AppState>(context);
     final l10n = AppLocalizations.of(context)!;
-    return SizedBox(
-      width: double.infinity,
-      child: appState.allStations.isEmpty 
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.noStationsFound,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.grey, fontSize: 16),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: appState.allStations.length,
-              itemBuilder: (context, index) {
-                final station = appState.allStations[index];
-                return StationCard(
-                  station: station,
-                  onTap: () {},
-                  onNavigate: () => _showRoutePanel(station),
-                  onShowElectric: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-                      builder: (context) => ElectricBikeDetailsModal(stationId: station.id, stationName: station.nameTw),
-                    );
-                  },
-                );
-              },
+    
+    if (appState.allStations.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              l10n.noStationsFound,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.grey, fontSize: 16),
             ),
-    );
-  }
+          ],
+        ),
+      );
+    }
 
-  Widget _buildRoadSignPin(bool isPinned) {
-    final Color circleColor = isPinned ? Colors.amber : Colors.yellow;
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Positioned(bottom: 0, child: Container(width: 6, height: 12, decoration: BoxDecoration(color: Colors.grey[600], borderRadius: const BorderRadius.vertical(bottom: Radius.circular(2)))),),
-        Container(width: 32, height: 32, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))])),
-        Container(width: 26, height: 26, decoration: BoxDecoration(color: circleColor, shape: BoxShape.circle)),
-        const Icon(Icons.directions_bike, color: Colors.black, size: 18),
-      ],
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: appState.allStations.length,
+      itemBuilder: (context, index) {
+        final station = appState.allStations[index];
+        return StationCard(
+          station: station,
+          onTap: () {},
+          onNavigate: () => _showRoutePanel(station),
+          onShowElectric: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+              builder: (context) => ElectricBikeDetailsModal(stationId: station.id, stationName: station.nameTw),
+            );
+          },
+        );
+      },
     );
   }
 }
