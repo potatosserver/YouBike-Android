@@ -346,7 +346,7 @@ class _HomeUpdateButtonState extends State<HomeUpdateButton> with SingleTickerPr
               ),
               const SizedBox(width: 8),
               Text(
-                "${appState.countdownRemaining}${l10n.countdown_unit} ${l10n.countdown_text}",
+                "${appState.countdownRemaining}${l10n.countdown_unit}${l10n.countdown_text}",
                 style: TextStyle(
                   color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87,
                   fontWeight: FontWeight.bold,

@@ -25,11 +25,26 @@ class RegionSelectionScreen extends StatelessWidget {
           final String regionId = entry.key;
           final String regionKey = entry.value['name'] as String;
           
-          // Use the dynamic translation method
-          final String regionName = (regionKey.startsWith('region_')) 
-              ? (l10n as dynamic).getTranslation(regionKey) // Use dynamic to bypass compile-time check if method exists in generated class
-              : regionKey;
+          // Correct way to get translation for regions from AppLocalizations
+          String regionName;
+          switch (regionKey) {
+            case 'region_taipei': regionName = l10n.region_taipei; break;
+            case 'region_new_taipei': regionName = l10n.region_new_taipei; break;
+            case 'region_taoyuan': regionName = l10n.region_taoyuan; break;
+            case 'region_hsinchu_county': regionName = l10n.region_hsinchu_county; break;
+            case 'region_hsinchu_city': regionName = l10n.region_hsinchu_city; break;
+            case 'region_science_park': regionName = l10n.region_science_park; break;
+            case 'region_miaoli': regionName = l10n.region_miaoli; break;
+            case 'region_taichung': regionName = l10n.region_taichung; break;
+            case 'region_chiayi': regionName = l10n.region_chiayi; break;
+            case 'region_tainan': regionName = l10n.region_tainan; break;
+            case 'region_kaohsiung': regionName = l10n.region_kaohsiung; break;
+            case 'region_pingtung': regionName = l10n.region_pingtung; break;
+            case 'region_taitung': regionName = l10n.region_taitung; break;
+            default: regionName = regionKey;
+          }
           final bool isSelected = appState.selectedRegion == regionId;
+
 
           return Padding(
             padding: const EdgeInsets.only(bottom: 24),

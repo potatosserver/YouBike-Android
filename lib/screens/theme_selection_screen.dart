@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../services/app_state.dart';
+import '../services/theme_provider.dart';
 
 class ThemeSelectionScreen extends StatelessWidget {
   const ThemeSelectionScreen({super.key});
@@ -9,8 +10,8 @@ class ThemeSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final appState = Provider.of<AppState>(context);
     final theme = Theme.of(context);
+
 
     return Scaffold(
       appBar: AppBar(
@@ -22,11 +23,11 @@ class ThemeSelectionScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         children: [
-          _buildOption(context, title: "系統預設", mode: ThemeMode.system, isSelected: appState.themeMode == ThemeMode.system),
+          _buildOption(context, title: "系統預設", mode: ThemeMode.system, isSelected: Provider.of<ThemeProvider>(context).themeMode == ThemeMode.system),
           const SizedBox(height: 24),
-          _buildOption(context, title: "淺色模式", mode: ThemeMode.light, isSelected: appState.themeMode == ThemeMode.light),
+          _buildOption(context, title: "淺色模式", mode: ThemeMode.light, isSelected: Provider.of<ThemeProvider>(context).themeMode == ThemeMode.light),
           const SizedBox(height: 24),
-          _buildOption(context, title: "深色模式", mode: ThemeMode.dark, isSelected: appState.themeMode == ThemeMode.dark),
+          _buildOption(context, title: "深色模式", mode: ThemeMode.dark, isSelected: Provider.of<ThemeProvider>(context).themeMode == ThemeMode.dark),
         ],
       ),
     );
@@ -36,7 +37,7 @@ class ThemeSelectionScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return InkWell(
       onTap: () {
-        Provider.of<AppState>(context, listen: false).setThemeMode(mode);
+        Provider.of<ThemeProvider>(context, listen: false).setThemeMode(mode);
       },
       child: Row(
         children: [

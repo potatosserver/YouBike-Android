@@ -54,7 +54,6 @@ class AppState extends ChangeNotifier {
   bool hasObtainedRealLocation = false;
   LatLng? lastKnownLocation;
   String currentLang = 'zh_TW';
-  ThemeMode themeMode = ThemeMode.system;
   bool isUpdating = false; 
   int countdownRemaining = 60;
   bool isOffline = false; 
@@ -156,8 +155,8 @@ class AppState extends ChangeNotifier {
 
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
-    final themeIndex = _prefs?.getInt('themeMode') ?? 0;
-    themeMode = ThemeMode.values[themeIndex];
+    // Note: themeMode is now managed by ThemeProvider, we just read it for consistency if needed
+    // final themeIndex = _prefs?.getInt('themeMode') ?? 0;
     currentLang = _prefs?.getString('currentLang') ?? 'zh_TW';
     selectedRegion = _prefs?.getString('selectedRegion') ?? 'kaohsiung';
     useLocation = _prefs?.getBool('useLocation') ?? true;
@@ -451,12 +450,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setThemeMode(ThemeMode mode) {
-    themeMode = mode;
-    _prefs?.setInt('themeMode', mode.index);
-    notifyListeners();
-  }
-
+  // Removed setThemeMode as it is now handled by ThemeProvider
   void setLanguage(String lang) {
     currentLang = lang;
     _prefs?.setString('currentLang', lang);
