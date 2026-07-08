@@ -1,9 +1,9 @@
-name: Generate Taiwan Map Tiles
+name: Generate YouBike Base Map
 
 on:
   schedule:
-    - cron: '0 0 * * 0' # 每週日午夜執行
-  workflow_dispatch:     # 允許手動點擊執行
+    - cron: '0 0 * * 0' # 每週日執行
+  workflow_dispatch:
 
 jobs:
   build:
@@ -18,29 +18,30 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Download Planetiler and Build Map
+      - name: Generate High-Res Base Map
         run: |
-          # 1. 下載 Planetiler 最新版
+          # 下載 Planetiler
           wget https://github.com/onthegomap/planetiler/releases/latest/download/planetiler.jar
           
-          # 2. 下載台灣 OSM 原始資料
+          # 下載全台 OSM 資料
           wget https://download.geofabrik.de/asia/taiwan-latest.osm.pbf
           
-          # 3. 執行打包 (加入 --download 自動抓取輔助圖層)
-          # 注意：-Xmx4g 設定 4GB 記憶體，台灣範圍已足夠
-          java -Xmx4g -jar planetiler.jar \
+          # 執行精簡化打包
+          # 僅保留：transportation (道路), transportation_name (路名), 
+          # building (建築), landuse (公園/綠地), water (水系)
+          java -Xmx12g -jar planetiler.jar \
             --osm-path=taiwan-latest.osm.pbf \
-            --output=taiwan.pmtiles \
+            --output=taiwan_base.pmtiles \
+            --only-layers=transportation,transportation_name,building,landuse,water \
             --download \
             --force \
-            --maxzoom=14
+            --maxzoom=18
           
-          # 檢查是否生成成功
-          ls -lh taiwan.pmtiles
+          ls -lh taiwan_base.pmtiles
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: taiwan-map-tiles
-          path: taiwan.pmtiles
+          name: taiwan-base-map
+          path: taiwan_base.pmtiles
           retention-days: 7
