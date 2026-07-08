@@ -18,7 +18,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Generate High-Res Base Map (Zoom 16)
+      - name: Generate OMT v3 Compatible Map
         run: |
           # 下載 Planetiler
           wget https://github.com/onthegomap/planetiler/releases/latest/download/planetiler.jar
@@ -27,20 +27,23 @@ jobs:
           wget https://download.geofabrik.de/asia/taiwan-latest.osm.pbf
           
           # 執行打包
-          # maxzoom=16 符合 OpenMapTiles 標準，並可透過 App 原生放大至 18
+          # --profile=openmaptiles: 確保輸出的 Schema 符合 OFM 樣式標準
+          # --exclude-layers=poi,mountain_peak: 移除無用雜訊，大幅縮小檔案
+          # --maxzoom=16: 維持高效能，並透過 App 向量放大支援 18 級顯示
           java -Xmx12g -jar planetiler.jar \
+            --profile=openmaptiles \
             --osm-path=taiwan-latest.osm.pbf \
-            --output=taiwan_base.pmtiles \
-            --only-layers=transportation,transportation_name,building,landuse,water \
+            --output=taiwan_omt_v3.pmtiles \
+            --exclude-layers=poi,mountain_peak \
+            --maxzoom=16 \
             --download \
-            --force \
-            --maxzoom=16
+            --force
           
-          ls -lh taiwan_base.pmtiles
+          ls -lh taiwan_omt_v3.pmtiles
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: taiwan-base-map
-          path: taiwan_base.pmtiles
+          name: taiwan-omt-v3-map
+          path: taiwan_omt_v3.pmtiles
           retention-days: 7
