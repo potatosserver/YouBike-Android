@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:latlong2/latlong.dart' as ll;
@@ -21,16 +22,32 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   MapLibreMapController? _mapController;
   late ValueNotifier<double> _panelHeightNotifier;
   bool _isMapLoaded = false;
   int _lastRenderedCount = 0;
+  
+  Ticker? _dragTicker;
+  double _pendingDeltaY = 0.0;
 
   @override
   void initState() {
     super.initState();
     _panelHeightNotifier = ValueNotifier<double>(0.0);
+    
+    _dragTicker = createTicker((elapsed) {
+      if (_pendingDeltaY != 0) {
+        double currentHeight = _panelHeightNotifier.value;
+        double newHeight = currentHeight - _pendingDeltaY;
+        _panelHeightNotifier.value = newHeight.clamp(
+          MediaQuery.of(context).size.height * 0.2, 
+          MediaQuery.of(context).size.height * 0.8,
+        );
+        _pendingDeltaY = 0.0;
+      }
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final appState = Provider.of<AppState>(context, listen: false);
       appState.addListener(_onAppStateChanged);
@@ -43,18 +60,16 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     Provider.of<AppState>(context, listen: false).removeListener(_onAppStateChanged);
     _panelHeightNotifier.dispose();
+    _dragTicker?.dispose();
     super.dispose();
   }
 
   void _onAppStateChanged() {
     final appState = Provider.of<AppState>(context, listen: false);
-    
     if (appState.isFollowingUser && appState.center != null) {
       _animateMapTo(appState.center!);
     }
-    
     if (_isMapLoaded && appState.allStations.length != _lastRenderedCount) {
-      debugPrint("[MAP-SYNC] Data changed ($_lastRenderedCount -> ${appState.allStations.length}), re-rendering...");
       _renderStationsChunked(appState.allStations);
     }
   }
@@ -112,7 +127,6 @@ class _HomeScreenState extends State<HomeScreen> {
           onStyleLoadedCallback: () async {
             await Future.delayed(const Duration(milliseconds: 200));
             _isMapLoaded = true;
-            debugPrint("[MAP-BOOT] Style loaded, composing composite icons...");
             await _loadBikeIcons();
             await _renderStationsChunked(appState.allStations);
           },
@@ -140,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           ValueListenableBuilder<double>(
             valueListenable: _panelHeightNotifier,
-            builder: (context, panelHeight, child) {
+            builder: (context, panelHeight, _) {
               if (appState.center == null) return const Center(child: CircularProgressIndicator());
               return Stack(
                 children: [
@@ -165,6 +179,28 @@ class _HomeScreenState extends State<HomeScreen> {
                   Positioned(
                     bottom: 0, left: 0, right: 0, height: panelHeight,
                     child: panelLayer,
+                  ),
+                  Positioned(
+                    bottom: panelHeight - 10,
+                    left: 0, right: 0, height: 32,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onVerticalDragStart: (_) => _dragTicker?.start(),
+                      onVerticalDragEnd: (_) => _dragTicker?.stop(),
+                      onVerticalDragUpdate: (details) {
+                        _pendingDeltaY += details.delta.dy;
+                      },
+                      child: Center(
+                        child: Container(
+                          width: MediaQuery.of(context).size.width * 0.4, height: 4,
+                          decoration: BoxDecoration(
+                            color: theme.brightness == Brightness.dark ? Colors.white38 : const Color(0xFFBBBBBB),
+                            borderRadius: BorderRadius.circular(2),
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 3, offset: const Offset(0, 1))],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               );
@@ -195,27 +231,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadBikeIcons() async {
     if (_mapController == null) return;
     try {
-      // 1. Load the PNG asset
       final ByteData data = await rootBundle.load('assets/icons/bike_icon.png');
       final Uint8List bytes = data.buffer.asUint8List();
       final ui.Codec codec = await ui.instantiateImageCodec(bytes);
       final ui.FrameInfo frame = await codec.getNextFrame();
       final ui.Image bikeImage = frame.image;
 
-      // 2. Setup Canvas for composition (64x64)
       const double size = 64.0;
       final ui.PictureRecorder recorder = ui.PictureRecorder();
       final ui.Canvas canvas = ui.Canvas(recorder);
-      final ui.Paint paint = ui.Paint()..color = const Color(0xFFFFD700); // YouBike Yellow
+      final ui.Paint paint = ui.Paint()..color = const Color(0xFFFFD700);
 
-      // 3. Draw Background Circle
-      canvas.drawCircle(
-        const Offset(size / 2, size / 2), 
-        size / 2, 
-        paint
-      );
-
-      // 4. Draw Bike Image centered on top
+      canvas.drawCircle(const Offset(size / 2, size / 2), size / 2, paint);
       const double imageSize = 40.0;
       const double offset = (size - imageSize) / 2;
       const Rect destRect = Rect.fromLTWH(offset, offset, imageSize, imageSize);
@@ -227,13 +254,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ui.Paint(),
       );
 
-      // 5. Convert composition to bytes
       final ui.Picture picture = recorder.endRecording();
       final ui.Image compositeImage = await picture.toImage(size.toInt(), size.toInt());
       final ByteData? compositeData = await compositeImage.toByteData(format: ui.ImageByteFormat.png);
       final Uint8List compositeBytes = compositeData!.buffer.asUint8List();
 
-      // 6. Inject into MapLibre
       await _mapController!.addImage('bike-icon', compositeBytes);
       debugPrint("[MAP-BOOT] Composite icon 'bike-icon' (Yellow Circle + PNG) loaded successfully.");
     } catch (e) {
@@ -297,28 +322,6 @@ class _BottomPanel extends StatelessWidget {
       ),
       child: Column(
         children: [
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onVerticalDragUpdate: (details) {
-              double newHeight = heightNotifier.value - details.delta.dy;
-              heightNotifier.value = newHeight.clamp(screenHeight * 0.2, screenHeight * 0.8);
-            },
-            child: Container(
-              width: double.infinity,
-              height: 32,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Center(
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.4, height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.brightness == Brightness.dark ? Colors.white38 : const Color(0xFFBBBBBB),
-                    borderRadius: BorderRadius.circular(2),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 3, offset: const Offset(0, 1))],
-                  ),
-                ),
-              ),
-            ),
-          ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
