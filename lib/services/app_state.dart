@@ -62,6 +62,7 @@ class AppState extends ChangeNotifier {
   Set<String> pinnedStationIds = {};
   StreamSubscription<Position>? _locationSubscription;
   SharedPreferences? _prefs;
+  final ValueNotifier<double> panelHeightNotifier = ValueNotifier(300.0);
 
   Map<String, Map<String, dynamic>> get regions => _regions;
   final Map<String, Map<String, dynamic>> _regions = {
@@ -326,16 +327,18 @@ class AppState extends ChangeNotifier {
       LatLng referencePoint = lastKnownLocation ?? getEffectiveLocation();
       
       // 定位請求保持非阻塞背景任務
-      getCurrentPosition().then((pos) {
-        if (pos != null) {
-          lastKnownLocation = LatLng(pos.latitude, pos.longitude);
-          hasObtainedRealLocation = true;
-          for (var s in allStations) {
-            s.distance = _calculateDistance(lastKnownLocation!.latitude, lastKnownLocation!.longitude, s.lat, s.lng);
-          }
-          notifyListeners();
-          debugPrint("[REFRESH-LOG] 🕒 背景定位更新完成: ${DateTime.now().millisecondsSinceEpoch - startTime}ms");
+      await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      ).then((pos) {
+        lastKnownLocation = LatLng(pos.latitude, pos.longitude);
+        hasObtainedRealLocation = true;
+        for (var s in allStations) {
+          s.distance = _calculateDistance(lastKnownLocation!.latitude, lastKnownLocation!.longitude, s.lat, s.lng);
         }
+        notifyListeners();
+        debugPrint("[REFRESH-LOG] 🕒 背景定位更新完成: ${DateTime.now().millisecondsSinceEpoch - startTime}ms");
       });
       
       final sorted = List<Station>.from(_fullStationList);
@@ -517,8 +520,9 @@ class AppState extends ChangeNotifier {
       
       debugPrint("[GPS] 📡 請求精確座標...");
       return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.low,
-        timeLimit: const Duration(seconds: 5),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+        ),
       ).timeout(const Duration(seconds: 6)); 
     } catch (e) {
       debugPrint("[GPS] ❌ 獲取失敗: $e");

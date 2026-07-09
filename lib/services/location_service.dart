@@ -40,7 +40,9 @@ class LocationService {
   /// 獲取單次當前位置
   Future<Position> getCurrentPosition() async {
     return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      ),
     );
   }
 
