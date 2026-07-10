@@ -8,9 +8,9 @@ class Station {
   final String addressEn;
   final double lat;
   final double lng;
-  int availableBikes;
-  int availableElectricBikes;
-  int emptySpaces;
+  int? availableBikes;
+  int? availableElectricBikes;
+  int? emptySpaces;
   double distance;
   LatLng? visualPosition; // Added for visual offsetting
 
@@ -22,9 +22,9 @@ class Station {
     required this.addressEn,
     required this.lat,
     required this.lng,
-    this.availableBikes = 0,
-    this.availableElectricBikes = 0,
-    this.emptySpaces = 0,
+    this.availableBikes,
+    this.availableElectricBikes,
+    this.emptySpaces,
     this.distance = 0.0,
   });
 
@@ -58,9 +58,10 @@ class Station {
     );
   }
 
-  static int _parseInt(dynamic value) {
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
     if (value is num) return value.toInt();
-    if (value is String) return int.tryParse(value) ?? 0;
-    return 0;
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 }

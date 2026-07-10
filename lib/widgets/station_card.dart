@@ -24,8 +24,12 @@ class StationCard extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final isPinned = appState.pinnedStationIds.contains(station.id);
-    final hasElectric = station.availableElectricBikes > 0;
+    final hasElectric = (station.availableElectricBikes ?? 0) > 0;
     final double distValue = station.distance;
+
+    String formatValue(int? value) {
+      return value == null ? "未知" : value.toString();
+    }
 
     return GestureDetector(
       onTap: onTap,
@@ -102,17 +106,17 @@ class StationCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              "${l10n.availableBikes} ${station.availableBikes}",
+              "${l10n.availableBikes} ${formatValue(station.availableBikes)}",
               style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
             const SizedBox(height: 4),
             Text(
-              "${l10n.availableElectricBikes} ${station.availableElectricBikes}",
+              "${l10n.availableElectricBikes} ${formatValue(station.availableElectricBikes)}",
               style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
             const SizedBox(height: 4),
             Text(
-              "${l10n.emptySpaces} ${station.emptySpaces}",
+              "${l10n.emptySpaces} ${formatValue(station.emptySpaces)}",
               style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
           ],

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/station.dart';
 
@@ -53,6 +54,7 @@ class ApiService {
       final batch = stationIds.sublist(i, i + batchSize > stationIds.length ? stationIds.length : i + batchSize);
       
       try {
+        debugPrint("[API-REQ] 🚀 發送批次請求: $batch");
         final response = await _client.post(
           url,
           headers: headers,
@@ -61,21 +63,28 @@ class ApiService {
 
         if (response.statusCode == 200) {
           final result = jsonDecode(response.body);
+          debugPrint("[API-RESP] 📩 收到回應: retCode=${result['retCode']}, status=${response.statusCode}");
+          
           if (result['retCode'] == 1 && result['retVal'] != null && result['retVal']['data'] != null) {
             final List<dynamic> data = result['retVal']['data'];
+            debugPrint("[API-RESP] ✅ 成功獲取數據筆數: ${data.length}");
             for (var item in data) {
               final stationNo = item['station_no'].toString();
               final detail = item['available_spaces_detail'];
               allVehicleData[stationNo] = {
-                'available_2_0': detail != null ? detail['yb2'] : 0,
-                'available_e': detail != null ? detail['eyb'] : 0,
-                'empty_spaces': item['empty_spaces'] ?? 0,
+                'available_2_0': detail != null ? detail['yb2'] : null,
+                'available_e': detail != null ? detail['eyb'] : null,
+                'empty_spaces': item['empty_spaces'],
               };
             }
+          } else {
+            debugPrint("[API-RESP] ⚠️ API 返回非成功狀態: ${result['retMsg']}");
           }
+        } else {
+          debugPrint("[API-RESP] ❌ HTTP 錯誤: ${response.statusCode}");
         }
       } catch (e) {
-        // Log error silently to avoid blocking the rest of the batches
+        debugPrint("[API-ERROR] 💥 批次請求異常: $e");
       }
     }
     return allVehicleData;
