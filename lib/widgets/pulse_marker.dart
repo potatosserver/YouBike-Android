@@ -15,25 +15,37 @@ class PulseMarker extends StatelessWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Outer pulse ring
+        // Outer soft pulse (Solid fill, not a ring)
         const PulseAnimation(
-          color: Color(0xFF2196F3),
-          size: 40,
+          color: Color(0xFF4285F4),
+          targetSize: 60,
         ),
-        // Inner pulse ring
+        // Inner soft pulse (Solid fill, not a ring)
         const PulseAnimation(
-          color: Color(0xFF2196F3),
-          size: 20,
+          color: Color(0xFF4285F4),
+          targetSize: 60,
           delay: Duration(milliseconds: 500),
         ),
-        // Center dot
+        // Center Dot: Web-standard 20px core with crisp white halo
         Container(
-          width: 12,
-          height: 12,
-          decoration: const BoxDecoration(
-            color: Color(0xFF2196F3),
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
-            boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 2)],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              color: const Color(0xFF4285F4),
+            ),
           ),
         ),
       ],
@@ -43,13 +55,13 @@ class PulseMarker extends StatelessWidget {
 
 class PulseAnimation extends StatefulWidget {
   final Color color;
-  final double size;
+  final double targetSize;
   final Duration delay;
 
   const PulseAnimation({
     super.key,
     required this.color,
-    required this.size,
+    required this.targetSize,
     this.delay = Duration.zero,
   });
 
@@ -81,15 +93,14 @@ class _PulseAnimationState extends State<PulseAnimation> with SingleTickerProvid
       animation: _controller,
       builder: (context, child) {
         final progress = _controller.value;
+        // Expand from core dot (20px) to targetSize (60px)
+        final currentSize = 20.0 + (widget.targetSize - 20.0) * progress;
         return Container(
-          width: widget.size * (1 + progress),
-          height: widget.size * (1 + progress),
+          width: currentSize,
+          height: currentSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(
-              color: widget.color.withValues(alpha: 1.0 - progress),
-              width: 2,
-            ),
+            color: widget.color.withValues(alpha: 0.3 * (1.0 - progress)),
           ),
         );
       },
