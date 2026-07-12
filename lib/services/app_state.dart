@@ -215,6 +215,9 @@ class AppState extends ChangeNotifier {
     _monitorConnectivity();
     await _runOptimizedInit();
     startAutoRefreshCycle();
+    // Start the first countdown immediately so user doesn't have to click
+    countdownRemaining = 60;
+    _startCountdownTimer();
     isLoading = false;
     notifyListeners();
   }
