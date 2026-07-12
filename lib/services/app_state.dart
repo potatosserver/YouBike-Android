@@ -19,24 +19,34 @@ class RoadSignPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
+    final mainRadius = 18.0; // Main yellow circle radius
+    final haloRadius = 24.0; // Outer glow radius
 
-    final paint = Paint()
-      ..color = isPinned ? const Color(0xFFFFD700) : Colors.amber.shade200
+    // 1. Draw Halo (Outer Glow)
+    final haloPaint = Paint()
+      ..color = const Color(0xFFFFD700).withOpacity(0.4)
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, radius, paint);
+    canvas.drawCircle(center, haloRadius, haloPaint);
 
-    paint
+    // 2. Draw Main Body
+    final bodyPaint = Paint()
+      ..color = isPinned ? const Color(0xFFFFD700) : const Color(0xFFF7D560)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, mainRadius, bodyPaint);
+
+    // 3. Draw Thick White Border
+    final borderPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    canvas.drawCircle(center, radius - 1, paint);
+      ..strokeWidth = 4.0;
+    canvas.drawCircle(center, mainRadius - 2.0, borderPaint);
 
+    // 4. Draw Bike Icon
     final textPainter = TextPainter(
       text: TextSpan(
         text: String.fromCharCode(Icons.directions_bike.codePoint),
         style: TextStyle(
-          fontSize: 24,
+          fontSize: 22,
           fontFamily: Icons.directions_bike.fontFamily,
           package: Icons.directions_bike.fontPackage,
           color: Colors.black87,
@@ -48,6 +58,10 @@ class RoadSignPainter extends CustomPainter {
     final iconOffset = Offset(center.dx - textPainter.width / 2, center.dy - textPainter.height / 2);
     textPainter.paint(canvas, iconOffset);
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
@@ -124,7 +138,7 @@ class AppState extends ChangeNotifier {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     const double dpr = 3.0; 
-    const Size logicalSize = Size(40, 40);
+    const Size logicalSize = Size(50, 50);
     canvas.scale(dpr); 
     painter.paint(canvas, logicalSize);
     final picture = recorder.endRecording();
@@ -171,11 +185,8 @@ class AppState extends ChangeNotifier {
     final id = stationId.trim();
     if (pinnedStationIds.contains(id)) {
       pinnedStationIds.remove(id);
-    if (pinnedStationIds.contains(id)) {
-      pinnedStationIds.remove(id);
     } else {
       pinnedStationIds.add(id);
-    }
     }
     _prefs?.setStringList('pinnedStations', pinnedStationIds.toList());
     notifyListeners();
@@ -215,7 +226,6 @@ class AppState extends ChangeNotifier {
     _monitorConnectivity();
     await _runOptimizedInit();
     startAutoRefreshCycle();
-    // Start the first countdown immediately so user doesn't have to click
     countdownRemaining = 60;
     _startCountdownTimer();
     isLoading = false;
@@ -307,7 +317,7 @@ class AppState extends ChangeNotifier {
   Future<void> _performRefresh(bool isInitial, String reason) async {
     if (!isInitial) {
       countdownRemaining = 60;
-      isUpdating = false; // Ensure we show the countdown, not 'Updating...'
+      isUpdating = false; 
       _startCountdownTimer();
       notifyListeners();
     }
