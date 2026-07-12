@@ -143,7 +143,7 @@ class _SearchPanelState extends State<SearchPanel> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) => RouteDetailPanel(destination: station.nameTw, destLat: station.lat, destLng: station.lng),
+      builder: (context) => RouteDetailPanel(station: station, destLat: station.lat, destLng: station.lng),
     );
   }
 }

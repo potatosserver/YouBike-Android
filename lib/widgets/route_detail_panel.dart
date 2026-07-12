@@ -5,15 +5,16 @@ import '../services/app_state.dart';
 import '../services/route_service.dart';
 import '../widgets/app_theme.dart';
 import '../l10n/app_localizations.dart';
+import '../models/station.dart';
 
 class RouteDetailPanel extends StatefulWidget {
-  final String destination;
+  final Station station;
   final double destLat;
   final double destLng;
 
   const RouteDetailPanel({
     super.key, 
-    required this.destination,
+    required this.station,
     required this.destLat,
     required this.destLng,
   });
@@ -53,7 +54,6 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
     final routeService = RouteService();
     
     try {
-      // 優先使用快取定位，避免阻塞
       LatLng startPoint = appState.lastKnownLocation ?? appState.getEffectiveLocation();
       
       final steps = await routeService.getRoute(
@@ -84,7 +84,10 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final appState = Provider.of<AppState>(context);
     
+    final destinationName = appState.currentLang == 'en' ? widget.station.nameEn : widget.station.nameTw;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -112,7 +115,7 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    "${l10n.go_to}${widget.destination}",
+                    "${l10n.go_to}$destinationName",
                     style: TextStyle(
                       fontSize: 20, 
                       fontWeight: FontWeight.bold,

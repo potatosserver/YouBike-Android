@@ -302,7 +302,12 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _performRefresh(bool isInitial, String reason) async {
-    if (!isInitial) { isUpdating = true; countdownRemaining = 60; notifyListeners(); }
+    if (!isInitial) {
+      countdownRemaining = 60;
+      isUpdating = false; // Ensure we show the countdown, not 'Updating...'
+      _startCountdownTimer();
+      notifyListeners();
+    }
     try {
       final api = ApiService();
       if (_fullStationList.isEmpty) _fullStationList = await api.fetchAllStations();
@@ -325,7 +330,7 @@ class AppState extends ChangeNotifier {
       for (var s in allStations) { if (vehicleData.containsKey(s.id)) { final data = vehicleData[s.id] as Map<String, dynamic>; s.availableBikes = data['available_2_0'] ?? 0; s.availableElectricBikes = data['available_e'] ?? 0; s.emptySpaces = data['empty_spaces'] ?? 0; } }
       _lastRefreshTime = DateTime.now();
     } catch (e) { addLog("refresh_error $e", isError: true); }
-    finally { if (!isInitial) { isUpdating = false; notifyListeners(); } }
+    finally { if (!isInitial) { isUpdating = false; _countdownTimer?.cancel(); notifyListeners(); } }
   }
 
   void addLog(String message, {bool isError = false}) {
@@ -373,12 +378,25 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _startCountdownTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (countdownRemaining > 0) {
+        countdownRemaining--;
+        notifyListeners();
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
   void startAutoRefreshCycle() {
     Timer.periodic(const Duration(minutes: 1), (timer) {
       refreshStations(isInitial: false, reason: "AUTO_REFRESH");
     });
   }
 
+  Timer? _countdownTimer;
   Future<void>? _refreshFuture; 
   DateTime? _lastRefreshTime;
   StreamSubscription<Position>? _locationSubscription;
