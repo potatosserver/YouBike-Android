@@ -19,7 +19,7 @@ class RoadSignPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final mainRadius = 20.0; // Diameter 40px
+    const mainRadius = 20.0; // Diameter 40px
 
     // 1. Draw Main Body (No Halo)
     final bodyPaint = Paint()
@@ -55,11 +55,6 @@ class RoadSignPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
-}
-
 class AppState extends ChangeNotifier {
   ui.Image? markerImageNormal;
   ui.Image? markerImagePinned;

@@ -7,7 +7,7 @@ class RoadSignMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (image == null) return const Icon(Icons.location_on, color: Colors.amber, size: 30);
+    if (image == null) return Container(width: 40, height: 40, decoration: const BoxDecoration(color: Colors.amber, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 4)));
 
     return RawImage(
       image: image,
