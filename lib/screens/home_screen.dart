@@ -1,5 +1,4 @@
 
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -9,6 +8,7 @@ import '../services/app_state.dart';
 import '../widgets/map_view.dart';
 import '../widgets/search_panel.dart';
 import '../widgets/home_update_button.dart';
+import '../widgets/map_mask_overlay.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,18 +46,10 @@ class _HomeScreenState extends State<HomeScreen> {
           final isWide = size.width >= 600;
           return Stack(
             children: [
-              Positioned(
-                top: isWide ? 12 : 0,
-                left: isWide ? 392 : 0,
-                right: isWide ? 12 : 0,
-                bottom: isWide ? 12 : (_panelHeight ?? size.height * 0.35) + 12,
-                child: ClipRRect(
-                  borderRadius: isWide 
-                      ? BorderRadius.circular(24) 
-                      : const BorderRadius.only(
-                          bottomLeft: Radius.circular(24), 
-                          bottomRight: Radius.circular(24),
-                        ),
+              // 1. Base Map Layer (Full Screen)
+              Positioned.fill(
+                child: Transform.translate(
+                  offset: Offset(0, -((_panelHeight ?? size.height * 0.35) / 2)),
                   child: MapView(
                     mapController: _mapController,
                     isMapReady: _isMapReady,
@@ -66,6 +58,58 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
+              
+              // 2. Framed Mask Overlay
+              Positioned.fill(
+                child: MapMaskOverlay(
+                  maskColor: theme.brightness == Brightness.dark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+                  panelHeight: _panelHeight ?? size.height * 0.35,
+                  isWide: isWide,
+                ),
+              ),
+              
+              // 3. Floating Panels
+              if (isWide)
+                Positioned(top: 12, bottom: 12, left: 12, width: 368, 
+                  child: SearchPanel(
+                    isWide: true, 
+                    mapController: _mapController, 
+                    onHeightChanged: (h) => setState(() => _panelHeight = h),
+                  )
+                )
+              else
+                Positioned(
+                  bottom: 0, 
+                  left: 0, 
+                  right: 0, 
+                  height: _panelHeight ?? size.height * 0.35,
+                  child: SearchPanel(
+                    isWide: false, 
+                    panelHeight: _panelHeight, 
+                    mapController: _mapController, 
+                    onHeightChanged: (h) => setState(() => _panelHeight = h),
+                  ),
+                ),
+              
+              // 4. TOP-LEVEL Drag Touch Layer (Only for Narrow mode)
+              if (!isWide)
+                Positioned(
+                  bottom: (_panelHeight ?? size.height * 0.35) - 40, 
+                  left: 0, 
+                  right: 0, 
+                  height: 140,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onVerticalDragUpdate: (details) {
+                      double newHeight = (_panelHeight ?? size.height * 0.35) - details.delta.dy;
+                      newHeight = newHeight.clamp(size.height * 0.2, size.height * 0.8);
+                      setState(() => _panelHeight = newHeight);
+                    },
+                    child: Container(color: Colors.transparent),
+                  ),
+                ),
+
+              // 5. UI Buttons (Topmost)
               Positioned(
                 top: 40, right: 15,
                 child: GestureDetector(
@@ -95,27 +139,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              if (isWide)
-                Positioned(top: 12, bottom: 12, left: 12, width: 368, 
-                  child: SearchPanel(
-                    isWide: true, 
-                    mapController: _mapController, 
-                    onHeightChanged: (h) => setState(() => _panelHeight = h),
-                  )
-                )
-              else
-                Positioned(
-                  bottom: 0, 
-                  left: 0, 
-                  right: 0, 
-                  height: _panelHeight ?? size.height * 0.35,
-                  child: SearchPanel(
-                    isWide: false, 
-                    panelHeight: _panelHeight, 
-                    mapController: _mapController, 
-                    onHeightChanged: (h) => setState(() => _panelHeight = h),
-                  ),
-                ),
               Positioned(
                 bottom: 30, left: isWide ? 390 : 0, right: 0,
                 child: const Center(child: HomeUpdateButton()),

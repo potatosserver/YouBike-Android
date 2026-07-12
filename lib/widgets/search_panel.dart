@@ -40,19 +40,15 @@ class _SearchPanelState extends State<SearchPanel> {
         return Column(
           children: [
             if (!widget.isWide)
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onVerticalDragUpdate: (details) {
-                  double newHeight = (widget.panelHeight ?? MediaQuery.of(context).size.height * 0.35) - details.delta.dy;
-                  newHeight = newHeight.clamp(MediaQuery.of(context).size.height * 0.2, MediaQuery.of(context).size.height * 0.8);
-                  widget.onHeightChanged(newHeight);
-                },
-                child: Container(
-                  width: double.infinity, height: 24, padding: const EdgeInsets.symmetric(vertical: 9),
-                  child: Center(
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * 0.4, height: 6, 
-                      decoration: BoxDecoration(color: theme.brightness == Brightness.dark ? Colors.white38 : const Color(0xFFBBBBBB), borderRadius: BorderRadius.circular(3), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 3, offset: const Offset(0, 1) )]),
+              Container(
+                width: double.infinity, height: 24, padding: const EdgeInsets.symmetric(vertical: 9),
+                child: Center(
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.4, height: 6, 
+                    decoration: BoxDecoration(
+                      color: theme.brightness == Brightness.dark ? Colors.white38 : const Color(0xFFBBBBBB), 
+                      borderRadius: BorderRadius.circular(3), 
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 3, offset: const Offset(0, 1) )]
                     ),
                   ),
                 ),
@@ -64,9 +60,9 @@ class _SearchPanelState extends State<SearchPanel> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1), 
-                      blurRadius: 15, 
-                      offset: widget.isWide ? const Offset(2, 0) : const Offset(0, -5)
+                      color: Colors.black.withValues(alpha: 0.15), 
+                      blurRadius: 20, 
+                      offset: widget.isWide ? const Offset(2, 0) : const Offset(0, -8)
                     )
                   ],
                 ),
