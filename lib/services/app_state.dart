@@ -40,7 +40,7 @@ class RoadSignPainter extends CustomPainter {
         text: String.fromCharCode(Icons.directions_bike.codePoint),
         style: TextStyle(
           fontSize: 22,
-          fontFamily: Icons.directions_bike.fontFamily,
+          fontFamily: 'MaterialIcons',
           package: Icons.directions_bike.fontPackage,
           color: Colors.black87,
         ),
@@ -113,7 +113,7 @@ class AppState extends ChangeNotifier {
   Future<void> bakeMarkers() async {
     _log("PERF", "Starting marker baking...");
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
+      await Future.delayed(const Duration(milliseconds: 1200));
       markerImageNormal = await _bakePainter(RoadSignPainter(isPinned: false));
       markerImagePinned = await _bakePainter(RoadSignPainter(isPinned: true));
       _log("PERF", "Markers 'baked' into high-res images.");
@@ -216,6 +216,7 @@ class AppState extends ChangeNotifier {
     startAutoRefreshCycle();
     countdownRemaining = 60;
     _startCountdownTimer();
+    bakeMarkers();
     isLoading = false;
     notifyListeners();
   }

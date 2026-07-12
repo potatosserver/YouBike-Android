@@ -106,7 +106,12 @@ class _MainWrapperState extends State<MainWrapper> {
       children: [
         const HomeScreen(),
         if (appState.isLoading) const LoadingOverlay(),
-      ],
+        // Font Warmer: Forces Material Icons to load before baking occurs
+        Opacity(
+          opacity: 0.0,
+          child: Text(String.fromCharCode(0xe53d), style: const TextStyle(fontFamily: 'MaterialIcons'),),
+        ),
+        ],
     );
   }
 }
