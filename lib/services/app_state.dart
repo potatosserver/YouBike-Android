@@ -330,7 +330,7 @@ class AppState extends ChangeNotifier {
       for (var s in allStations) { if (vehicleData.containsKey(s.id)) { final data = vehicleData[s.id] as Map<String, dynamic>; s.availableBikes = data['available_2_0'] ?? 0; s.availableElectricBikes = data['available_e'] ?? 0; s.emptySpaces = data['empty_spaces'] ?? 0; } }
       _lastRefreshTime = DateTime.now();
     } catch (e) { addLog("refresh_error $e", isError: true); }
-    finally { if (!isInitial) { isUpdating = false; _countdownTimer?.cancel(); notifyListeners(); } }
+    finally { if (!isInitial) { isUpdating = false; notifyListeners(); } }
   }
 
   void addLog(String message, {bool isError = false}) {
