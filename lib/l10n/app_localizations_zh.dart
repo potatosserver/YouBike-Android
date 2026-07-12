@@ -227,6 +227,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navigationUnavailable => '導航服務不可用';
 
   @override
+  String get go_to => '前往 ';
+
+  @override
+  String get unknown => '未知';
+
+  @override
   String get updating => '更新中...';
 
   @override

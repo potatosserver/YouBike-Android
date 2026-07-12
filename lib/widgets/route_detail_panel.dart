@@ -33,6 +33,21 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
     _loadRoute();
   }
 
+  String _translateInstruction(String instruction, String lang) {
+    if (lang != 'en') {
+      final map = {
+        'Continue': '直行',
+        'Turn left': '左轉',
+        'Turn right': '右轉',
+        'U-turn': '掉頭',
+      };
+      for (var entry in map.entries) {
+        if (instruction.contains(entry.key)) return instruction.replaceFirst(entry.key, entry.value);
+      }
+    }
+    return instruction;
+  }
+
   Future<void> _loadRoute() async {
     final appState = Provider.of<AppState>(context, listen: false);
     final routeService = RouteService();
@@ -49,7 +64,8 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
       
       if (mounted) {
         setState(() {
-          _steps = steps.map((s) => "${s.instruction} (${(s.distance / 1000).toStringAsFixed(2)} km)").toList();
+          final lang = Provider.of<AppState>(context, listen: false).currentLang;
+          _steps = steps.map((s) => "${_translateInstruction(s.instruction, lang)} (${(s.distance / 1000).toStringAsFixed(2)} km)").toList();
           _isLoading = false;
         });
       }
@@ -95,7 +111,7 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    "前往 ${widget.destination}",
+                    "${l10n.go_to}${widget.destination}",
                     style: TextStyle(
                       fontSize: 20, 
                       fontWeight: FontWeight.bold,
@@ -131,7 +147,7 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
               Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 40),
-                  child: Text("找不到路徑", style: TextStyle(color: theme.colorScheme.onSurface)),
+                  child: Text(l10n.routeNotFound, style: TextStyle(color: theme.colorScheme.onSurface)),
                 ),
               )
             else

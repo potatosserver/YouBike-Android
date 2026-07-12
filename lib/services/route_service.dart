@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
@@ -37,33 +38,25 @@ class RouteService {
     
     final url = "${RouteService.baseUrl}?profile=$profile&locale=$locale&key=${RouteService.apiKey}&elevation=false&instructions=true&point=${start.latitude},${start.longitude}&point=${end.latitude},${end.longitude}";
     
-    
-    
-    
-    
-
     try {
       final response = await http.get(Uri.parse(url));
-      
-      
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['paths'] != null && (data['paths'] as List).isNotEmpty) {
           final steps = data['paths'][0]['instructions'] as List;
-          
           return steps.map((s) => RouteStep.fromJson(s)).toList();
         } else {
-          
+          debugPrint("RouteService: No paths found in response");
         }
       } else if (response.statusCode == 401) {
-        
+        debugPrint("RouteService: Auth failed (401)");
         throw Exception("ROUTE_AUTH_FAILED");
       } else {
-        
+        debugPrint("RouteService: API error ${response.statusCode}");
         throw Exception("ROUTE_API_ERROR");
       }
     } catch (e) {
-      
+      debugPrint("RouteService error: $e");
     }
     return [];
   }

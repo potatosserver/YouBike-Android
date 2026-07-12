@@ -8,6 +8,7 @@ import 'package:youbike_android/screens/settings_screen.dart';
 import 'package:youbike_android/screens/theme_selection_screen.dart';
 import 'package:youbike_android/screens/region_selection_screen.dart';
 import 'package:youbike_android/screens/language_selection_screen.dart';
+import 'package:youbike_android/services/theme_provider.dart';
 import 'package:youbike_android/widgets/loading_overlay.dart';
 import 'package:youbike_android/l10n/app_localizations.dart';
 
@@ -22,6 +23,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => appState),
         ChangeNotifierProvider(create: (_) => langService),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -33,38 +35,40 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'YouBike',
-      themeMode: ThemeMode.system,
-      theme: ThemeData(
-        brightness: Brightness.light,
-        primaryColor: const Color(0xFF007BFF),
-        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-        useMaterial3: true,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) => MaterialApp(
+        title: 'YouBike',
+        themeMode: themeProvider.themeMode,
+        theme: ThemeData(
+          brightness: Brightness.light,
+          primaryColor: const Color(0xFF007BFF),
+          scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+          useMaterial3: true,
+        ),
+        darkTheme: ThemeData(
+          brightness: Brightness.dark,
+          primaryColor: const Color(0xFF90CAF9),
+          scaffoldBackgroundColor: const Color(0xFF121212),
+          useMaterial3: true,
+        ),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('zh', 'TW'),
+          Locale('en', 'US'),
+        ],
+        home: const MainWrapper(),
+        routes: {
+          '/settings': (context) => const SettingsScreen(),
+          '/theme-selection': (context) => const ThemeSelectionScreen(),
+          '/region-selection': (context) => const RegionSelectionScreen(),
+          '/language-selection': (context) => const LanguageSelectionScreen(),
+        },
       ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: const Color(0xFF90CAF9),
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        useMaterial3: true,
-      ),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('zh', 'TW'),
-        Locale('en', 'US'),
-      ],
-      home: const MainWrapper(),
-      routes: {
-        '/settings': (context) => const SettingsScreen(),
-        '/theme-selection': (context) => const ThemeSelectionScreen(),
-        '/region-selection': (context) => const RegionSelectionScreen(),
-        '/language-selection': (context) => const LanguageSelectionScreen(),
-      },
     );
   }
 }

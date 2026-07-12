@@ -511,6 +511,14 @@ abstract class AppLocalizations {
   /// **'Navigation unavailable'**
   String get navigationUnavailable;
 
+  /// No description provided for @go_to.
+  /// In en, this message translates to: 'Go to '
+  String get go_to;
+
+  /// No description provided for @unknown.
+  /// In en, this message translates to: 'Unknown'
+  String get unknown;
+
   /// No description provided for @updating.
   ///
   /// In en, this message translates to:

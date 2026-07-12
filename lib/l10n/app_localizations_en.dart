@@ -227,6 +227,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationUnavailable => 'Navigation unavailable';
 
   @override
+  String get go_to => 'Go to ';
+
+  @override
+  String get unknown => 'Unknown';
+
+  @override
   String get updating => 'Updating...';
 
   @override

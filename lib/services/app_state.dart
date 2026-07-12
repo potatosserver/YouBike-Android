@@ -169,8 +169,14 @@ class AppState extends ChangeNotifier {
 
   void togglePinStation(String stationId) {
     final id = stationId.trim();
-    if (pinnedStationIds.contains(id)) pinnedStationIds.remove(id);
-    else pinnedStationIds.add(id);
+    if (pinnedStationIds.contains(id)) {
+      pinnedStationIds.remove(id);
+    if (pinnedStationIds.contains(id)) {
+      pinnedStationIds.remove(id);
+    } else {
+      pinnedStationIds.add(id);
+    }
+    }
     _prefs?.setStringList('pinnedStations', pinnedStationIds.toList());
     notifyListeners();
   }

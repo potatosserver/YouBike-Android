@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 
 import 'package:http/http.dart' as http;
 import '../models/station.dart';
@@ -54,7 +55,6 @@ class ApiService {
       final batch = stationIds.sublist(i, i + batchSize > stationIds.length ? stationIds.length : i + batchSize);
       
       try {
-        
         final response = await _client.post(
           url,
           headers: headers,
@@ -63,11 +63,8 @@ class ApiService {
 
         if (response.statusCode == 200) {
           final result = jsonDecode(response.body);
-          
-          
           if (result['retCode'] == 1 && result['retVal'] != null && result['retVal']['data'] != null) {
             final List<dynamic> data = result['retVal']['data'];
-            
             for (var item in data) {
               final stationNo = item['station_no'].toString();
               final detail = item['available_spaces_detail'];
@@ -78,13 +75,13 @@ class ApiService {
               };
             }
           } else {
-            
+            debugPrint("ApiService: Invalid retCode from server");
           }
         } else {
-          
+          debugPrint("ApiService: HTTP error ${response.statusCode}");
         }
       } catch (e) {
-        
+        debugPrint("ApiService batch error: $e");
       }
     }
     return allVehicleData;
@@ -108,7 +105,7 @@ class ApiService {
         }
       }
     } catch (e) {
-      // Log error
+      debugPrint("ApiService electric bike error: $e");
     }
     return [];
   }

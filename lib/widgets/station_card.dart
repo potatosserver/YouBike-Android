@@ -27,8 +27,9 @@ class StationCard extends StatelessWidget {
     final hasElectric = (station.availableElectricBikes ?? 0) > 0;
     final double distValue = station.distance;
 
-    String formatValue(int? value) {
-      return value == null ? "未知" : value.toString();
+    String formatValue(BuildContext context, int? value) {
+      final l10n = AppLocalizations.of(context)!;
+      return value == null ? l10n.unknown : value.toString();
     }
 
     return GestureDetector(
@@ -106,17 +107,17 @@ class StationCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              "${l10n.availableBikes} ${formatValue(station.availableBikes)}",
+              "${l10n.availableBikes} ${formatValue(context, station.availableBikes)}",
               style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
             const SizedBox(height: 4),
             Text(
-              "${l10n.availableElectricBikes} ${formatValue(station.availableElectricBikes)}",
+              "${l10n.availableElectricBikes} ${formatValue(context, station.availableElectricBikes)}",
               style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
             const SizedBox(height: 4),
             Text(
-              "${l10n.emptySpaces} ${formatValue(station.emptySpaces)}",
+              "${l10n.emptySpaces} ${formatValue(context, station.emptySpaces)}",
               style: TextStyle(fontSize: 15, color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87),
             ),
           ],
