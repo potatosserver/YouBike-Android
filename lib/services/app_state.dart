@@ -21,22 +21,31 @@ class RoadSignPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    final paint = Paint()
-      ..color = isPinned ? const Color(0xFFFFD700) : Colors.amber.shade200
+    // 1. Outer Red Border (Road Sign Standard)
+    final borderPaint = Paint()
+      ..color = const Color(0xFFFF4B4B)
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, radius, paint);
+    canvas.drawCircle(center, radius, borderPaint);
 
-    paint
+    // 2. Inner Yellow Circle
+    final bgPaint = Paint()
+      ..color = isPinned ? const Color(0xFFFFD700) : const Color(0xFFF7D560)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, radius - 2, bgPaint);
+
+    // 3. White Thin Ring
+    final whitePaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    canvas.drawCircle(center, radius - 1, paint);
+      ..strokeWidth = 1.5;
+    canvas.drawCircle(center, radius - 3, whitePaint);
 
+    // 4. Bike Icon
     final textPainter = TextPainter(
       text: TextSpan(
         text: String.fromCharCode(Icons.directions_bike.codePoint),
         style: TextStyle(
-          fontSize: 24,
+          fontSize: 22,
           fontFamily: Icons.directions_bike.fontFamily,
           package: Icons.directions_bike.fontPackage,
           color: Colors.black87,
@@ -48,6 +57,10 @@ class RoadSignPainter extends CustomPainter {
     final iconOffset = Offset(center.dx - textPainter.width / 2, center.dy - textPainter.height / 2);
     textPainter.paint(canvas, iconOffset);
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
@@ -169,8 +182,6 @@ class AppState extends ChangeNotifier {
 
   void togglePinStation(String stationId) {
     final id = stationId.trim();
-    if (pinnedStationIds.contains(id)) {
-      pinnedStationIds.remove(id);
     if (pinnedStationIds.contains(id)) {
       pinnedStationIds.remove(id);
     } else {
