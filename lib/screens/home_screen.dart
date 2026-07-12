@@ -51,11 +51,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 left: isWide ? 392 : 0,
                 right: isWide ? 12 : 0,
                 bottom: isWide ? 12 : (_panelHeight ?? size.height * 0.35) + 12,
-                child: MapView(
-                  mapController: _mapController,
-                  isMapReady: _isMapReady,
-                  onReady: (ready) => setState(() => _isMapReady = ready),
-                  onMoveToStation: (pos, zoom) => _mapController.move(pos, zoom),
+                child: ClipRRect(
+                  borderRadius: isWide 
+                      ? BorderRadius.circular(24) 
+                      : const BorderRadius.only(
+                          bottomLeft: Radius.circular(24), 
+                          bottomRight: Radius.circular(24),
+                        ),
+                  child: MapView(
+                    mapController: _mapController,
+                    isMapReady: _isMapReady,
+                    onReady: (ready) => setState(() => _isMapReady = ready),
+                    onMoveToStation: (pos, zoom) => _mapController.move(pos, zoom),
+                  ),
                 ),
               ),
               Positioned(
