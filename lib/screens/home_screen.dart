@@ -46,10 +46,22 @@ class _HomeScreenState extends State<HomeScreen> {
           final isWide = size.width >= 600;
           return Stack(
             children: [
-              // 1. Base Map Layer (Full Screen)
-              Positioned.fill(
-                child: Transform.translate(
-                  offset: Offset(0, -((_panelHeight ?? size.height * 0.35) / 2)),
+              // 1. Base Map Layer
+              if (isWide)
+                Positioned(
+                  left: 404, top: 20, 
+                  width: size.width - 444, height: size.height - 40,
+                  child: MapView(
+                    mapController: _mapController,
+                    isMapReady: _isMapReady,
+                    onReady: (ready) => setState(() => _isMapReady = ready),
+                    onMoveToStation: (pos, zoom) => _mapController.move(pos, zoom),
+                  ),
+                )
+              else
+                Positioned(
+                  top: 0, left: 0, right: 0, 
+                  height: size.height - (_panelHeight ?? size.height * 0.35),
                   child: MapView(
                     mapController: _mapController,
                     isMapReady: _isMapReady,
@@ -57,14 +69,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     onMoveToStation: (pos, zoom) => _mapController.move(pos, zoom),
                   ),
                 ),
-              ),
               
-              // 2. Framed Mask Overlay
+              // 2. Framed Mask Overlay (Wrapped in IgnorePointer for touch passthrough)
               Positioned.fill(
-                child: MapMaskOverlay(
-                  maskColor: theme.brightness == Brightness.dark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
-                  panelHeight: _panelHeight ?? size.height * 0.35,
-                  isWide: isWide,
+                child: IgnorePointer(
+                  child: MapMaskOverlay(
+                    maskColor: theme.brightness == Brightness.dark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+                    panelHeight: _panelHeight ?? size.height * 0.35,
+                    isWide: isWide,
+                    leftOffset: isWide ? 404.0 : null,
+                  ),
                 ),
               ),
               

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -30,6 +29,42 @@ class SearchPanel extends StatefulWidget {
 }
 
 class _SearchPanelState extends State<SearchPanel> {
+  final FocusNode _searchFocusNode = FocusNode();
+  final TextEditingController _searchController = TextEditingController();
+  bool _isFocused = false;
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchFocusNode.addListener(_handleFocusChange);
+    _searchController.addListener(_handleTextChange);
+  }
+
+  void _handleFocusChange() {
+    setState(() {
+      _isFocused = _searchFocusNode.hasFocus;
+    });
+  }
+
+  void _handleTextChange() {
+    setState(() {
+      _hasText = _searchController.text.isNotEmpty;
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _searchFocusNode.requestFocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -57,12 +92,12 @@ class _SearchPanelState extends State<SearchPanel> {
               child: Container(
                 decoration: BoxDecoration(
                   color: theme.brightness == Brightness.dark ? const Color(0xFF222222) : const Color(0xFFFFF2EC),
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15), 
-                      blurRadius: 20, 
-                      offset: widget.isWide ? const Offset(2, 0) : const Offset(0, -8)
+                      color: Colors.black.withValues(alpha: 0.1), 
+                      blurRadius: 4, 
+                      offset: widget.isWide ? const Offset(1, 0) : const Offset(0, 2)
                     )
                   ],
                 ),
@@ -70,15 +105,53 @@ class _SearchPanelState extends State<SearchPanel> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          filled: true, fillColor: theme.brightness == Brightness.dark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF),
-                          hintText: l10n.input_placeholder, prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 20),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _isFocused 
+                            ? (theme.brightness == Brightness.dark ? const Color(0xFF333333) : const Color(0xFFFDE8D6))
+                            : (theme.brightness == Brightness.dark ? const Color(0xFF2A2A2A) : const Color(0xFFFFE8D6)),
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: _isFocused ? 0.15 : 0.08),
+                              blurRadius: _isFocused ? 6 : 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        onSubmitted: (val) => appState.searchStations(val),
-                        style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface),
+                        child: TextField(
+                          controller: _searchController,
+                          focusNode: _searchFocusNode,
+                          textAlignVertical: TextAlignVertical.center,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            hintText: l10n.input_placeholder,
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                            suffixIcon: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (_hasText)
+                                  IconButton(
+                                    icon: const Icon(Icons.clear, color: Colors.grey, size: 24),
+                                    onPressed: _clearSearch,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                if (_hasText) const SizedBox(width: 8),
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 12),
+                                  child: Icon(Icons.search, color: Colors.grey, size: 24),
+                                ),
+                              ],
+                            ),
+                          ),
+                          onSubmitted: (val) => appState.searchStations(val),
+                          style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface),
+                        ),
                       ),
                     ),
                     Expanded(child: _buildStationPanel(appState, l10n)),
