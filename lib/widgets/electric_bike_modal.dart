@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../l10n/app_localizations.dart';
 
-class ElectricBikeDetailsModal extends StatelessWidget {
+class ElectricBikeDetailsModal extends StatefulWidget {
   final String stationId;
   final String stationName;
 
@@ -12,9 +12,23 @@ class ElectricBikeDetailsModal extends StatelessWidget {
     required this.stationName,
   });
 
+  @override
+  State<ElectricBikeDetailsModal> createState() => _ElectricBikeDetailsModalState();
+}
+
+class _ElectricBikeDetailsModalState extends State<ElectricBikeDetailsModal> {
+  late Future<List<Map<String, dynamic>>> _bikesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // 在 initState 中僅調用一次，避免 rebuild 時重新發送請求
+    _bikesFuture = _fetchBikes();
+  }
+
   Future<List<Map<String, dynamic>>> _fetchBikes() async {
     final api = ApiService();
-    return await api.fetchElectricBikeDetails(stationId);
+    return await api.fetchElectricBikeDetails(widget.stationId);
   }
 
   @override
@@ -22,7 +36,7 @@ class ElectricBikeDetailsModal extends StatelessWidget {
     final theme = Theme.of(context);
     
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _fetchBikes(),
+      future: _bikesFuture,
       builder: (context, snapshot) {
         final l10n = AppLocalizations.of(context)!;
         return Container(
@@ -48,7 +62,7 @@ class ElectricBikeDetailsModal extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  "${l10n.electric_bike_details_title} $stationName",
+                  "${l10n.electric_bike_details_title} ${widget.stationName}",
                   style: TextStyle(
                     fontSize: 20, 
                     fontWeight: FontWeight.bold,

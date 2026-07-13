@@ -132,40 +132,45 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               
               // 5. UI Buttons (Topmost)
-              Positioned(
-                top: 40, right: 15,
-                child: GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, '/settings'),
+              ...[
+                Positioned(
+                  top: isWide ? (horizontalMargin + 16.0) : 40, 
+                  right: isWide ? (horizontalMargin + 16.0) : 15,
+                  child: GestureDetector(
+                    onTap: () => Navigator.pushNamed(context, '/settings'),
+                    child: Container(
+                      width: 32, height: 32,
+                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                      child: Center(child: Icon(Icons.settings, size: 22, color: theme.brightness == Brightness.dark ? const Color(0xFF90CAF9) : Colors.black87)),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: isWide ? (horizontalMargin + 16.0) : 20,
+                  bottom: isWide ? (horizontalMargin + 16.0) : (_panelHeight ?? availableHeight * 0.35) + 20, 
                   child: Container(
-                    width: 32, height: 32,
-                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                    child: Center(child: Icon(Icons.settings, size: 22, color: theme.brightness == Brightness.dark ? const Color(0xFF90CAF9) : Colors.black87)),
+                    decoration: BoxDecoration(
+                      color: theme.brightness == Brightness.dark ? const Color(0xFF4A4A4A) : const Color(0xFFFDCACB),
+                      borderRadius: BorderRadius.circular(12), 
+                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.my_location, size: 22, color: theme.brightness == Brightness.dark ? const Color(0xFF90CAF9) : Colors.black87),
+                      onPressed: () async {
+                        await _appState.requestAndCenterLocation();
+                        LatLng snapPos = _appState.lastKnownLocation ?? _appState.getEffectiveLocation();
+                        _mapController.move(snapPos, 18.0);
+                      },
+                    ),
                   ),
                 ),
-              ),
-              Positioned(
-                right: 20,
-                bottom: isWide ? 20 : (_panelHeight ?? availableHeight * 0.35) + 20, 
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: theme.brightness == Brightness.dark ? const Color(0xFF4A4A4A) : const Color(0xFFFDCACB),
-                    borderRadius: BorderRadius.circular(12), 
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
-                  ),
-                  child: IconButton(
-                    icon: Icon(Icons.my_location, size: 22, color: theme.brightness == Brightness.dark ? const Color(0xFF90CAF9) : Colors.black87),
-                    onPressed: () async {
-                      await _appState.requestAndCenterLocation();
-                      LatLng snapPos = _appState.lastKnownLocation ?? _appState.getEffectiveLocation();
-                      _mapController.move(snapPos, 18.0);
-                    },
-                  ),
+                Positioned(
+                  bottom: isWide ? (horizontalMargin + 16.0) : 30, 
+                  left: isWide ? (horizontalMargin + sidebarWidth + gap) : 0, 
+                  right: isWide ? (horizontalMargin + 16.0) : 0,
+                  child: const Center(child: HomeUpdateButton()),
                 ),
-              ),
-              Positioned(
-                bottom: 30, left: isWide ? 390 : 0, right: 0,
-                child: const Center(child: HomeUpdateButton()),
-              ),
+              ],
               
               // 6. 頂層載入遮罩 (遮住所有內容直到初始化完成)
               Positioned.fill(
