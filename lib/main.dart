@@ -50,13 +50,21 @@ class MyApp extends StatelessWidget {
           locale: _getLocale(appState.currentLang), // CRITICAL: Link lang state to MaterialApp
           theme: ThemeData(
             brightness: Brightness.light,
-            primaryColor: const Color(0xFF007BFF),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF007BFF),
+              brightness: Brightness.light,
+              primary: const Color(0xFF007BFF),
+            ),
             scaffoldBackgroundColor: const Color(0xFFF5F5F5),
             useMaterial3: true,
           ),
           darkTheme: ThemeData(
             brightness: Brightness.dark,
-            primaryColor: const Color(0xFF90CAF9),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF90CAF9),
+              brightness: Brightness.dark,
+              primary: const Color(0xFF90CAF9),
+            ),
             scaffoldBackgroundColor: const Color(0xFF121212),
             useMaterial3: true,
           ),

@@ -57,7 +57,8 @@ class SettingsScreen extends StatelessWidget {
                   trailing: Switch(
                     value: appState.useLocation,
                     onChanged: (val) => appState.setUseLocation(val),
-                    activeThumbColor: theme.colorScheme.primary,
+                    activeTrackColor: theme.brightness == Brightness.dark ? const Color(0xFF90CAF9) : const Color(0xFF4A90E2),
+                    activeThumbColor: Colors.white,
                   ),
                   onTap: null,
                 ),
