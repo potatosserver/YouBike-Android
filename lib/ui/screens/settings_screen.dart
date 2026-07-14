@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:youbike_android/core/l10n/app_localizations.dart';
 import 'package:youbike_android/data/services/app_config_service.dart';
+import 'package:youbike_android/ui/widgets/setting_group_card.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     final config = Provider.of<AppConfigService>(context);
@@ -13,7 +14,7 @@ class SettingsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     
     return Scaffold(
-      backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF121212) : const Color(0xFFF8F9FA),
+      backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF121212) : Colors.white,
       appBar: AppBar(
         title: Text(l10n.settings_title),
         backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
@@ -25,8 +26,7 @@ class SettingsScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
           children: [
-            _buildSettingsGroup(
-              context,
+            SettingGroupCard(
               title: l10n.param_settings,
               children: [
                 _buildWalkGoItem(
@@ -34,21 +34,21 @@ class SettingsScreen extends StatelessWidget {
                   icon: Icons.palette_outlined,
                   title: l10n.settings_theme,
                   trailing: const Icon(Icons.chevron_right, size: 22, color: Colors.grey),
-                  onTap: () => Navigator.pushNamed(context, '/theme-selection'),
+                  onTap: () => context.push('/theme-selection'),
                 ),
                 _buildWalkGoItem(
                   context,
                   icon: Icons.map_outlined,
                   title: l10n.settings_region,
                   trailing: const Icon(Icons.chevron_right, size: 22, color: Colors.grey),
-                  onTap: () => Navigator.pushNamed(context, '/region-selection'),
+                  onTap: () => context.push('/region-selection'),
                 ),
                 _buildWalkGoItem(
                   context,
                   icon: Icons.language_outlined,
                   title: l10n.settings_language,
                   trailing: const Icon(Icons.chevron_right, size: 22, color: Colors.grey),
-                  onTap: () => Navigator.pushNamed(context, '/language-selection'),
+                  onTap: () => context.push('/language-selection'),
                 ),
                 _buildWalkGoItem(
                   context,
@@ -67,51 +67,6 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildSettingsGroup(
-    BuildContext context, {
-    required String title,
-    required List<Widget> children,
-  }) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-          child: Text(
-            title,
-            style: TextStyle(
-              color: theme.brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[600],
-              fontWeight: FontWeight.w500,
-              fontSize: 13,
-            ),
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Material(
-            color: theme.brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            clipBehavior: Clip.antiAlias,
-            // Removed 'shape' to fix the Material assertion crash
-            child: Column(
-              children: children,
-            ),
-          ),
-        ),
-      ],
     );
   }
 

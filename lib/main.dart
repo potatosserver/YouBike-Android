@@ -35,8 +35,11 @@ void main() async {
           update: (_, config, mapVm) => mapVm!..updateConfig(config),
         ),
         ChangeNotifierProxyProvider2<AppConfigService, MapViewModel, StationViewModel>(
-          create: (_) => StationViewModel(configService, MapViewModel(configService)),
-          update: (_, config, mapVm, stationVm) => stationVm!..updateDependencies(config, mapVm),
+          create: (_) => StationViewModel(configService, null),
+          update: (_, config, mapVm, stationVm) {
+            stationVm!.updateDependencies(config, mapVm);
+            return stationVm;
+          },
         ),
         ChangeNotifierProvider.value(value: languageService),
       ],

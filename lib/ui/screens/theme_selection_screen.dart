@@ -10,9 +10,10 @@ class ThemeSelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-
+    final currentMode = Provider.of<ThemeProvider>(context).themeMode;
 
     return Scaffold(
+      backgroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.surface : Colors.white,
       appBar: AppBar(
         title: Text(l10n.settings_theme),
         backgroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.surface : Colors.white,
@@ -22,15 +23,16 @@ class ThemeSelectionScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         children: [
-          _buildOption(context, title: "系統預設", mode: ThemeMode.system, isSelected: Provider.of<ThemeProvider>(context).themeMode == ThemeMode.system),
+          _buildOption(context, title: "系統預設", mode: ThemeMode.system, isSelected: currentMode == ThemeMode.system),
           const SizedBox(height: 24),
-          _buildOption(context, title: "淺色模式", mode: ThemeMode.light, isSelected: Provider.of<ThemeProvider>(context).themeMode == ThemeMode.light),
+          _buildOption(context, title: "淺色模式", mode: ThemeMode.light, isSelected: currentMode == ThemeMode.light),
           const SizedBox(height: 24),
-          _buildOption(context, title: "深色模式", mode: ThemeMode.dark, isSelected: Provider.of<ThemeProvider>(context).themeMode == ThemeMode.dark),
+          _buildOption(context, title: "深色模式", mode: ThemeMode.dark, isSelected: currentMode == ThemeMode.dark),
         ],
       ),
     );
   }
+
 
   Widget _buildOption(BuildContext context, {required String title, required ThemeMode mode, required bool isSelected}) {
     final theme = Theme.of(context);

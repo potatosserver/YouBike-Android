@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:youbike_android/ui/screens/settings_screen.dart';
-import 'package:youbike_android/ui/screens/theme_selection_screen.dart';
-import 'package:youbike_android/ui/screens/region_selection_screen.dart';
-import 'package:youbike_android/ui/screens/language_selection_screen.dart';
 import 'package:youbike_android/core/theme/theme_provider.dart';
 import 'package:youbike_android/data/services/app_config_service.dart';
 import 'package:youbike_android/core/l10n/app_localizations.dart';
-import 'package:youbike_android/ui/widgets/app_wrapper.dart';
+import 'package:youbike_android/core/router/app_router.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -27,22 +23,32 @@ class MyApp extends StatelessWidget {
 
     return Consumer2<ThemeProvider, AppConfigService>(
       builder: (context, themeProvider, config, child) {
-        return MaterialApp(
+        return MaterialApp.router(
           title: 'YouBike',
           themeMode: themeProvider.themeMode,
           locale: _getLocale(config.currentLang),
+          routerConfig: AppRouter.router,
           theme: ThemeData(
             useMaterial3: true,
-            colorSchemeSeed: Colors.deepPurple,
-            brightness: Brightness.light,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.deepPurple,
+              brightness: Brightness.light,
+              surface: Colors.white,
+              onSurface: Colors.black87,
+            ),
             dialogTheme: dialogTheme,
           ),
           darkTheme: ThemeData(
             useMaterial3: true,
-            colorSchemeSeed: Colors.deepPurple,
-            brightness: Brightness.dark,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.deepPurple,
+              brightness: Brightness.dark,
+              surface: const Color(0xFF121212),
+              onSurface: Colors.white,
+            ),
             dialogTheme: dialogTheme,
           ),
+
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
@@ -53,13 +59,6 @@ class MyApp extends StatelessWidget {
             Locale('zh', 'TW'),
             Locale('en', 'US'),
           ],
-          home: const AppWrapper(),
-          routes: {
-            '/settings': (context) => const SettingsScreen(),
-            '/theme-selection': (context) => const ThemeSelectionScreen(),
-            '/region-selection': (context) => const RegionSelectionScreen(),
-            '/language-selection': (context) => const LanguageSelectionScreen(),
-          },
         );
       },
     );

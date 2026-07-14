@@ -11,7 +11,7 @@ import 'package:youbike_android/providers/localized_view_model.dart';
 
 class StationViewModel extends LocalizedViewModel {
   AppConfigService config;
-  MapViewModel mapVm;
+  MapViewModel? mapVm; // 改為可空
   StationViewModel(this.config, this.mapVm) {
     _startCountdown();
   }
@@ -62,7 +62,7 @@ class StationViewModel extends LocalizedViewModel {
     try {
       final api = ApiService();
       final vehicleData = await api.fetchRealtimeVehicles(targetList.map((s) => s.id).toList());
-      final referencePoint = mapVm.lastKnownLocation ?? mapVm.getEffectiveLocation();
+      final referencePoint = mapVm?.lastKnownLocation ?? mapVm?.getEffectiveLocation() ?? const LatLng(25.0330, 121.5654);
       
       for (var s in targetList) {
         if (vehicleData.containsKey(s.id)) {
@@ -79,6 +79,7 @@ class StationViewModel extends LocalizedViewModel {
     }
   }
 
+
   Future<void> refreshStations({bool isInitial = false}) async {
     isUpdating = true;
     countdownRemaining = 60; // Reset countdown to 60
@@ -87,7 +88,7 @@ class StationViewModel extends LocalizedViewModel {
       if (isInitial) {
         if (_fullStationList.isEmpty) await fetchBaseData();
         
-        LatLng referencePoint = mapVm.lastKnownLocation ?? mapVm.getEffectiveLocation();
+        final referencePoint = mapVm?.lastKnownLocation ?? mapVm?.getEffectiveLocation() ?? const LatLng(25.0330, 121.5654);
         final sorted = List<Station>.from(_fullStationList);
         sorted.sort((a, b) {
           final distA = _calculateDistance(referencePoint.latitude, referencePoint.longitude, a.lat, a.lng);
@@ -104,6 +105,7 @@ class StationViewModel extends LocalizedViewModel {
       notifyListeners();
     }
   }
+
 
   void searchStations(String query) async {
     try {
@@ -124,14 +126,14 @@ class StationViewModel extends LocalizedViewModel {
   }
 
   List<Station> _applyPrioritySort(List<Station> stations) {
-    final referencePoint = mapVm.lastKnownLocation ?? mapVm.getEffectiveLocation();
+    final referencePoint = mapVm?.lastKnownLocation ?? mapVm?.getEffectiveLocation() ?? const LatLng(25.0330, 121.5654);
     final sortedByDist = List<Station>.from(stations);
     sortedByDist.sort((a, b) {
       final distA = _calculateDistance(referencePoint.latitude, referencePoint.longitude, a.lat, a.lng);
       final distB = _calculateDistance(referencePoint.latitude, referencePoint.longitude, b.lat, b.lng);
       return distA.compareTo(distB);
     });
-
+    
     final pinned = sortedByDist.where((s) => config.pinnedStationIds.contains(s.id.trim())).toList();
     final normal = sortedByDist.where((s) => !config.pinnedStationIds.contains(s.id.trim())).toList();
     return [...pinned, ...normal];

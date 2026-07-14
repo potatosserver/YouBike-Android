@@ -1,16 +1,17 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-
 import 'package:youbike_android/providers/map_view_model.dart';
 import 'package:youbike_android/providers/loading_view_model.dart';
 import 'package:youbike_android/ui/widgets/map_view.dart';
-import 'package:youbike_android/ui/widgets/search_panel.dart';
-import 'package:youbike_android/ui/widgets/home_update_button.dart';
 import 'package:youbike_android/ui/widgets/map_mask_overlay.dart';
 import 'package:youbike_android/ui/widgets/loading_overlay.dart';
+import 'package:youbike_android/ui/widgets/search_panel.dart';
+import 'package:youbike_android/ui/widgets/home_update_button.dart';
+
 
 
 class HomeScreen extends StatefulWidget {
@@ -132,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   top: isWide ? (horizontalMargin + 16.0) : 40, 
                   right: isWide ? (horizontalMargin + 16.0) : 15,
                   child: GestureDetector(
-                    onTap: () => Navigator.pushNamed(context, '/settings'),
+                    onTap: () => context.push('/settings'),
                     child: Container(
                       width: 32, height: 32,
                       decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),

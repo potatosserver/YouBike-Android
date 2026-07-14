@@ -13,6 +13,7 @@ class RegionSelectionScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.surface : Colors.white,
       appBar: AppBar(
         title: Text(l10n.settings_region),
         backgroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.surface : Colors.white,
