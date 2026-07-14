@@ -7,8 +7,9 @@ import '../models/station.dart';
 import '../services/api_service.dart';
 import '../services/app_config_service.dart';
 import '../viewmodels/map_view_model.dart';
+import 'localized_view_model.dart';
 
-class StationViewModel with ChangeNotifier {
+class StationViewModel extends LocalizedViewModel {
   AppConfigService config;
   MapViewModel mapVm;
   StationViewModel(this.config, this.mapVm) {

@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../services/app_config_service.dart';
+import 'localized_view_model.dart';
 
-class MapViewModel with ChangeNotifier {
+class MapViewModel extends LocalizedViewModel {
   final AppConfigService config;
   MapViewModel(this.config);
 
