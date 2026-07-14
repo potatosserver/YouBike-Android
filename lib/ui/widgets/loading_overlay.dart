@@ -11,7 +11,8 @@ class LoadingOverlay extends StatefulWidget {
   State<LoadingOverlay> createState() => _LoadingOverlayState();
 }
 
-class _LoadingOverlayState extends State<LoadingOverlay> with SingleTickerProviderStateMixin {
+class _LoadingOverlayState extends State<LoadingOverlay>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
@@ -23,14 +24,14 @@ class _LoadingOverlayState extends State<LoadingOverlay> with SingleTickerProvid
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
 
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-    _opacityAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+    _opacityAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
@@ -72,14 +73,14 @@ class _LoadingOverlayState extends State<LoadingOverlay> with SingleTickerProvid
                           BoxShadow(
                             color: brandOrange.withValues(alpha: 0.3),
                             blurRadius: 30,
-                            spreadRadius: 8,
+                            spreadRadius: 5,
                             offset: const Offset(0, 10),
                           ),
                         ],
                       ),
                       child: const Icon(
-                        Icons.directions_bike_rounded, 
-                        size: 64, 
+                        Icons.directions_bike_rounded,
+                        size: 64,
                         color: Colors.white,
                       ),
                     ),
@@ -102,9 +103,10 @@ class _LoadingOverlayState extends State<LoadingOverlay> with SingleTickerProvid
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: LinearProgressIndicator(
-                          value: loadingVm.loadingProgress / 100, 
+                          value: loadingVm.loadingProgress / 100,
                           backgroundColor: colorScheme.surfaceContainerHighest,
-                          valueColor: const AlwaysStoppedAnimation<Color>(brandOrange),
+                          valueColor:
+                              const AlwaysStoppedAnimation<Color>(brandOrange),
                           minHeight: 6,
                         ),
                       ),
@@ -136,23 +138,34 @@ class _LoadingOverlayState extends State<LoadingOverlay> with SingleTickerProvid
     // 處理動態數值插值
     if (key == 'init_syncing_stations') {
       final count = val ?? 0;
-      return "正在載入 $count 個站點..."; 
+      return "正在載入 $count 個站點...";
       // 注意：實際應使用 l10n.syncing_stations(count)
     }
 
     // 普通 Key 映射
     switch (key) {
-      case 'init_starting': return l10n.init_starting;
-      case 'init_requesting_permission': return "請求定位權限...";
-      case 'init_verifying_permission': return "驗證權限狀態...";
-      case 'init_locating': return l10n.init_locating;
-      case 'init_map_engine': return "啟動地圖渲染引擎...";
-      case 'init_map_tiles': return "配置區域地圖快取...";
-      case 'init_syncing': return l10n.init_syncing;
-      case 'init_clustering': return "初始化站點集群...";
-      case 'init_updating': return l10n.init_updating;
-      case 'init_success': return l10n.init_success;
-      default: return key;
+      case 'init_starting':
+        return l10n.init_starting;
+      case 'init_requesting_permission':
+        return "請求定位權限...";
+      case 'init_verifying_permission':
+        return "驗證權限狀態...";
+      case 'init_locating':
+        return l10n.init_locating;
+      case 'init_map_engine':
+        return "啟動地圖渲染引擎...";
+      case 'init_map_tiles':
+        return "配置區域地圖快取...";
+      case 'init_syncing':
+        return l10n.init_syncing;
+      case 'init_clustering':
+        return "初始化站點集群...";
+      case 'init_updating':
+        return l10n.init_updating;
+      case 'init_success':
+        return l10n.init_success;
+      default:
+        return key;
     }
   }
 }

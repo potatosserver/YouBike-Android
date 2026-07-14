@@ -44,27 +44,59 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     .logo-circle {
-      width: 110px;
-      height: 110px;
+      width: 130px;
+      height: 130px;
       background-color: #FF9800;
       border-radius: 50%;
       display: flex;
       justify-content: center;
       align-items: center;
-      box-shadow: 0 15px 35px rgba(255, 152, 0, 0.3);
+      box-shadow: 0 10px 30px rgba(255, 152, 0, 0.3);
       animation: pulse 1.5s infinite ease-in-out;
     }
     .logo-icon {
       color: white;
-      font-size: 45px;
+      font-size: 64px;
       font-style: normal;
     }
     .brand-text {
-      margin-top: 35px;
+      margin-top: 48px;
       font-size: 26px;
       font-weight: 600;
       color: #333;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
+    }
+    .progress-container {
+      margin-top: 32px;
+      width: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .progress-bar-bg {
+      width: 100%;
+      height: 6px;
+      background-color: #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      width: 30%;
+      height: 100%;
+      background-color: #FF9800;
+      border-radius: 12px;
+      animation: loading 2s infinite ease-in-out;
+    }
+    .progress-text {
+      margin-top: 16px;
+      font-size: 14px;
+      color: #757575;
+      font-weight: 500;
+    }
+    @keyframes loading {
+      0% { width: 0%; margin-left: 0%; }
+      50% { width: 50%; margin-left: 25%; }
+      100% { width: 0%; margin-left: 100%; }
     }
     @keyframes pulse {
       0% { transform: scale(1); opacity: 0.8; }
@@ -82,9 +114,15 @@
   
   <div id="loading-screen">
     <div class="logo-circle">
-      <span class="logo-icon">🚲</span>
-    </div>
+        <svg xmlns="http://www.w3.org/2000/svg" height="64px" viewBox="0 -960 960 960" width="64px" fill="#FFFFFF"><path d="M200-80q-83 0-141.5-58.5T0-280q0-83 58.5-141.5T200-480q83 0 141.5 58.5T400-280q0 83-58.5 141.5T200-80Zm85-115q35-35 35-85t-35-85q-35-35-85-35t-85 35q-35 35-35 85t35 85q35 35 85 35t85-35Zm155-5v-200L312-512q-12-11-18-25.5t-6-30.5q0-16 6.5-30.5T312-624l112-112q12-12 27.5-18t32.5-6q17 0 32.5 6t27.5 18l76 76q28 28 64 44t76 16v80q-57 0-108.5-22T560-604l-32-32-96 96 88 92v248h-80Zm123.5-563.5Q540-787 540-820t23.5-56.5Q587-900 620-900t56.5 23.5Q700-853 700-820t-23.5 56.5Q653-740 620-740t-56.5-23.5ZM760-80q-83 0-141.5-58.5T560-280q0-83 58.5-141.5T760-480q83 0 141.5 58.5T960-280q0 83-58.5 141.5T760-80Zm85-115q35-35 35-85t-35-85q-35-35-85-35t-85 35q-35 35-35 85t35 85q35 35 85 35t85-35Z"/></svg>
+  </div>
     <div class="brand-text">YouBike</div>
+    <div class="progress-container">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill"></div>
+      </div>
+      <div class="progress-text">Loading...</div>
+    </div>
   </div>
 
   <script src="flutter_bootstrap.js" async></script>
