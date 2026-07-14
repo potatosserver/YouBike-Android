@@ -1,12 +1,12 @@
-import '../viewmodels/map_view_model.dart';
+import 'package:youbike_android/providers/map_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
-import '../services/app_config_service.dart';
-import '../services/route_service.dart';
-import '../widgets/app_theme.dart';
-import '../l10n/app_localizations.dart';
-import '../models/station.dart';
+import 'package:youbike_android/data/services/app_config_service.dart';
+import 'package:youbike_android/data/services/route_service.dart';
+import 'package:youbike_android/ui/widgets/app_theme.dart';
+import 'package:youbike_android/core/l10n/app_localizations.dart';
+import 'package:youbike_android/data/models/station.dart';
 
 class RouteDetailPanel extends StatefulWidget {
   final Station station;

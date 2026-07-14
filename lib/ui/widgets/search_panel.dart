@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import '../viewmodels/station_view_model.dart';
-import '../models/station.dart';
-import '../widgets/station_card.dart';
-import '../widgets/route_detail_panel.dart';
-import '../widgets/electric_bike_modal.dart';
-import '../l10n/app_localizations.dart';
+import 'package:youbike_android/providers/station_view_model.dart';
+import 'package:youbike_android/data/models/station.dart';
+import 'package:youbike_android/ui/widgets/station_card.dart';
+import 'package:youbike_android/ui/widgets/route_detail_panel.dart';
+import 'package:youbike_android/ui/widgets/electric_bike_modal.dart';
+import 'package:youbike_android/core/l10n/app_localizations.dart';
 import 'dart:math' as math;
 
 class SearchPanel extends StatefulWidget {

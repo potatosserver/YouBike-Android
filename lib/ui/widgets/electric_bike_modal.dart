@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
-import '../l10n/app_localizations.dart';
+import 'package:youbike_android/data/services/api_service.dart';
+import 'package:youbike_android/core/l10n/app_localizations.dart';
 
 class ElectricBikeDetailsModal extends StatefulWidget {
   final String stationId;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../viewmodels/loading_view_model.dart';
-import '../l10n/app_localizations.dart';
+import 'package:youbike_android/providers/loading_view_model.dart';
+import 'package:youbike_android/core/l10n/app_localizations.dart';
 
 class LoadingOverlay extends StatelessWidget {
   const LoadingOverlay({super.key});

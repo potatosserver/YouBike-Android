@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../l10n/app_localizations.dart';
-import '../services/app_config_service.dart';
+import 'package:youbike_android/core/l10n/app_localizations.dart';
+import 'package:youbike_android/data/services/app_config_service.dart';
 
 class RegionSelectionScreen extends StatelessWidget {
   const RegionSelectionScreen({super.key});

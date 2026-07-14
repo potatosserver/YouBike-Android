@@ -4,11 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
-import '../models/station.dart';
-import '../viewmodels/map_view_model.dart';
-import '../viewmodels/station_view_model.dart';
-import '../widgets/map_markers.dart';
-import '../widgets/pulse_marker.dart';
+import 'package:youbike_android/data/models/station.dart';
+import 'package:youbike_android/providers/map_view_model.dart';
+import 'package:youbike_android/providers/station_view_model.dart';
+import 'package:youbike_android/ui/widgets/map_markers.dart';
+import 'package:youbike_android/ui/widgets/pulse_marker.dart';
 
 class MapView extends StatefulWidget {
   final MapController mapController;

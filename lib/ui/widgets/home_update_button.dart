@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../viewmodels/station_view_model.dart';
-import '../l10n/app_localizations.dart';
+import 'package:youbike_android/providers/station_view_model.dart';
+import 'package:youbike_android/core/l10n/app_localizations.dart';
 
 class HomeUpdateButton extends StatefulWidget {
   const HomeUpdateButton({super.key});

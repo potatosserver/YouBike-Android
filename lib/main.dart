@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:youbike_android/services/language_service.dart';
-import 'package:youbike_android/services/theme_provider.dart';
-import 'package:youbike_android/services/app_config_service.dart';
-import 'package:youbike_android/services/log_service.dart';
-import 'package:youbike_android/viewmodels/map_view_model.dart';
-import 'package:youbike_android/viewmodels/station_view_model.dart';
-import 'package:youbike_android/viewmodels/loading_view_model.dart';
-import 'package:youbike_android/app.dart';
+import 'package:youbike_android/data/services/language_service.dart';
+import 'package:youbike_android/core/theme/theme_provider.dart';
+import 'package:youbike_android/data/services/app_config_service.dart';
+import 'package:youbike_android/core/utils/log_service.dart';
+import 'package:youbike_android/providers/map_view_model.dart';
+import 'package:youbike_android/providers/station_view_model.dart';
+import 'package:youbike_android/providers/loading_view_model.dart';
+import 'package:youbike_android/ui/app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

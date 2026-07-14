@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import 'package:http/http.dart' as http;
-import '../models/station.dart';
+import 'package:youbike_android/data/models/station.dart';
 
 class ApiService {
   final String stationsUrl = "https://apis.youbike.com.tw/json/station-min-yb2.json";

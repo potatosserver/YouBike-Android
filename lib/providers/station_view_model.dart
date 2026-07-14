@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
-import '../models/station.dart';
-import '../services/api_service.dart';
-import '../services/app_config_service.dart';
-import '../viewmodels/map_view_model.dart';
-import 'localized_view_model.dart';
+import 'package:youbike_android/data/models/station.dart';
+import 'package:youbike_android/data/services/api_service.dart';
+import 'package:youbike_android/data/services/app_config_service.dart';
+import 'package:youbike_android/providers/map_view_model.dart';
+import 'package:youbike_android/providers/localized_view_model.dart';
 
 class StationViewModel extends LocalizedViewModel {
   AppConfigService config;

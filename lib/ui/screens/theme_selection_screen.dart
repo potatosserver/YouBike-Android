@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../l10n/app_localizations.dart';
-import '../services/theme_provider.dart';
+import 'package:youbike_android/core/l10n/app_localizations.dart';
+import 'package:youbike_android/core/theme/theme_provider.dart';
 
 class ThemeSelectionScreen extends StatelessWidget {
   const ThemeSelectionScreen({super.key});

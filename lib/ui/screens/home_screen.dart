@@ -4,13 +4,13 @@ import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../viewmodels/map_view_model.dart';
-import '../viewmodels/loading_view_model.dart';
-import '../widgets/map_view.dart';
-import '../widgets/search_panel.dart';
-import '../widgets/home_update_button.dart';
-import '../widgets/map_mask_overlay.dart';
-import '../widgets/loading_overlay.dart';
+import 'package:youbike_android/providers/map_view_model.dart';
+import 'package:youbike_android/providers/loading_view_model.dart';
+import 'package:youbike_android/ui/widgets/map_view.dart';
+import 'package:youbike_android/ui/widgets/search_panel.dart';
+import 'package:youbike_android/ui/widgets/home_update_button.dart';
+import 'package:youbike_android/ui/widgets/map_mask_overlay.dart';
+import 'package:youbike_android/ui/widgets/loading_overlay.dart';
 
 
 class HomeScreen extends StatefulWidget {

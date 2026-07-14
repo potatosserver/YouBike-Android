@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:youbike_android/screens/home_screen.dart';
-import 'package:youbike_android/viewmodels/loading_view_model.dart';
-import 'package:youbike_android/viewmodels/station_view_model.dart';
-import 'package:youbike_android/viewmodels/map_view_model.dart';
-import 'package:youbike_android/widgets/loading_overlay.dart';
-import 'package:youbike_android/services/log_service.dart';
+import 'package:youbike_android/ui/screens/home_screen.dart';
+import 'package:youbike_android/providers/loading_view_model.dart';
+import 'package:youbike_android/providers/station_view_model.dart';
+import 'package:youbike_android/providers/map_view_model.dart';
+import 'package:youbike_android/ui/widgets/loading_overlay.dart';
+import 'package:youbike_android/core/utils/log_service.dart';
 
 class AppWrapper extends StatefulWidget {
   const AppWrapper({super.key});

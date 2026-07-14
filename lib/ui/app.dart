@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:youbike_android/screens/settings_screen.dart';
-import 'package:youbike_android/screens/theme_selection_screen.dart';
-import 'package:youbike_android/screens/region_selection_screen.dart';
-import 'package:youbike_android/screens/language_selection_screen.dart';
-import 'package:youbike_android/services/theme_provider.dart';
-import 'package:youbike_android/services/app_config_service.dart';
-import 'package:youbike_android/l10n/app_localizations.dart';
-import 'package:youbike_android/widgets/app_wrapper.dart';
+import 'package:youbike_android/ui/screens/settings_screen.dart';
+import 'package:youbike_android/ui/screens/theme_selection_screen.dart';
+import 'package:youbike_android/ui/screens/region_selection_screen.dart';
+import 'package:youbike_android/ui/screens/language_selection_screen.dart';
+import 'package:youbike_android/core/theme/theme_provider.dart';
+import 'package:youbike_android/data/services/app_config_service.dart';
+import 'package:youbike_android/core/l10n/app_localizations.dart';
+import 'package:youbike_android/ui/widgets/app_wrapper.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

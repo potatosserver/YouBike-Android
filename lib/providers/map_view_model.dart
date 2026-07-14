@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import '../services/app_config_service.dart';
-import 'localized_view_model.dart';
+import 'package:youbike_android/data/services/app_config_service.dart';
+import 'package:youbike_android/providers/localized_view_model.dart';
 
 class MapViewModel extends LocalizedViewModel {
   final AppConfigService config;

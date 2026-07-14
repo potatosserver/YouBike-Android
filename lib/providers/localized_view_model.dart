@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:youbike_android/l10n/app_localizations.dart';
+import 'package:youbike_android/core/l10n/app_localizations.dart';
 
 /// [LocalizedViewModel] 提供一個標準化的 L10n 注入接口。
 /// 繼承此類的 ViewModel 可以直接通過 [l10n] 屬性訪問翻譯字符串，
