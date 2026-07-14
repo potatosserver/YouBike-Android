@@ -1,11 +1,12 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter/material.dart';
 
 class LoadingViewModel with ChangeNotifier {
   bool isLoading = false;
   double loadingProgress = 0.0;
   String currentNotice = "init_starting";
   int? statusValue; // 用於存放動態數據（如站點數量）
+  Timer? _progressTimer;
 
   // 分類管理通知
   final Map<String, String> technicalSteps = {
@@ -33,6 +34,8 @@ class LoadingViewModel with ChangeNotifier {
   ];
 
   void setLoading(bool value) {
+    _progressTimer?.cancel();
+    _progressTimer = null;
     isLoading = value;
     if (!value) {
       loadingProgress = 0.0;
@@ -41,35 +44,65 @@ class LoadingViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-  // 強化版更新狀態：支持傳入動態數值
-  void updateStatus(String key, {int? value}) {
+  void setProgress(double progress) {
+    _animateToProgress(progress.clamp(0.0, 100.0));
+  }
+
+  // 強化版更新狀態：支持傳入動態數值與進度
+  void updateStatus(String key, {int? value, double? progress}) {
     currentNotice = key;
     statusValue = value;
-    notifyListeners();
+    if (progress != null) {
+      setProgress(progress);
+    } else {
+      notifyListeners();
+    }
   }
 
   void simulatePercentage() {
-    Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (!isLoading) {
-        timer.cancel();
-        return;
-      }
-      
-      if (loadingProgress < 100) {
-        loadingProgress += 0.8;
-        if (loadingProgress > 100) loadingProgress = 100;
-        notifyListeners();
-      } else {
-        timer.cancel();
-      }
-    });
+    // 保留方法以兼容舊呼叫，但不再用於啟動流程。
+    setProgress(loadingProgress);
   }
 
   void setFinished() {
+    _progressTimer?.cancel();
+    _progressTimer = null;
     isLoading = false;
-    loadingProgress = 100.0;
+    setProgress(100.0);
     currentNotice = "init_success";
     statusValue = null;
-    notifyListeners();
+  }
+
+  void _animateToProgress(double targetProgress) {
+    if (!isLoading && targetProgress < 100.0) {
+      loadingProgress = targetProgress;
+      notifyListeners();
+      return;
+    }
+
+    _progressTimer?.cancel();
+    _progressTimer = null;
+
+    if ((loadingProgress - targetProgress).abs() < 0.01) {
+      loadingProgress = targetProgress;
+      notifyListeners();
+      return;
+    }
+
+    final stepSize = (targetProgress - loadingProgress).abs() > 10 ? 2.4 : 1.0;
+
+    _progressTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
+      final diff = targetProgress - loadingProgress;
+      if (diff.abs() <= stepSize) {
+        loadingProgress = targetProgress;
+        _progressTimer?.cancel();
+        _progressTimer = null;
+        notifyListeners();
+        return;
+      }
+
+      loadingProgress += diff > 0 ? stepSize : -stepSize;
+      notifyListeners();
+    });
   }
 }
