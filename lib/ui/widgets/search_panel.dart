@@ -7,6 +7,8 @@ import 'package:youbike_android/data/models/station.dart';
 import 'package:youbike_android/ui/widgets/station_card.dart';
 import 'package:youbike_android/ui/widgets/route_detail_panel.dart';
 import 'package:youbike_android/ui/widgets/electric_bike_modal.dart';
+import 'package:youbike_android/core/services/station_format_helper.dart';
+import 'package:youbike_android/data/services/app_config_service.dart';
 import 'package:youbike_android/core/l10n/app_localizations.dart';
 import 'dart:math' as math;
 
@@ -106,9 +108,7 @@ class _SearchPanelState extends State<SearchPanel> {
                         curve: Curves.easeInOut,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _isFocused 
-                            ? cs.surfaceContainerHighest
-                            : cs.surfaceContainer,
+                          color: cs.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(28),
                           boxShadow: [
                             BoxShadow(
@@ -193,7 +193,10 @@ class _SearchPanelState extends State<SearchPanel> {
                         context: context,
                         isScrollControlled: true,
                         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-                        builder: (context) => ElectricBikeDetailsModal(stationId: station.id, stationName: station.nameTw),
+                        builder: (context) => ElectricBikeDetailsModal(
+                          stationId: station.id,
+                          stationName: const StationFormatHelper().name(station, Provider.of<AppConfigService>(context, listen: false).currentLang),
+                        ),
                       );
                     },
                   );
