@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:youbike_android/providers/map_view_model.dart';
 import 'package:youbike_android/providers/loading_view_model.dart';
 import 'package:youbike_android/ui/widgets/map_view.dart';
+import 'package:youbike_android/core/theme/brand_colors.dart';
 import 'package:youbike_android/providers/station_view_model.dart';
 import 'package:youbike_android/core/services/gps_requester.dart';
 import 'package:youbike_android/ui/widgets/map_mask_overlay.dart';
@@ -143,8 +144,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () => context.push('/settings'),
                     child: Container(
                       width: 32, height: 32,
-                      decoration: const BoxDecoration(color: Color(0xFFFFCC80), shape: BoxShape.circle),
-                      child: const Center(child: Icon(Icons.settings, size: 22, color: Colors.black)),
+                      decoration: const BoxDecoration(color: BrandColors.lightOrange, shape: BoxShape.circle),
+                      child: Center(child: Icon(Icons.settings, size: 22, color: cs.onSurface)),
                     ),
                   ),
                 ),
@@ -153,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   bottom: isWide ? (horizontalMargin + 16.0) : (_panelHeight ?? availableHeight * 0.35) + 20, 
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFCC80),
+                      color: BrandColors.lightOrange,
                       borderRadius: BorderRadius.circular(12), 
                       boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
                     ),

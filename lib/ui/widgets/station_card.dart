@@ -57,10 +57,10 @@ class StationCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     _fmt.name(station, lang),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: cs.brightness == Brightness.light ? BrandColors.accentBlue : cs.primary,
+                      color: BrandColors.accentBlue,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

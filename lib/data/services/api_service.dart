@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'package:youbike_android/core/utils/log_service.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:youbike_android/data/models/station.dart';
@@ -75,13 +75,13 @@ class ApiService {
               };
             }
           } else {
-            debugPrint("ApiService: Invalid retCode from server");
+            LogService().w('API', 'Invalid retCode from server');
           }
         } else {
-          debugPrint("ApiService: HTTP error ${response.statusCode}");
+          LogService().e('API', 'HTTP ${response.statusCode}');
         }
       } catch (e) {
-        debugPrint("ApiService batch error: $e");
+        LogService().e('API', 'Batch request failed', error: e);
       }
     }
     return allVehicleData;
@@ -105,7 +105,7 @@ class ApiService {
         }
       }
     } catch (e) {
-      debugPrint("ApiService electric bike error: $e");
+      LogService().e('API', 'Electric bike request failed', error: e);
     }
     return [];
   }

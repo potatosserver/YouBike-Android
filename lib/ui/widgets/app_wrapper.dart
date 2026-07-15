@@ -59,7 +59,7 @@ class _AppWrapperState extends State<AppWrapper> {
       await stationVm.fetchBaseData(loadingVm); // 傳入 loadingVm 以回報數量
 
       loadingVm.updateStatus('init_clustering', progress: 86);
-      await stationVm.refreshCards(moveTo: mapVm.center);
+      await stationVm.refreshCards(moveTo: mapVm.getEffectiveLocation());
 
       loadingVm.updateStatus('init_updating', progress: 96);
       await Future.delayed(const Duration(milliseconds: 300));

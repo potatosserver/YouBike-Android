@@ -43,7 +43,8 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
     final routeService = RouteService();
 
     try {
-      LatLng startPoint = Provider.of<MapViewModel>(context, listen: false).lastKnownLocation ?? Provider.of<MapViewModel>(context, listen: false).getEffectiveLocation();
+      final mapVm = Provider.of<MapViewModel>(context, listen: false);
+      final startPoint = mapVm.lastKnownLocation ?? mapVm.getEffectiveLocation();
 
       final steps = await routeService.getRoute(
         startPoint,

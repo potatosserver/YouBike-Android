@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:youbike_android/core/utils/log_service.dart';
 import 'package:latlong2/latlong.dart' hide DistanceCalculator;
 import 'package:youbike_android/core/services/distance_calculator.dart';
 import 'package:youbike_android/data/models/station.dart';
@@ -32,7 +32,7 @@ class RealtimeUpdater {
         );
       }
     } catch (e) {
-      debugPrint('RealtimeUpdater error: $e');
+      LogService().e('RT_UPDATER', 'Realtime update failed', error: e);
     }
   }
 }

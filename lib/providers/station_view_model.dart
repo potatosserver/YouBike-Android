@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/material.dart';
+import 'package:youbike_android/core/utils/log_service.dart';
 import 'package:latlong2/latlong.dart' hide DistanceCalculator;
 import 'package:youbike_android/core/services/card_refresh_coordinator.dart';
 import 'package:youbike_android/core/services/map_move_trigger.dart';
@@ -95,7 +95,7 @@ class StationViewModel extends LocalizedViewModel {
         );
       }
     } catch (e) {
-      debugPrint('Base data fetch error: $e');
+      LogService().e('STATION', 'Base data fetch failed', error: e);
     }
   }
 
@@ -124,7 +124,7 @@ class StationViewModel extends LocalizedViewModel {
         moveTo: moveTo,
       );
     } catch (e) {
-      debugPrint('refreshCards error: $e');
+      LogService().e('STATION', 'refreshCards failed', error: e);
     } finally {
       isUpdating = false;
       notifyListeners();
@@ -155,7 +155,7 @@ class StationViewModel extends LocalizedViewModel {
         moveTo: null,
       );
     } catch (e) {
-      debugPrint('Search error: $e');
+      LogService().e('STATION', 'Search failed', error: e);
     } finally {
       isUpdating = false;
       notifyListeners();

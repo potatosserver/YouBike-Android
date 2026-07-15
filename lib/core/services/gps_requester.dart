@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:youbike_android/core/utils/log_service.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:youbike_android/providers/map_view_model.dart';
 
@@ -21,7 +21,7 @@ class GpsRequester {
       // If it's still null, GPS failed → caller can decide fallback.
       return mapVm.lastKnownLocation;
     } catch (e) {
-      debugPrint('GpsRequester error: $e');
+      LogService().e('GPS', 'Request failed', error: e);
       return null;
     }
   }

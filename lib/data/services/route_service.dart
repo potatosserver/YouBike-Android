@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'package:youbike_android/core/utils/log_service.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
@@ -46,17 +46,17 @@ class RouteService {
           final steps = data['paths'][0]['instructions'] as List;
           return steps.map((s) => RouteStep.fromJson(s)).toList();
         } else {
-          debugPrint("RouteService: No paths found in response");
+          LogService().w('ROUTE', 'No paths in response');
         }
       } else if (response.statusCode == 401) {
-        debugPrint("RouteService: Auth failed (401)");
+        LogService().e('ROUTE', 'Auth failed (401)');
         throw Exception("ROUTE_AUTH_FAILED");
       } else {
-        debugPrint("RouteService: API error ${response.statusCode}");
+        LogService().e('ROUTE', 'API error: ${response.statusCode}');
         throw Exception("ROUTE_API_ERROR");
       }
     } catch (e) {
-      debugPrint("RouteService error: $e");
+      LogService().e('ROUTE', 'Route request failed', error: e);
     }
     return [];
   }

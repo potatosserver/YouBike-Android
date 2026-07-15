@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:youbike_android/core/theme/brand_colors.dart';
 import 'package:youbike_android/providers/station_view_model.dart';
 import 'package:youbike_android/core/l10n/app_localizations.dart';
 
@@ -51,7 +52,7 @@ class _HomeUpdateButtonState extends State<HomeUpdateButton> with SingleTickerPr
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFCC80),
+                  color: BrandColors.lightOrange,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
                 ),

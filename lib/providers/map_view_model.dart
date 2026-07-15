@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:youbike_android/core/utils/log_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:youbike_android/data/services/app_config_service.dart';
@@ -19,13 +19,13 @@ class MapViewModel extends LocalizedViewModel {
 
   Future<void> requestAndCenterLocation() async {
     if (!config.useLocation) {
-      debugPrint("Location is disabled by user config.");
+      LogService().i('MAP', 'Location disabled by config');
       return;
     }
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        debugPrint("Location services are disabled.");
+        LogService().w('MAP', 'Location services disabled');
         return;
       }
 
@@ -45,7 +45,7 @@ class MapViewModel extends LocalizedViewModel {
       center = lastKnownLocation;
       notifyListeners();
     } catch (e) {
-      debugPrint("Location error: $e");
+      LogService().e('MAP', 'Location request failed', error: e);
     }
   }
 
