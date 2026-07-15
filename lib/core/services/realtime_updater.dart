@@ -4,7 +4,7 @@ import 'package:youbike_android/core/services/distance_calculator.dart';
 import 'package:youbike_android/data/models/station.dart';
 import 'package:youbike_android/data/services/api_service.dart';
 
-/// Fetches realtime vehicle data from the API and applies it + distance to stations.
+/// 從 API 取得即時車輛數據，填入站點並更新距離。
 class RealtimeUpdater {
   final DistanceCalculator _calc;
 

@@ -18,18 +18,15 @@ class PulseMarker extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Outer soft pulse
           const PulseAnimation(
             color: BrandColors.accentBlue,
             targetSize: 60,
           ),
-          // Inner soft pulse
           const PulseAnimation(
             color: BrandColors.accentBlue,
             targetSize: 60,
             delay: Duration(milliseconds: 500),
           ),
-          // Center Dot
           Container(
             width: 20,
             height: 20,

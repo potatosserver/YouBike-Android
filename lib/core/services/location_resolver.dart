@@ -1,8 +1,8 @@
 import 'package:latlong2/latlong.dart';
 import 'package:youbike_android/providers/map_view_model.dart';
 
-/// Resolves the reference point. Delegates to MapViewModel which
-/// respects config.useLocation internally.
+/// 解析參考座標。委派給 MapViewModel，
+/// 內部遵循 config.useLocation 設定。
 class LocationResolver {
   const LocationResolver();
 

@@ -34,7 +34,7 @@ class StationViewModel extends LocalizedViewModel {
   Timer? _countdownTimer;
   late bool _wasUseLocation;
 
-  /// Exposed so HomeScreen can attach its MapController.
+  /// 暴露給 HomeScreen 注入 MapController。
   MapMoveTrigger get mapTrigger => _coordinator.mapTrigger;
 
   void updateDependencies(AppConfigService newConfig, MapViewModel newMapVm) {
@@ -79,8 +79,6 @@ class StationViewModel extends LocalizedViewModel {
     });
   }
 
-  // ── base data (unchanged) ──
-
   Future<void> fetchBaseData(LoadingViewModel? loadingVm) async {
     try {
       final api = ApiService();
@@ -99,16 +97,14 @@ class StationViewModel extends LocalizedViewModel {
     }
   }
 
-  // ── single entry point for everything ──
-
   void _beginRefresh() {
     isUpdating = true;
     countdownRemaining = 60;
     notifyListeners();
   }
 
-  /// Re-sorts, fetches realtime data, and optionally moves the map.
-  /// Called by: countdown expiry, manual update button, search.
+  /// 重新排序、取得即時數據，並可選地圖移動。
+  /// 觸發者：倒數歸零、手動更新按鈕、搜尋。
   Future<void> refreshCards({LatLng? moveTo}) async {
     if (_fullStationList.isEmpty) await fetchBaseData(null);
     if (_fullStationList.isEmpty) return;
@@ -131,7 +127,7 @@ class StationViewModel extends LocalizedViewModel {
     }
   }
 
-  /// Search filters station names, then delegates to refreshCards.
+  /// 依站名過濾，再委派給 refreshCards。
   void searchStations(String query) async {
     try {
       if (query.isEmpty) {

@@ -1,8 +1,8 @@
 import 'package:youbike_android/core/l10n/app_localizations.dart';
 import 'package:youbike_android/data/models/station.dart';
 
-/// Formats Station fields for display. Keeps nullable-handling logic
-/// out of StationCard widget.
+/// 站點欄位顯示格式化。將 nullable 處理邏輯
+/// 從 StationCard 中抽離。
 class StationFormatHelper {
   const StationFormatHelper();
 

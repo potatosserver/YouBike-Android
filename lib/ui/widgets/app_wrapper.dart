@@ -39,7 +39,6 @@ class _AppWrapperState extends State<AppWrapper> {
     loadingVm.updateStatus('init_starting', progress: 5);
 
     try {
-      // --- 階段 1: 定位與權限 ---
       loadingVm.updateStatus('init_requesting_permission', progress: 12);
       await Future.delayed(const Duration(milliseconds: 500));
 
@@ -47,14 +46,12 @@ class _AppWrapperState extends State<AppWrapper> {
       const gps = GpsRequester();
       await gps.requestOrFallback(mapVm);
 
-      // --- 階段 2: 地圖引擎準備 ---
       loadingVm.updateStatus('init_map_engine', progress: 38);
       await Future.delayed(const Duration(milliseconds: 400));
 
       loadingVm.updateStatus('init_map_tiles', progress: 52);
       await Future.delayed(const Duration(milliseconds: 400));
 
-      // --- 階段 3: 數據同步 (掛鉤真實數據) ---
       loadingVm.updateStatus('init_syncing', progress: 68);
       await stationVm.fetchBaseData(loadingVm); // 傳入 loadingVm 以回報數量
 
@@ -80,10 +77,8 @@ class _AppWrapperState extends State<AppWrapper> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // 底層：主畫面預先渲染
         const HomeScreen(),
 
-        // 頂層：共用真實載入層
         LoadingOverlay(isVisible: _isInitializing),
       ],
     );

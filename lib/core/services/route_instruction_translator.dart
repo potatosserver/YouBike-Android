@@ -1,5 +1,5 @@
-/// Translates GraphHopper route instructions.
-/// Separated from RouteDetailPanel widget.
+/// GraphHopper 導航指令翻譯。
+/// 從 RouteDetailPanel 分離出來。
 class RouteInstructionTranslator {
   const RouteInstructionTranslator();
 

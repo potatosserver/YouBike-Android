@@ -2,23 +2,22 @@ import 'package:youbike_android/core/utils/log_service.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:youbike_android/providers/map_view_model.dart';
 
-/// Single entry point for requesting GPS and getting a resolved position.
+/// GPS 請求與位置解析的唯一入口。
 ///
-/// Usage:
+/// 用法：
 ///   final pos = await gpsRequester.request(mapVm);
 ///   if (pos != null) { ... }
 class GpsRequester {
   const GpsRequester();
 
-  /// Requests GPS permission + position, returns the resolved coordinate.
-  /// Returns null if GPS is unavailable or denied.
-  /// Falls back to region center via [mapVm.getEffectiveLocation] internally
-  /// but still returns null to signal GPS explicitly failed.
+  /// 請求 GPS 權限與位置，回傳解析後的座標。
+  /// GPS 不可用或被拒時回傳 null。
+  /// 內部透過 [mapVm.getEffectiveLocation] 回退至區域中心，
+  /// 但仍回傳 null 明確表示 GPS 失敗。
   Future<LatLng?> request(MapViewModel mapVm) async {
     try {
       await mapVm.requestAndCenterLocation();
-      // After requestAndCenterLocation, lastKnownLocation is set if GPS succeeded.
-      // If it's still null, GPS failed → caller can decide fallback.
+      // requestAndCenterLocation 成功則 lastKnownLocation 已設置；仍為 null 表示 GPS 失敗，呼叫方自行決定回退
       return mapVm.lastKnownLocation;
     } catch (e) {
       LogService().e('GPS', 'Request failed', error: e);
@@ -26,8 +25,8 @@ class GpsRequester {
     }
   }
 
-  /// Convenience: always returns a LatLng (never null).
-  /// GPS if available, otherwise falls back to region center.
+  /// 便利方法：永遠回傳 LatLng（不為 null）。
+  /// GPS 可用時回 GPS，否則回退至區域中心。
   Future<LatLng> requestOrFallback(MapViewModel mapVm) async {
     final gps = await request(mapVm);
     return gps ?? mapVm.getEffectiveLocation();

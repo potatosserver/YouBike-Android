@@ -2,7 +2,7 @@ import 'package:latlong2/latlong.dart' hide DistanceCalculator;
 import 'package:youbike_android/core/services/distance_calculator.dart';
 import 'package:youbike_android/data/models/station.dart';
 
-/// Distance-sorts stations, places pinned on top, returns top N.
+/// 依距離排序站點，釘選置頂，回傳前 N 筆。
 class StationSorter {
   final DistanceCalculator _calc;
 
@@ -17,18 +17,15 @@ class StationSorter {
   }) {
     if (stations.isEmpty) return [];
 
-    // 1. Assign distance to every station
     for (final s in stations) {
       s.distance = _calc.haversine(
         refPoint.latitude, refPoint.longitude, s.lat, s.lng,
       );
     }
 
-    // 2. Sort by distance ascending
     final sorted = List<Station>.from(stations)
       ..sort((a, b) => a.distance.compareTo(b.distance));
 
-    // 3. Pinned first, then unpinned
     final pinned = sorted
         .where((s) => pinnedIds.contains(s.id.trim()))
         .toList();

@@ -1,7 +1,7 @@
 import 'package:youbike_android/core/l10n/app_localizations.dart';
 
-/// Maps loading notice keys to localized display strings via AppLocalizations.
-/// No hardcoded strings — everything comes from ARB.
+/// 將載入通知 key 透過 AppLocalizations 對應到本地化顯示字串。
+/// 無任何硬編碼 — 全部來自 ARB。
 class LoadingNoticeTranslator {
   const LoadingNoticeTranslator();
 

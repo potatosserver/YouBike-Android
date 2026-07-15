@@ -27,7 +27,7 @@ class RegionSelectionScreen extends StatelessWidget {
           final String regionId = entry.key;
           final String regionKey = entry.value['name'] as String;
           
-          // Correct way to get translation for regions from AppLocalizations
+          // 透過 AppLocalizations 取得區域名稱翻譯
           String regionName;
           switch (regionKey) {
             case 'region_taipei': regionName = l10n.region_taipei; break;

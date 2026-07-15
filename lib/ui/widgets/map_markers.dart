@@ -9,7 +9,7 @@ class RoadSignMarker extends StatelessWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // 1. Main Body & Border (Gold Standard #FFD700 + 4px White Border)
+        // 主體與邊框：Gold Standard #FFD700 + 4px 白邊
         Container(
           width: 40,
           height: 40,
@@ -22,7 +22,7 @@ class RoadSignMarker extends StatelessWidget {
             ],
           ),
         ),
-        // 2. Bike Icon (Direct Asset Rendering - 100% Reliable)
+        // 腳踏車圖示：PNG 素材渲染，100% 可靠
         Image.asset(
           'assets/icons/bike_icon.png',
           width: 22,

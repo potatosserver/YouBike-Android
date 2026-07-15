@@ -57,7 +57,7 @@ class _MapMaskPainter extends CustomPainter {
 
     canvas.drawPath(path, paint..style = PaintingStyle.fill);
     
-    // Use a refined shadow based on YouBike-Web standard (approx 0 2px 4px rgba(0,0,0,0.1))
+    // 陰影效果，參照 YouBike-Web 標準
     canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), Paint());
     canvas.clipPath(path);
     
@@ -70,7 +70,7 @@ class _MapMaskPainter extends CustomPainter {
     canvas.drawRRect(cutoutRect, sharpShadowPaint);
     canvas.restore();
     
-    // Fine highlight border for a polished finish
+    // 高光邊框，提升質感
     final highlightPaint = Paint()
       ..color = color.withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke

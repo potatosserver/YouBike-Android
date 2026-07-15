@@ -6,13 +6,13 @@ import 'package:youbike_android/core/services/map_move_trigger.dart';
 import 'package:youbike_android/data/models/station.dart';
 import 'package:youbike_android/providers/map_view_model.dart';
 
-/// Orchestrates a full card refresh in one call:
-///   1. resolve reference point
-///   2. sort + pin + pick top N
-///   3. fetch & apply realtime vehicle data
-///   4. trigger map move (if caller requests)
+/// 一鍵完整卡片更新協調器：
+///   1. 解析參考座標
+///   2. 排序 + 釘選置頂 + 取前 N
+///   3. 取得並填入即時車輛數據
+///   4. 觸發地圖移動（若有指定）
 ///
-/// All four sub-steps are delegated to dedicated services.
+/// 四個子步驟皆委派給專屬服務。
 class CardRefreshCoordinator {
   final LocationResolver _location;
   final StationSorter _sorter;
@@ -31,8 +31,8 @@ class CardRefreshCoordinator {
 
   MapMoveTrigger get mapTrigger => _mapTrigger;
 
-  /// Full pipeline. Returns the final top-N list after realtime data applied.
-  /// If [moveTo] is provided, the map is centered on that position after refresh.
+  /// 完整流程。回傳即時數據填入後的前 N 筆站點清單。
+  /// 若提供 [moveTo]，刷新後地圖中心移至該位置。
   Future<List<Station>> execute({
     required List<Station> fullStations,
     required Set<String> pinnedIds,
@@ -40,17 +40,13 @@ class CardRefreshCoordinator {
     int limit = 10,
     LatLng? moveTo,
   }) async {
-    // 1. Resolve reference point
     final refPoint = _location.resolve(mapVm);
 
-    // 2. Sort, pin-prioritize, pick top N
     final candidates = _sorter.sortAndPick(fullStations, refPoint, pinnedIds,
         limit: limit);
 
-    // 3. Fetch realtime data
     await _updater.apply(candidates, refPoint);
 
-    // 4. Move map if requested
     if (moveTo != null) _mapTrigger.fire(moveTo);
 
     return candidates;

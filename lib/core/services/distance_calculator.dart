@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 
-/// Pure Haversine distance calculator. No state, no dependencies.
+/// 純 Haversine 距離計算器。無狀態，無依賴。
 class DistanceCalculator {
   const DistanceCalculator();
 
-  /// Returns distance in meters between two lat/lng points.
+  /// 回傳兩點之間的距離（公尺）。
   double haversine(double lat1, double lon1, double lat2, double lon2) {
     const double earthRadius = 6371000;
     final double dLat = (lat2 - lat1) * math.pi / 180;
