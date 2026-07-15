@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:youbike_android/data/services/app_config_service.dart';
 import 'package:youbike_android/data/services/route_service.dart';
 import 'package:youbike_android/core/services/route_instruction_translator.dart';
-import 'package:youbike_android/ui/widgets/app_theme.dart';
 import 'package:youbike_android/core/l10n/app_localizations.dart';
 import 'package:youbike_android/core/services/station_format_helper.dart';
 import 'package:youbike_android/data/models/station.dart';
@@ -74,6 +73,7 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final config = Provider.of<AppConfigService>(context);
     
     final destinationName = _fmt.name(widget.station, config.currentLang);
@@ -81,7 +81,7 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: cs.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, -5)),
@@ -95,28 +95,28 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
             Center(
               child: Container(
                 width: 40, height: 4,
-                decoration: BoxDecoration(color: Colors.grey[400], borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: cs.onSurfaceVariant.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(10)),
               ),
             ),
             const SizedBox(height: 20),
             Row(
               children: [
-                const Icon(Icons.directions_walk, color: AppColors.primary),
+                Icon(Icons.directions_walk, color: cs.primary),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    "${l10n.go_to}$destinationName",
+                    '${l10n.go_to}$destinationName',
                     style: TextStyle(
                       fontSize: 20, 
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
+                      color: cs.onSurface,
                     ),
                   ),
                 ),
                 IconButton(
                   icon: Icon(
                     Icons.close, 
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    color: cs.onSurface.withValues(alpha: 0.7),
                   ),
                   onPressed: () => Navigator.pop(context),
                 ),
@@ -134,14 +134,14 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
               Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 40),
-                  child: Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                  child: Text(_errorMessage!, style: TextStyle(color: cs.error)),
                 ),
               )
             else if (_steps == null || _steps!.isEmpty)
               Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 40),
-                  child: Text(l10n.routeNotFound, style: TextStyle(color: theme.colorScheme.onSurface)),
+                  child: Text(l10n.routeNotFound, style: TextStyle(color: cs.onSurface)),
                 ),
               )
             else
@@ -157,17 +157,17 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
                         children: [
                           CircleAvatar(
                             radius: 10,
-                            backgroundColor: idx == 0 ? AppColors.primary : Colors.grey[300],
+                            backgroundColor: idx == 0 ? cs.primary : cs.surfaceContainerHighest,
                             child: Text(
-                              "${idx + 1}",
+                              '${idx + 1}',
                               style: TextStyle(
                                 fontSize: 10, 
-                                color: idx == 0 ? Colors.white : Colors.black54
+                                color: idx == 0 ? cs.onPrimary : cs.onSurfaceVariant,
                               ),
                             ),
                           ),
                           if (idx != _steps!.length - 1)
-                            Container(width: 2, height: 20, color: Colors.grey[300]),
+                            Container(width: 2, height: 20, color: cs.surfaceContainerHighest),
                         ],
                       ),
                       const SizedBox(width: 16),
@@ -177,7 +177,7 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
                           style: TextStyle(
                             fontSize: 15, 
                             height: 1.5,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                            color: cs.onSurface.withValues(alpha: 0.8),
                           ),
                         ),
                       ),

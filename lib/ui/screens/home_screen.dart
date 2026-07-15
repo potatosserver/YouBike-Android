@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -30,7 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Wire MapController into the coordinator's trigger so refreshCards() can move the map.
     Future.microtask(() {
       if (mounted) {
         Provider.of<StationViewModel>(context, listen: false)
@@ -43,8 +41,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return Scaffold(
-      backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+      backgroundColor: cs.surface,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final availableHeight = constraints.maxHeight;
@@ -89,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Positioned.fill(
                 child: IgnorePointer(
                   child: MapMaskOverlay(
-                    maskColor: theme.brightness == Brightness.dark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+                    maskColor: cs.surface,
                     panelHeight: _panelHeight ?? availableHeight * 0.35,
                     isWide: isWide,
                     leftOffset: isWide ? horizontalMargin + sidebarWidth + gap : null,
@@ -144,8 +143,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () => context.push('/settings'),
                     child: Container(
                       width: 32, height: 32,
-                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                      child: Center(child: Icon(Icons.settings, size: 22, color: theme.brightness == Brightness.dark ? const Color(0xFF90CAF9) : Colors.black87)),
+                      decoration: const BoxDecoration(color: Color(0xFFFFCC80), shape: BoxShape.circle),
+                      child: const Center(child: Icon(Icons.settings, size: 22, color: Colors.black)),
                     ),
                   ),
                 ),
@@ -154,12 +153,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   bottom: isWide ? (horizontalMargin + 16.0) : (_panelHeight ?? availableHeight * 0.35) + 20, 
                   child: Container(
                     decoration: BoxDecoration(
-                      color: theme.brightness == Brightness.dark ? const Color(0xFF4A4A4A) : const Color(0xFFFDCACB),
+                      color: const Color(0xFFFFCC80),
                       borderRadius: BorderRadius.circular(12), 
                       boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
                     ),
                     child: IconButton(
-                      icon: Icon(Icons.my_location, size: 22, color: theme.brightness == Brightness.dark ? const Color(0xFF90CAF9) : Colors.black87),
+                      icon: const Icon(Icons.my_location, size: 22, color: Colors.black),
                       onPressed: () async {
                         const gps = GpsRequester();
                         final stationVm = Provider.of<StationViewModel>(context, listen: false);

@@ -31,7 +31,7 @@ class _HomeUpdateButtonState extends State<HomeUpdateButton> with SingleTickerPr
   void _handleUpdate() async {
     final stationVm = Provider.of<StationViewModel>(context, listen: false);
     if (stationVm.isUpdating) return;
-    
+
     _controller.forward(from: 0.0);
     await stationVm.refreshCards();
     _controller.reset();
@@ -39,11 +39,8 @@ class _HomeUpdateButtonState extends State<HomeUpdateButton> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final Color contentColor = isDark ? const Color(0xFF333333) : Colors.black87;
     final l10n = AppLocalizations.of(context);
-    
+
     return Consumer<StationViewModel>(
       builder: (context, vm, child) {
         return GestureDetector(
@@ -54,7 +51,7 @@ class _HomeUpdateButtonState extends State<HomeUpdateButton> with SingleTickerPr
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFFE8DEF8) : const Color(0xFFFFDACB),
+                  color: const Color(0xFFFFCC80),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
                 ),
@@ -62,19 +59,15 @@ class _HomeUpdateButtonState extends State<HomeUpdateButton> with SingleTickerPr
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Transform.rotate(
-                      angle: _controller.value * 3.1415926535, 
-                      child: Icon(
-                        Icons.autorenew, 
-                        size: 20, 
-                        color: contentColor,
-                      ),
+                      angle: _controller.value * 3.1415926535,
+                      child: const Icon(Icons.autorenew, size: 20, color: Colors.black),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       l10n.updatingIn(vm.countdownRemaining.toString()),
-                      style: TextStyle(
-                        color: contentColor, 
-                        fontWeight: FontWeight.bold, 
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
                     ),

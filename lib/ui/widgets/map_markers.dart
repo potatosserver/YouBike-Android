@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:youbike_android/core/theme/brand_colors.dart';
 
 class RoadSignMarker extends StatelessWidget {
   const RoadSignMarker({super.key});
@@ -13,7 +14,7 @@ class RoadSignMarker extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: const Color(0xFFFFD700),
+            color: BrandColors.markerYellow,
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 4.0),
             boxShadow: const [
@@ -47,7 +48,7 @@ class ClusterMarker extends StatelessWidget {
       height: 45,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFFFFD700), // Solid Yellow
+        color: BrandColors.markerYellow, // Solid Yellow
         border: Border.all(
           color: Colors.white, 
           width: 4.0, // Thick White Border

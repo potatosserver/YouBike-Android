@@ -12,12 +12,13 @@ class RegionSelectionScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
+    final cs = theme.colorScheme;
     return Scaffold(
-      backgroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.surface : Colors.white,
+      backgroundColor: cs.surface,
       appBar: AppBar(
         title: Text(l10n.settings_region),
-        backgroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.surface : Colors.white,
-        foregroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.primary : Colors.black,
+        backgroundColor: cs.surface,
+        foregroundColor: cs.onSurface,
         elevation: 0,
       ),
       body: ListView(
@@ -61,7 +62,7 @@ class RegionSelectionScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected ? theme.colorScheme.primary : Colors.grey,
+                        color: isSelected ? cs.primary : cs.onSurfaceVariant,
                         width: 2,
                       ),
                     ),
@@ -71,7 +72,7 @@ class RegionSelectionScreen extends StatelessWidget {
                             width: 12,
                             height: 12,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
+                              color: cs.primary,
                               shape: BoxShape.circle,
                             ),
                           ) 
@@ -82,7 +83,7 @@ class RegionSelectionScreen extends StatelessWidget {
                   Text(regionName, style: TextStyle(
                     fontSize: 18, 
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: theme.brightness == Brightness.dark ? Colors.white : Colors.black87,
+                    color: cs.onSurface,
                   )),
                 ],
               ),

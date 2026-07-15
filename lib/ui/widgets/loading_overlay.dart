@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:youbike_android/core/theme/brand_colors.dart';
 import 'package:youbike_android/providers/loading_view_model.dart';
 import 'package:youbike_android/core/l10n/app_localizations.dart';
 import 'package:youbike_android/core/services/loading_notice_translator.dart';
@@ -18,7 +19,6 @@ class _LoadingOverlayState extends State<LoadingOverlay>
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
 
-  static const Color brandOrange = Color(0xFFFF9800);
   static const _translator = LoadingNoticeTranslator();
 
   @override
@@ -55,7 +55,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
       child: IgnorePointer(
         ignoring: !widget.isVisible,
         child: Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: colorScheme.surface,
           body: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -68,11 +68,11 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                       width: 130,
                       height: 130,
                       decoration: BoxDecoration(
-                        color: brandOrange,
+                        color: BrandColors.orange,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: brandOrange.withValues(alpha: 0.3),
+                            color: BrandColors.orange.withValues(alpha: 0.3),
                             blurRadius: 30,
                             spreadRadius: 5,
                             offset: const Offset(0, 10),
@@ -107,7 +107,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                           value: loadingVm.loadingProgress / 100,
                           backgroundColor: colorScheme.surfaceContainerHighest,
                           valueColor:
-                              const AlwaysStoppedAnimation<Color>(brandOrange),
+                              const AlwaysStoppedAnimation<Color>(BrandColors.orange),
                           minHeight: 6,
                         ),
                       ),

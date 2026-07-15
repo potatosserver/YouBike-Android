@@ -12,13 +12,14 @@ class SettingsScreen extends StatelessWidget {
     final config = Provider.of<AppConfigService>(context);
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    
+    final cs = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF121212) : Colors.white,
+      backgroundColor: cs.surface,
       appBar: AppBar(
         title: Text(l10n.settings_title),
-        backgroundColor: theme.brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
-        foregroundColor: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+        backgroundColor: cs.surface,
+        foregroundColor: cs.onSurface,
         elevation: 0,
         centerTitle: false,
       ),
@@ -33,21 +34,21 @@ class SettingsScreen extends StatelessWidget {
                   context,
                   icon: Icons.palette_outlined,
                   title: l10n.settings_theme,
-                  trailing: const Icon(Icons.chevron_right, size: 22, color: Colors.grey),
+                  trailing: Icon(Icons.chevron_right, size: 22, color: cs.onSurfaceVariant),
                   onTap: () => context.push('/theme-selection'),
                 ),
                 _buildWalkGoItem(
                   context,
                   icon: Icons.map_outlined,
                   title: l10n.settings_region,
-                  trailing: const Icon(Icons.chevron_right, size: 22, color: Colors.grey),
+                  trailing: Icon(Icons.chevron_right, size: 22, color: cs.onSurfaceVariant),
                   onTap: () => context.push('/region-selection'),
                 ),
                 _buildWalkGoItem(
                   context,
                   icon: Icons.language_outlined,
                   title: l10n.settings_language,
-                  trailing: const Icon(Icons.chevron_right, size: 22, color: Colors.grey),
+                  trailing: Icon(Icons.chevron_right, size: 22, color: cs.onSurfaceVariant),
                   onTap: () => context.push('/language-selection'),
                 ),
                 _buildWalkGoItem(
@@ -57,8 +58,8 @@ class SettingsScreen extends StatelessWidget {
                   trailing: Switch(
                     value: config.useLocation,
                     onChanged: (val) => config.setUseLocation(val),
-                    activeTrackColor: theme.brightness == Brightness.dark ? const Color(0xFF90CAF9) : const Color(0xFF4A90E2),
-                    activeThumbColor: Colors.white,
+                    activeTrackColor: cs.primary,
+                    activeThumbColor: cs.onPrimary,
                   ),
                   onTap: null,
                 ),
@@ -77,19 +78,15 @@ class SettingsScreen extends StatelessWidget {
     Widget? trailing,
     VoidCallback? onTap,
   }) {
-    final theme = Theme.of(context);
+    final cs = Theme.of(context).colorScheme;
     return ListTile(
-      leading: Icon(
-        icon, 
-        color: theme.brightness == Brightness.dark ? Colors.white70 : Colors.black54,
-        size: 22,
-      ),
+      leading: Icon(icon, color: cs.onSurfaceVariant, size: 22),
       title: Text(
         title,
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w400,
-          color: theme.brightness == Brightness.dark ? Colors.white : Colors.black87,
+          color: cs.onSurface,
           overflow: TextOverflow.ellipsis,
         ),
       ),

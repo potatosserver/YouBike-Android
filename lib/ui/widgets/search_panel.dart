@@ -42,15 +42,11 @@ class _SearchPanelState extends State<SearchPanel> {
   }
 
   void _handleFocusChange() {
-    setState(() {
-      _isFocused = _searchFocusNode.hasFocus;
-    });
+    setState(() => _isFocused = _searchFocusNode.hasFocus);
   }
 
   void _handleTextChange() {
-    setState(() {
-      _hasText = _searchController.text.isNotEmpty;
-    });
+    setState(() => _hasText = _searchController.text.isNotEmpty);
   }
 
   @override
@@ -68,11 +64,10 @@ class _SearchPanelState extends State<SearchPanel> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return Consumer<StationViewModel>(
       builder: (context, stationVm, child) {
         final l10n = AppLocalizations.of(context);
-        // 移除 if (l10n == null) return const SizedBox.shrink(); 
-        // 確保面板結構永遠存在，避免視覺跳變
         return Column(
           children: [
             if (!widget.isWide)
@@ -82,9 +77,9 @@ class _SearchPanelState extends State<SearchPanel> {
                   child: Container(
                     width: MediaQuery.of(context).size.width * 0.4, height: 6, 
                     decoration: BoxDecoration(
-                      color: theme.brightness == Brightness.dark ? Colors.white38 : const Color(0xFFBBBBBB), 
+                      color: cs.onSurfaceVariant.withValues(alpha: 0.3), 
                       borderRadius: BorderRadius.circular(3), 
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 3, offset: const Offset(0, 1) )]
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 3, offset: const Offset(0, 1))]
                     ),
                   ),
                 ),
@@ -92,7 +87,7 @@ class _SearchPanelState extends State<SearchPanel> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: theme.brightness == Brightness.dark ? const Color(0xFF222222) : const Color(0xFFFFF2EC),
+                  color: cs.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
@@ -112,8 +107,8 @@ class _SearchPanelState extends State<SearchPanel> {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         decoration: BoxDecoration(
                           color: _isFocused 
-                            ? (theme.brightness == Brightness.dark ? const Color(0xFF333333) : const Color(0xFFFDE8D6))
-                            : (theme.brightness == Brightness.dark ? const Color(0xFF2A2A2A) : const Color(0xFFFFE8D6)),
+                            ? cs.surfaceContainerHighest
+                            : cs.surfaceContainer,
                           borderRadius: BorderRadius.circular(28),
                           boxShadow: [
                             BoxShadow(
@@ -129,7 +124,7 @@ class _SearchPanelState extends State<SearchPanel> {
                           textAlignVertical: TextAlignVertical.center,
                           decoration: InputDecoration(
                             isDense: true,
-                            hintText: l10n.input_placeholder, // 提供後備文字
+                            hintText: l10n.input_placeholder,
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(vertical: 0),
                             suffixIcon: SizedBox(
@@ -141,23 +136,23 @@ class _SearchPanelState extends State<SearchPanel> {
                                   if (_hasText)
                                     GestureDetector(
                                       onTap: _clearSearch,
-                                      child: const Icon(Icons.clear, color: Colors.grey, size: 24),
+                                      child: Icon(Icons.clear, color: cs.onSurfaceVariant, size: 24),
                                     ),
                                   if (_hasText) const SizedBox(width: 8),
-                                  const Padding(
-                                    padding: EdgeInsets.only(right: 4),
-                                    child: Icon(Icons.search, color: Colors.grey, size: 24),
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 4),
+                                    child: Icon(Icons.search, color: cs.onSurfaceVariant, size: 24),
                                   ),
                                 ],
                               ),
                             ),
                           ),
                           onSubmitted: (val) => stationVm.searchStations(val),
-                          style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface),
+                          style: TextStyle(fontSize: 14, color: cs.onSurface),
                         ),
                       ),
                     ),
-                    Expanded(child: _buildStationPanel(stationVm, l10n)),
+                    Expanded(child: _buildStationPanel(stationVm, l10n, cs)),
                   ],
                 ),
               ),
@@ -168,7 +163,7 @@ class _SearchPanelState extends State<SearchPanel> {
     );
   }
 
-  Widget _buildStationPanel(StationViewModel stationVm, AppLocalizations? l10n) =>
+  Widget _buildStationPanel(StationViewModel stationVm, AppLocalizations? l10n, ColorScheme cs) =>
       SizedBox(
         width: double.infinity,
         child: stationVm.allStations.isEmpty 
@@ -177,12 +172,13 @@ class _SearchPanelState extends State<SearchPanel> {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.search_off, size: 64, color: Colors.grey),
+                  Icon(Icons.search_off, size: 64, color: cs.onSurfaceVariant),
                   const SizedBox(height: 16),
-                  Text(l10n?.noStationsFound ?? "No stations found", textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey, fontSize: 16)),
+                  Text(l10n?.noStationsFound ?? 'No stations found',
+                       textAlign: TextAlign.center,
+                       style: TextStyle(color: cs.onSurfaceVariant, fontSize: 16)),
                 ],
-              ),
-              )
+              ))
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 itemCount: math.min(stationVm.allStations.length, 10), 

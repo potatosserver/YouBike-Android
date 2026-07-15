@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:youbike_android/core/theme/brand_colors.dart';
 import 'package:youbike_android/core/l10n/app_localizations.dart';
 import 'package:youbike_android/core/services/station_format_helper.dart';
 import 'package:youbike_android/data/models/station.dart';
@@ -25,8 +26,8 @@ class StationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final config = Provider.of<AppConfigService>(context);
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final l10n = AppLocalizations.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final lang = config.currentLang;
     final isPinned = config.pinnedStationIds.contains(station.id);
     final hasElectric = (station.availableElectricBikes ?? 0) > 0;
@@ -37,7 +38,7 @@ class StationCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF444444) : const Color(0xFFFFF2EC),
+          color: cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -59,9 +60,7 @@ class StationCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: isDark
-                          ? const Color(0xFF90CAF9)
-                          : const Color(0xFF4A90E2),
+                      color: cs.brightness == Brightness.light ? BrandColors.accentBlue : cs.primary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -71,28 +70,21 @@ class StationCard extends StatelessWidget {
                   if (hasElectric)
                     GestureDetector(
                       onTap: onShowElectric,
-                      child: const Icon(Icons.electric_bolt,
-                          color: Colors.green, size: 22),
+                      child: const Icon(Icons.electric_bolt, color: BrandColors.accentGreen, size: 22),
                     ),
                   const SizedBox(width: 12),
                   GestureDetector(
                     onTap: () => config.togglePinStation(station.id),
                     child: Icon(
                       isPinned ? Icons.star : Icons.star_border,
-                      color: isPinned
-                          ? Colors.amber
-                          : (isDark ? Colors.grey[400] : Colors.grey[600]),
+                      color: isPinned ? Colors.amber : cs.onSurfaceVariant,
                       size: 22,
                     ),
                   ),
                   const SizedBox(width: 12),
                   GestureDetector(
                     onTap: onNavigate,
-                    child: Icon(Icons.navigation,
-                        color: isDark
-                            ? const Color(0xFF90CAF9)
-                            : const Color(0xFF4A90E2),
-                        size: 22),
+                    child: const Icon(Icons.navigation, color: BrandColors.accentBlue, size: 22),
                   ),
                 ]),
               ],
@@ -100,37 +92,27 @@ class StationCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               '${l10n.distance} ${_fmt.distance(station.distance, l10n)}',
-              style: TextStyle(
-                  fontSize: 15,
-                  color: isDark ? Colors.white70 : Colors.black87),
+              style: TextStyle(fontSize: 15, color: cs.onSurface),
             ),
             const SizedBox(height: 4),
             Text(
               '${l10n.address} ${_fmt.address(station, lang)}',
-              style: TextStyle(
-                  fontSize: 15,
-                  color: isDark ? Colors.white70 : Colors.black87),
+              style: TextStyle(fontSize: 15, color: cs.onSurface),
             ),
             const SizedBox(height: 4),
             Text(
               '${l10n.availableBikes} ${_fmt.bikes(station.availableBikes, l10n)}',
-              style: TextStyle(
-                  fontSize: 15,
-                  color: isDark ? Colors.white70 : Colors.black87),
+              style: TextStyle(fontSize: 15, color: cs.onSurface),
             ),
             const SizedBox(height: 4),
             Text(
               '${l10n.availableElectricBikes} ${_fmt.bikes(station.availableElectricBikes, l10n)}',
-              style: TextStyle(
-                  fontSize: 15,
-                  color: isDark ? Colors.white70 : Colors.black87),
+              style: TextStyle(fontSize: 15, color: cs.onSurface),
             ),
             const SizedBox(height: 4),
             Text(
               '${l10n.emptySpaces} ${_fmt.bikes(station.emptySpaces, l10n)}',
-              style: TextStyle(
-                  fontSize: 15,
-                  color: isDark ? Colors.white70 : Colors.black87),
+              style: TextStyle(fontSize: 15, color: cs.onSurface),
             ),
           ],
         ),

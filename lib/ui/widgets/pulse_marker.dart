@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:youbike_android/core/theme/brand_colors.dart';
 
 class PulseMarker extends StatelessWidget {
   final double latitude;
@@ -19,12 +20,12 @@ class PulseMarker extends StatelessWidget {
         children: [
           // Outer soft pulse
           const PulseAnimation(
-            color: Color(0xFF4285F4),
+            color: BrandColors.accentBlue,
             targetSize: 60,
           ),
           // Inner soft pulse
           const PulseAnimation(
-            color: Color(0xFF4285F4),
+            color: BrandColors.accentBlue,
             targetSize: 60,
             delay: Duration(milliseconds: 500),
           ),
@@ -46,7 +47,7 @@ class PulseMarker extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
-                color: const Color(0xFF4285F4),
+                color: BrandColors.accentBlue,
               ),
             ),
           ),

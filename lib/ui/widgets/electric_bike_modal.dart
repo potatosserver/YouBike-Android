@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:youbike_android/core/theme/brand_colors.dart';
 import 'package:youbike_android/data/services/api_service.dart';
 import 'package:youbike_android/core/l10n/app_localizations.dart';
 
@@ -22,7 +23,6 @@ class _ElectricBikeDetailsModalState extends State<ElectricBikeDetailsModal> {
   @override
   void initState() {
     super.initState();
-    // 在 initState 中僅調用一次，避免 rebuild 時重新發送請求
     _bikesFuture = _fetchBikes();
   }
 
@@ -34,7 +34,8 @@ class _ElectricBikeDetailsModalState extends State<ElectricBikeDetailsModal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+    final cs = theme.colorScheme;
+
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: _bikesFuture,
       builder: (context, snapshot) {
@@ -42,7 +43,7 @@ class _ElectricBikeDetailsModalState extends State<ElectricBikeDetailsModal> {
         return Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
+            color: cs.surface,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: SingleChildScrollView(
@@ -62,11 +63,11 @@ class _ElectricBikeDetailsModalState extends State<ElectricBikeDetailsModal> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  "${l10n.electric_bike_details_title} ${widget.stationName}",
+                  '${l10n.electric_bike_details_title} ${widget.stationName}',
                   style: TextStyle(
                     fontSize: 20, 
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
+                    color: cs.onSurface,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -75,13 +76,11 @@ class _ElectricBikeDetailsModalState extends State<ElectricBikeDetailsModal> {
                   Center(
                     child: Column(
                       children: [
-                        CircularProgressIndicator(
-                          color: theme.colorScheme.primary,
-                        ),
+                        CircularProgressIndicator(color: cs.primary),
                         const SizedBox(height: 16),
                         Text(
                           l10n.getting_bike_data,
-                          style: TextStyle(color: theme.colorScheme.onSurface),
+                          style: TextStyle(color: cs.onSurface),
                         ),
                       ],
                     ),
@@ -89,8 +88,8 @@ class _ElectricBikeDetailsModalState extends State<ElectricBikeDetailsModal> {
                 else if (snapshot.hasError)
                   Center(
                     child: Text(
-                      "${l10n.electricBikeError} ${snapshot.error}",
-                      style: const TextStyle(color: Colors.red),
+                      '${l10n.electricBikeError} ${snapshot.error}',
+                      style: TextStyle(color: cs.error),
                       textAlign: TextAlign.center,
                     ),
                   )
@@ -98,10 +97,7 @@ class _ElectricBikeDetailsModalState extends State<ElectricBikeDetailsModal> {
                   Center(
                     child: Text(
                       l10n.no_electric_bikes,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: theme.colorScheme.onSurface,
-                      ),
+                      style: TextStyle(fontSize: 16, color: cs.onSurface),
                     ),
                   )
                 else
@@ -115,24 +111,20 @@ class _ElectricBikeDetailsModalState extends State<ElectricBikeDetailsModal> {
                         color: theme.cardColor,
                         margin: const EdgeInsets.symmetric(vertical: 8),
                         child: ListTile(
-                          leading: const Icon(Icons.electric_bike, color: Colors.green),
+                          leading: const Icon(Icons.electric_bike, color: BrandColors.accentGreen),
                           title: Text(
-                            "${l10n.bike_number_label} ${bike['bike_no']}",
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface,
-                            ),
+                            '${l10n.bike_number_label} ${bike['bike_no']}',
+                            style: TextStyle(color: cs.onSurface),
                           ),
                           subtitle: Text(
-                            "${l10n.pillar_number_label} ${bike['pillar_no']}",
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                            ),
+                            '${l10n.pillar_number_label} ${bike['pillar_no']}',
+                            style: TextStyle(color: cs.onSurface.withValues(alpha: 0.6)),
                           ),
                           trailing: Text(
-                            "${bike['battery_power']}%",
+                            '${bike['battery_power']}%',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.green,
+                              color: BrandColors.accentGreen,
                               fontSize: 16,
                             ),
                           ),
