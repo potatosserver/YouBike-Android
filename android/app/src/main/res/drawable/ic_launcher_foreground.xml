@@ -3,12 +3,16 @@
     android:viewportHeight="512"
     android:width="512dp"
     android:height="512dp">
-    <!-- White directions_bike icon scaled and centered (takes ~70% of the 512 canvas) -->
+    <!-- Orange circle background (#FF9800) -->
+    <path
+        android:pathData="M256,256m-256,0a256,256 0,1,1 512,0a256,256 0,1,1 -512,0"
+        android:fillColor="#FF9800" />
+    <!-- White directions_bike icon scaled and centered (scale=0.25, ~47% of circle) -->
     <group
         android:translateX="256"
         android:translateY="256"
-        android:scaleX="0.35"
-        android:scaleY="0.35">
+        android:scaleX="0.25"
+        android:scaleY="0.25">
         <group
             android:translateX="-480"
             android:translateY="480">
