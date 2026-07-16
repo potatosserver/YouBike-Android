@@ -95,6 +95,9 @@ jobs:
             echo "keyAlias=${KEY_ALIAS}" >> android/key.properties
             echo "keyPassword=${KEY_PASSWORD}" >> android/key.properties
             echo "storePassword=${STORE_PASSWORD}" >> android/key.properties
+            
+            # 優先編譯 AAB，隨後編譯 APK
+            flutter build appbundle --release
             flutter build apk --release --split-per-abi
           fi
 
@@ -102,6 +105,14 @@ jobs:
         run: |
           git pull origin main
           echo "Re-pulled latest CHANGELOG.md to capture user edits during build."
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: WalkGo-Release-AAB
+          path: build/app/outputs/bundle/release/*.aab
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Extract Release Notes from CHANGELOG
         run: |
