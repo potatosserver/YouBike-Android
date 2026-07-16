@@ -589,6 +589,240 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Syncing {count} stations...'**
   String init_syncing_stations(int count);
+
+  /// No description provided for @permission_location_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Location Permission'**
+  String get permission_location_title;
+
+  /// No description provided for @permission_location_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'YouBike needs your location to show nearby stations and distances. We do not track your location in the background.'**
+  String get permission_location_desc;
+
+  /// No description provided for @permission_denied_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission Permanently Denied'**
+  String get permission_denied_title;
+
+  /// No description provided for @permission_denied_content.
+  ///
+  /// In en, this message translates to:
+  /// **'You have permanently denied location permission. Please go to your device settings to grant it manually, or use region selection to browse stations.'**
+  String get permission_denied_content;
+
+  /// No description provided for @open_settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get open_settings;
+
+  /// No description provided for @grant_permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant Permission'**
+  String get grant_permission;
+
+  /// No description provided for @skip_permission_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip for now'**
+  String get skip_permission_label;
+
+  /// No description provided for @skip_permission_confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Skip'**
+  String get skip_permission_confirm;
+
+  /// No description provided for @skip_location_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip Location Permission'**
+  String get skip_location_title;
+
+  /// No description provided for @skip_location_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'If you skip location permission, your selected region center will be used as the default position, and real-time distance cannot be shown. You can enable location anytime in Settings.'**
+  String get skip_location_desc;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
+  /// No description provided for @setup_complete.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get setup_complete;
+
+  /// No description provided for @settings_logs.
+  ///
+  /// In en, this message translates to:
+  /// **'View Logs'**
+  String get settings_logs;
+
+  /// No description provided for @about_youbike.
+  ///
+  /// In en, this message translates to:
+  /// **'About YouBike'**
+  String get about_youbike;
+
+  /// No description provided for @about_youbike_content.
+  ///
+  /// In en, this message translates to:
+  /// **'YouBike Station Search is a clean, beautiful real-time YouBike finder built with Flutter, supporting 13 regions across Taiwan with station search and walking navigation.'**
+  String get about_youbike_content;
+
+  /// No description provided for @developer_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer: Andrew Cho'**
+  String get developer_label;
+
+  /// No description provided for @github_source_code.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub Source Code'**
+  String get github_source_code;
+
+  /// No description provided for @version_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Version: {version}'**
+  String version_label(String version);
+
+  /// No description provided for @view_release_notes.
+  ///
+  /// In en, this message translates to:
+  /// **'View Release Notes'**
+  String get view_release_notes;
+
+  /// No description provided for @view_changelog.
+  ///
+  /// In en, this message translates to:
+  /// **'View Changelog'**
+  String get view_changelog;
+
+  /// No description provided for @check_for_updates.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for Updates'**
+  String get check_for_updates;
+
+  /// No description provided for @latest_version_installed.
+  ///
+  /// In en, this message translates to:
+  /// **'You are already using the latest version.'**
+  String get latest_version_installed;
+
+  /// No description provided for @update_check_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to check for updates. Please check your network connection.'**
+  String get update_check_failed;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @rerun_setup.
+  ///
+  /// In en, this message translates to:
+  /// **'View Welcome Page'**
+  String get rerun_setup;
+
+  /// No description provided for @clear_data_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All App Data'**
+  String get clear_data_button;
+
+  /// No description provided for @clear_data_confirm_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Deletion'**
+  String get clear_data_confirm_title;
+
+  /// No description provided for @clear_data_confirm_content.
+  ///
+  /// In en, this message translates to:
+  /// **'This will permanently delete all app data, including your settings. This action cannot be undone.'**
+  String get clear_data_confirm_content;
+
+  /// No description provided for @data_cleared_success.
+  ///
+  /// In en, this message translates to:
+  /// **'App data has been successfully cleared.'**
+  String get data_cleared_success;
+
+  /// No description provided for @app_reset_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'This will clear all app data and settings, restoring the app to its initial state.'**
+  String get app_reset_desc;
+
+  /// No description provided for @clear_logs_confirm_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Clear Logs'**
+  String get clear_logs_confirm_title;
+
+  /// No description provided for @clear_logs_confirm_content.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to clear all app logs? This action cannot be undone.'**
+  String get clear_logs_confirm_content;
+
+  /// No description provided for @logs_cleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs cleared.'**
+  String get logs_cleared;
+
+  /// No description provided for @no_logs.
+  ///
+  /// In en, this message translates to:
+  /// **'No logs yet.'**
+  String get no_logs;
+
+  /// No description provided for @clear_all_logs.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All Logs'**
+  String get clear_all_logs;
+
+  /// No description provided for @welcome_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to YouBike'**
+  String get welcome_title;
+
+  /// No description provided for @welcome_message.
+  ///
+  /// In en, this message translates to:
+  /// **'YouBike Station Search helps you quickly find nearby YouBike stations, check real-time bike availability, and get walking directions.'**
+  String get welcome_message;
+
+  /// No description provided for @get_started.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get get_started;
 }
 
 class _AppLocalizationsDelegate

@@ -263,4 +263,127 @@ class AppLocalizationsZh extends AppLocalizations {
   String init_syncing_stations(int count) {
     return '同步 $count 個站點中...';
   }
+
+  @override
+  String get permission_location_title => '定位權限';
+
+  @override
+  String get permission_location_desc =>
+      'YouBike 需要您的位置資訊來顯示附近的站點與距離。我們不會在背景追蹤您的位置。';
+
+  @override
+  String get permission_denied_title => '權限已被永久拒絕';
+
+  @override
+  String get permission_denied_content =>
+      '您已永久拒絕定位權限。請前往裝置設定手動授予權限，或使用地區選擇來查看站點。';
+
+  @override
+  String get open_settings => '開啟設定';
+
+  @override
+  String get grant_permission => '授予權限';
+
+  @override
+  String get skip_permission_label => '暫時略過';
+
+  @override
+  String get skip_permission_confirm => '確認略過';
+
+  @override
+  String get skip_location_title => '略過定位權限';
+
+  @override
+  String get skip_location_desc =>
+      '若略過定位權限，將使用您選擇的地區中心作為預設位置，無法顯示與您即時距離。您可以隨時在設定中開啟定位。';
+
+  @override
+  String get cancel => '取消';
+
+  @override
+  String get confirm => '確認';
+
+  @override
+  String get setup_complete => '開始使用';
+
+  @override
+  String get settings_logs => '檢視日誌';
+
+  @override
+  String get about_youbike => '關於 YouBike';
+
+  @override
+  String get about_youbike_content =>
+      'YouBike 站點搜尋是一款簡潔、美觀的 YouBike 即時查詢 App，使用 Flutter 打造，支援全台 13 個縣市的微笑單車站點搜尋與步行導航。';
+
+  @override
+  String get developer_label => '開發者：Andrew Cho (卓稟鈞)';
+
+  @override
+  String get github_source_code => 'GitHub 原始碼';
+
+  @override
+  String version_label(String version) {
+    return '版本：$version';
+  }
+
+  @override
+  String get view_release_notes => '查看版本資訊';
+
+  @override
+  String get view_changelog => '查看版本日誌';
+
+  @override
+  String get check_for_updates => '檢查更新';
+
+  @override
+  String get latest_version_installed => '目前已是最新版本。';
+
+  @override
+  String get update_check_failed => '檢查更新失敗，請檢查您的網路連線。';
+
+  @override
+  String get close => '關閉';
+
+  @override
+  String get rerun_setup => '查看歡迎頁面';
+
+  @override
+  String get clear_data_button => '清除所有應用程式資料';
+
+  @override
+  String get clear_data_confirm_title => '確認刪除';
+
+  @override
+  String get clear_data_confirm_content => '此操作將永久刪除所有應用程式資料，包括您的設定。此操作無法復原。';
+
+  @override
+  String get data_cleared_success => '應用程式資料已成功清除。';
+
+  @override
+  String get app_reset_desc => '此操作將清除所有應用程式資料和設定，將應用程式還原至初始狀態。';
+
+  @override
+  String get clear_logs_confirm_title => '確認清除日誌';
+
+  @override
+  String get clear_logs_confirm_content => '確定要清除所有應用程式日誌嗎？此操作無法復原。';
+
+  @override
+  String get logs_cleared => '日誌已清除。';
+
+  @override
+  String get no_logs => '尚無日誌。';
+
+  @override
+  String get clear_all_logs => '清除所有日誌';
+
+  @override
+  String get welcome_title => '歡迎使用 YouBike';
+
+  @override
+  String get welcome_message => 'YouBike 站點搜尋幫助您快速找到附近的微笑單車站點，查詢即時車輛數量與步行導航。';
+
+  @override
+  String get get_started => '開始使用';
 }

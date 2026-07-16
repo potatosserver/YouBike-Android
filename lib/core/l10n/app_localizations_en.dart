@@ -268,4 +268,133 @@ class AppLocalizationsEn extends AppLocalizations {
   String init_syncing_stations(int count) {
     return 'Syncing $count stations...';
   }
+
+  @override
+  String get permission_location_title => 'Location Permission';
+
+  @override
+  String get permission_location_desc =>
+      'YouBike needs your location to show nearby stations and distances. We do not track your location in the background.';
+
+  @override
+  String get permission_denied_title => 'Permission Permanently Denied';
+
+  @override
+  String get permission_denied_content =>
+      'You have permanently denied location permission. Please go to your device settings to grant it manually, or use region selection to browse stations.';
+
+  @override
+  String get open_settings => 'Open Settings';
+
+  @override
+  String get grant_permission => 'Grant Permission';
+
+  @override
+  String get skip_permission_label => 'Skip for now';
+
+  @override
+  String get skip_permission_confirm => 'Confirm Skip';
+
+  @override
+  String get skip_location_title => 'Skip Location Permission';
+
+  @override
+  String get skip_location_desc =>
+      'If you skip location permission, your selected region center will be used as the default position, and real-time distance cannot be shown. You can enable location anytime in Settings.';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get setup_complete => 'Get Started';
+
+  @override
+  String get settings_logs => 'View Logs';
+
+  @override
+  String get about_youbike => 'About YouBike';
+
+  @override
+  String get about_youbike_content =>
+      'YouBike Station Search is a clean, beautiful real-time YouBike finder built with Flutter, supporting 13 regions across Taiwan with station search and walking navigation.';
+
+  @override
+  String get developer_label => 'Developer: Andrew Cho';
+
+  @override
+  String get github_source_code => 'GitHub Source Code';
+
+  @override
+  String version_label(String version) {
+    return 'Version: $version';
+  }
+
+  @override
+  String get view_release_notes => 'View Release Notes';
+
+  @override
+  String get view_changelog => 'View Changelog';
+
+  @override
+  String get check_for_updates => 'Check for Updates';
+
+  @override
+  String get latest_version_installed =>
+      'You are already using the latest version.';
+
+  @override
+  String get update_check_failed =>
+      'Failed to check for updates. Please check your network connection.';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get rerun_setup => 'View Welcome Page';
+
+  @override
+  String get clear_data_button => 'Clear All App Data';
+
+  @override
+  String get clear_data_confirm_title => 'Confirm Deletion';
+
+  @override
+  String get clear_data_confirm_content =>
+      'This will permanently delete all app data, including your settings. This action cannot be undone.';
+
+  @override
+  String get data_cleared_success => 'App data has been successfully cleared.';
+
+  @override
+  String get app_reset_desc =>
+      'This will clear all app data and settings, restoring the app to its initial state.';
+
+  @override
+  String get clear_logs_confirm_title => 'Confirm Clear Logs';
+
+  @override
+  String get clear_logs_confirm_content =>
+      'Are you sure you want to clear all app logs? This action cannot be undone.';
+
+  @override
+  String get logs_cleared => 'Logs cleared.';
+
+  @override
+  String get no_logs => 'No logs yet.';
+
+  @override
+  String get clear_all_logs => 'Clear All Logs';
+
+  @override
+  String get welcome_title => 'Welcome to YouBike';
+
+  @override
+  String get welcome_message =>
+      'YouBike Station Search helps you quickly find nearby YouBike stations, check real-time bike availability, and get walking directions.';
+
+  @override
+  String get get_started => 'Get Started';
 }
