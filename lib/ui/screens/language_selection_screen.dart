@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:youbike_android/core/l10n/app_localizations.dart';
 import 'package:youbike_android/data/services/app_config_service.dart';
 import 'package:youbike_android/data/services/language_service.dart';
+import 'package:youbike_android/ui/widgets/radio_dot.dart';
 
 class LanguageSelectionScreen extends StatelessWidget {
   const LanguageSelectionScreen({super.key});
@@ -11,9 +12,8 @@ class LanguageSelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final config = Provider.of<AppConfigService>(context);
-    final theme = Theme.of(context);
+    final cs = Theme.of(context).colorScheme;
 
-    final cs = theme.colorScheme;
     return Scaffold(
       backgroundColor: cs.surface,
       appBar: AppBar(
@@ -24,53 +24,25 @@ class LanguageSelectionScreen extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-        children: AppLocalizations.supportedLocales.map((locale) {
-          final isSelected = config.currentLang == (locale.languageCode == 'zh' ? 'zh_TW' : 'en');
-          final label = locale.languageCode == 'zh' ? "繁體中文" : "English";
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: InkWell(
-              onTap: () {
-                config.setLanguage(locale.languageCode == 'zh' ? 'zh_TW' : 'en');
-                Provider.of<LanguageService>(context, listen: false).setLocale(locale);
-              },
-              child: Row(
-                children: [
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected ? cs.primary : cs.onSurfaceVariant,
-                        width: 2,
-                      ),
-                    ),
-                    child: Center(
-                      child: isSelected 
-                        ? Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: cs.primary,
-                              shape: BoxShape.circle,
-                            ),
-                          ) 
-                        : null,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(label, style: TextStyle(
-                    fontSize: 18, 
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: cs.onSurface,
-                  )),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
+        children: [
+          RadioDot(
+            label: '繁體中文',
+            isSelected: config.currentLang == 'zh_TW',
+            onTap: () {
+              config.setLanguage('zh_TW');
+              Provider.of<LanguageService>(context, listen: false).setLocale(const Locale('zh'));
+            },
+          ),
+          const SizedBox(height: 24),
+          RadioDot(
+            label: 'English',
+            isSelected: config.currentLang == 'en',
+            onTap: () {
+              config.setLanguage('en');
+              Provider.of<LanguageService>(context, listen: false).setLocale(const Locale('en'));
+            },
+          ),
+        ],
       ),
     );
   }

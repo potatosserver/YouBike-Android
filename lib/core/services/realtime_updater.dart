@@ -1,17 +1,14 @@
 import 'package:youbike_android/core/utils/log_service.dart';
 import 'package:latlong2/latlong.dart' hide DistanceCalculator;
-import 'package:youbike_android/core/services/distance_calculator.dart';
 import 'package:youbike_android/data/models/station.dart';
 import 'package:youbike_android/data/services/api_service.dart';
 
-/// 從 API 取得即時車輛數據，填入站點並更新距離。
+/// 從 API 取得即時車輛數據並填入站點。
+/// 距離由 StationSorter 統一計算，此處不重複。
 class RealtimeUpdater {
-  final DistanceCalculator _calc;
+  const RealtimeUpdater();
 
-  RealtimeUpdater({DistanceCalculator? calculator})
-      : _calc = calculator ?? const DistanceCalculator();
-
-  Future<void> apply(List<Station> stations, LatLng refPoint) async {
+  Future<void> apply(List<Station> stations, LatLng _) async {
     if (stations.isEmpty) return;
 
     try {
@@ -27,9 +24,6 @@ class RealtimeUpdater {
           s.availableElectricBikes = data['available_e'] ?? 0;
           s.emptySpaces = data['empty_spaces'] ?? 0;
         }
-        s.distance = _calc.haversine(
-          refPoint.latitude, refPoint.longitude, s.lat, s.lng,
-        );
       }
     } catch (e) {
       LogService().e('RT_UPDATER', 'Realtime update failed', error: e);

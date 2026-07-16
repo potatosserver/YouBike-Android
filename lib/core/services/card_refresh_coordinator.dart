@@ -26,7 +26,7 @@ class CardRefreshCoordinator {
     MapMoveTrigger? mapMoveTrigger,
   })  : _location = locationResolver ?? const LocationResolver(),
         _sorter = stationSorter ?? StationSorter(),
-        _updater = realtimeUpdater ?? RealtimeUpdater(),
+        _updater = realtimeUpdater ?? const RealtimeUpdater(),
         _mapTrigger = mapMoveTrigger ?? MapMoveTrigger();
 
   MapMoveTrigger get mapTrigger => _mapTrigger;

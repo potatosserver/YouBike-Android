@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:youbike_android/core/theme/brand_colors.dart';
 import 'package:youbike_android/data/services/api_service.dart';
 import 'package:youbike_android/core/l10n/app_localizations.dart';
+import 'package:youbike_android/ui/widgets/app_shapes.dart';
 
 class ElectricBikeDetailsModal extends StatefulWidget {
   final String stationId;
@@ -51,16 +52,7 @@ class _ElectricBikeDetailsModalState extends State<ElectricBikeDetailsModal> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: theme.dividerColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
+                const DragHandle(),
                 const SizedBox(height: 20),
                 Text(
                   '${l10n.electric_bike_details_title} ${widget.stationName}',

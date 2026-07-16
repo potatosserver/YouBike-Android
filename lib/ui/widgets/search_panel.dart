@@ -10,6 +10,7 @@ import 'package:youbike_android/ui/widgets/electric_bike_modal.dart';
 import 'package:youbike_android/core/services/station_format_helper.dart';
 import 'package:youbike_android/data/services/app_config_service.dart';
 import 'package:youbike_android/core/l10n/app_localizations.dart';
+import 'package:youbike_android/ui/widgets/app_shapes.dart';
 
 class SearchPanel extends StatefulWidget {
   final bool isWide;
@@ -191,7 +192,7 @@ class _SearchPanelState extends State<SearchPanel> {
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
-                        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                        shape: AppShapes.bottomSheet,
                         builder: (context) => ElectricBikeDetailsModal(
                           stationId: station.id,
                           stationName: const StationFormatHelper().name(station, Provider.of<AppConfigService>(context, listen: false).currentLang),
@@ -212,7 +213,7 @@ class _SearchPanelState extends State<SearchPanel> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: AppShapes.bottomSheet,
       builder: (context) => RouteDetailPanel(station: station, destLat: station.lat, destLng: station.lng),
     );
   }

@@ -8,6 +8,7 @@ import 'package:youbike_android/core/services/route_instruction_translator.dart'
 import 'package:youbike_android/core/l10n/app_localizations.dart';
 import 'package:youbike_android/core/services/station_format_helper.dart';
 import 'package:youbike_android/data/models/station.dart';
+import 'package:youbike_android/ui/widgets/app_shapes.dart';
 
 class RouteDetailPanel extends StatefulWidget {
   final Station station;
@@ -93,12 +94,7 @@ class _RouteDetailPanelState extends State<RouteDetailPanel> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(color: cs.onSurfaceVariant.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
+            const DragHandle(),
             const SizedBox(height: 20),
             Row(
               children: [

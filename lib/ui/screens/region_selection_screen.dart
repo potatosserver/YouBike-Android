@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:youbike_android/core/l10n/app_localizations.dart';
 import 'package:youbike_android/data/services/app_config_service.dart';
+import 'package:youbike_android/ui/widgets/radio_dot.dart';
 
 class RegionSelectionScreen extends StatelessWidget {
   const RegionSelectionScreen({super.key});
@@ -10,9 +11,9 @@ class RegionSelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final config = Provider.of<AppConfigService>(context);
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
+    final cs = Theme.of(context).colorScheme;
+    final entries = config.regions.entries.toList();
 
-    final cs = theme.colorScheme;
     return Scaffold(
       backgroundColor: cs.surface,
       appBar: AppBar(
@@ -23,74 +24,45 @@ class RegionSelectionScreen extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-        children: config.regions.entries.map((entry) {
-          final String regionId = entry.key;
-          final String regionKey = entry.value['name'] as String;
-          
-          // 透過 AppLocalizations 取得區域名稱翻譯
-          String regionName;
-          switch (regionKey) {
-            case 'region_taipei': regionName = l10n.region_taipei; break;
-            case 'region_new_taipei': regionName = l10n.region_new_taipei; break;
-            case 'region_taoyuan': regionName = l10n.region_taoyuan; break;
-            case 'region_hsinchu_county': regionName = l10n.region_hsinchu_county; break;
-            case 'region_hsinchu_city': regionName = l10n.region_hsinchu_city; break;
-            case 'region_science_park': regionName = l10n.region_science_park; break;
-            case 'region_miaoli': regionName = l10n.region_miaoli; break;
-            case 'region_taichung': regionName = l10n.region_taichung; break;
-            case 'region_chiayi': regionName = l10n.region_chiayi; break;
-            case 'region_tainan': regionName = l10n.region_tainan; break;
-            case 'region_kaohsiung': regionName = l10n.region_kaohsiung; break;
-            case 'region_pingtung': regionName = l10n.region_pingtung; break;
-            case 'region_taitung': regionName = l10n.region_taitung; break;
-            default: regionName = regionKey;
-          }
-          final bool isSelected = config.selectedRegion == regionId;
+        children: List.generate(entries.length, (i) {
+          final entry = entries[i];
+          final regionId = entry.key;
+          final regionKey = entry.value['name'] as String;
+          final label = _lookupLabel(regionKey, l10n);
+          final isSelected = config.selectedRegion == regionId;
+          final isLast = i == entries.length - 1;
 
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: InkWell(
-              onTap: () {
-                config.setRegion(regionId);
-              },
-              child: Row(
-                children: [
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected ? cs.primary : cs.onSurfaceVariant,
-                        width: 2,
-                      ),
-                    ),
-                    child: Center(
-                      child: isSelected 
-                        ? Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: cs.primary,
-                              shape: BoxShape.circle,
-                            ),
-                          ) 
-                        : null,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(regionName, style: TextStyle(
-                    fontSize: 18, 
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: cs.onSurface,
-                  )),
-                ],
+          return Column(
+            children: [
+              RadioDot(
+                label: label,
+                isSelected: isSelected,
+                onTap: () => config.setRegion(regionId),
               ),
-            ),
+              if (!isLast) const SizedBox(height: 24),
+            ],
           );
-        }).toList(),
+        }),
       ),
     );
+  }
+
+  String _lookupLabel(String key, AppLocalizations l10n) {
+    switch (key) {
+      case 'region_taipei':          return l10n.region_taipei;
+      case 'region_new_taipei':      return l10n.region_new_taipei;
+      case 'region_taoyuan':         return l10n.region_taoyuan;
+      case 'region_hsinchu_county':  return l10n.region_hsinchu_county;
+      case 'region_hsinchu_city':    return l10n.region_hsinchu_city;
+      case 'region_science_park':    return l10n.region_science_park;
+      case 'region_miaoli':          return l10n.region_miaoli;
+      case 'region_taichung':        return l10n.region_taichung;
+      case 'region_chiayi':          return l10n.region_chiayi;
+      case 'region_tainan':          return l10n.region_tainan;
+      case 'region_kaohsiung':       return l10n.region_kaohsiung;
+      case 'region_pingtung':        return l10n.region_pingtung;
+      case 'region_taitung':         return l10n.region_taitung;
+      default:                       return key;
+    }
   }
 }

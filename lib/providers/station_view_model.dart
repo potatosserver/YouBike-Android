@@ -135,6 +135,27 @@ class StationViewModel extends LocalizedViewModel {
   /// 重新排序、取得即時數據，並可選地圖移動。
   /// 觸發者：倒數歸零、手動更新按鈕、搜尋。
   Future<void> refreshCards({LatLng? moveTo}) async {
+    await _executeRefresh(stations: _fullStationList, moveTo: moveTo);
+  }
+
+  /// 依站名過濾，再委派給 refreshCards。
+  void searchStations(String query) async {
+    if (query.isEmpty) {
+      await refreshCards();
+      return;
+    }
+    final filtered = _fullStationList
+        .where((s) => s.nameTw.contains(query) || s.nameEn.contains(query))
+        .toList();
+    if (filtered.isEmpty) {
+      allStations = [];
+      notifyListeners();
+      return;
+    }
+    await _executeRefresh(stations: filtered);
+  }
+
+  Future<void> _executeRefresh({required List<Station> stations, LatLng? moveTo}) async {
     if (_fullStationList.isEmpty) await fetchBaseData(null);
     if (_fullStationList.isEmpty) return;
 
@@ -142,45 +163,14 @@ class StationViewModel extends LocalizedViewModel {
 
     try {
       allStations = await _coordinator.execute(
-        fullStations: _fullStationList,
+        fullStations: stations,
         pinnedIds: config.pinnedStationIds,
         mapVm: mapVm!,
         limit: 10,
         moveTo: moveTo,
       );
     } catch (e) {
-      LogService().e('STATION', 'refreshCards failed', error: e);
-    } finally {
-      isUpdating = false;
-      notifyListeners();
-    }
-  }
-
-  /// 依站名過濾，再委派給 refreshCards。
-  void searchStations(String query) async {
-    try {
-      if (query.isEmpty) {
-        await refreshCards();
-        return;
-      }
-      final filtered = _fullStationList
-          .where((s) => s.nameTw.contains(query) || s.nameEn.contains(query))
-          .toList();
-      if (filtered.isEmpty) {
-        allStations = [];
-        notifyListeners();
-        return;
-      }
-      _beginRefresh();
-      allStations = await _coordinator.execute(
-        fullStations: filtered,
-        pinnedIds: config.pinnedStationIds,
-        mapVm: mapVm!,
-        limit: 10,
-        moveTo: null,
-      );
-    } catch (e) {
-      LogService().e('STATION', 'Search failed', error: e);
+      LogService().e('STATION', 'Refresh failed', error: e);
     } finally {
       isUpdating = false;
       notifyListeners();
