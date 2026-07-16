@@ -5,7 +5,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:youbike_android/providers/map_view_model.dart';
 import 'package:youbike_android/providers/loading_view_model.dart';
 import 'package:youbike_android/ui/widgets/map_view.dart';
-import 'package:youbike_android/core/theme/brand_colors.dart';
 import 'package:youbike_android/providers/station_view_model.dart';
 import 'package:youbike_android/core/services/gps_requester.dart';
 import 'package:youbike_android/ui/widgets/map_mask_overlay.dart';
@@ -144,7 +143,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () => context.push('/settings'),
                     child: Container(
                       width: 32, height: 32,
-                      decoration: const BoxDecoration(color: BrandColors.lightOrange, shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerHigh,
+                        shape: BoxShape.circle,
+                        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
+                      ),
                       child: Center(child: Icon(Icons.settings, size: 22, color: cs.onSurface)),
                     ),
                   ),
@@ -154,12 +157,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   bottom: isWide ? (horizontalMargin + 16.0) : (_panelHeight ?? availableHeight * 0.35) + 20, 
                   child: Container(
                     decoration: BoxDecoration(
-                      color: BrandColors.lightOrange,
+                      color: cs.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(12), 
                       boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.my_location, size: 22, color: Colors.black),
+                      icon: Icon(Icons.my_location, size: 22, color: cs.onSurface),
                       onPressed: () async {
                         const gps = GpsRequester();
                         final stationVm = Provider.of<StationViewModel>(context, listen: false);

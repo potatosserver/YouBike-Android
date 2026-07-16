@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:youbike_android/core/theme/brand_colors.dart';
 import 'package:youbike_android/providers/station_view_model.dart';
 import 'package:youbike_android/core/l10n/app_localizations.dart';
 
@@ -41,6 +40,7 @@ class _HomeUpdateButtonState extends State<HomeUpdateButton> with SingleTickerPr
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
 
     return Consumer<StationViewModel>(
       builder: (context, vm, child) {
@@ -52,7 +52,7 @@ class _HomeUpdateButtonState extends State<HomeUpdateButton> with SingleTickerPr
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  color: BrandColors.lightOrange,
+                  color: cs.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
                 ),
@@ -61,13 +61,13 @@ class _HomeUpdateButtonState extends State<HomeUpdateButton> with SingleTickerPr
                   children: [
                     Transform.rotate(
                       angle: _controller.value * 3.1415926535,
-                      child: const Icon(Icons.autorenew, size: 20, color: Colors.black),
+                      child: Icon(Icons.autorenew, size: 20, color: cs.onSurface),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       l10n.updatingIn(vm.countdownRemaining.toString()),
-                      style: const TextStyle(
-                        color: Colors.black,
+                      style: TextStyle(
+                        color: cs.onSurface,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
