@@ -28,17 +28,11 @@ jobs:
       - name: Generate L10n
         run: flutter gen-l10n
 
-      # 1. 從 GitHub Secrets 安全重建被 gitignore 的 env/prod.json 檔案
-      - name: Recreate prod.json from Secret
-        run: |
-          mkdir -p env
-          echo '${{ secrets.ENV_PROD_JSON }}' > env/prod.json
-
-      # 2. 編譯 Web Wasm 正式版本 [1.1.5, 1.2.6]
+      # 使用你原本最熟悉的指令進行 Wasm 編譯 [1.1.5, 1.2.6]
       - name: Build Web Wasm
-        run: flutter build web --wasm --release --dart-define-from-file=env/prod.json
+        run: flutter build web --wasm --release --dart-define=UPDATE_CHANNEL=web
 
-      # 3. 自動將編譯好的網頁推送到同 Repo 的 gh-pages 分支 [1.2.1]
+      # 自動將編譯好的網頁推送到同 Repo 的 gh-pages 分支 [1.2.1]
       - name: Push Web Build to gh-pages Branch
         uses: JamesIves/github-pages-deploy-action@v4
         with:
