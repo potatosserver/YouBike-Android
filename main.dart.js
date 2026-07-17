@@ -34483,11 +34483,11 @@ s=1
 break
 case 1:return A.x(q,r)}})
 return A.y($async$QW,r)},
-biq(){switch("github"){case"github":return"GitHub"
+biq(){switch("web"){case"github":return"GitHub"
 case"google_play":return"Google Play"
 case"web":return"Web"
 case"test":return"Test"
-default:return"github"}}},B={}
+default:return"web"}}},B={}
 var w=[A,J,B]
 var $={}
 A.RG.prototype={
@@ -118450,7 +118450,7 @@ var $async$vA=A.A(function(a,b){if(a===1){o.push(b)
 s=p}for(;;)switch(s){case 0:s=3
 return A.u(A.a0U(),$async$vA)
 case 3:i=b.c
-h="github".toLowerCase()
+h="web".toLowerCase()
 p=5
 s=J.f(h,"google_play")?8:9
 break
@@ -119730,7 +119730,7 @@ return A.y($async$CP,r)},
 M(a2){var s,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d,c,b=this,a=null,a0=A.dq(a2,!0,t.Ef),a1=A.cH(a2,B.aY,t.E)
 a1.toString
 s=A.a0(a2).ax
-r="github".toLowerCase()
+r="web".toLowerCase()
 q=r!=="google_play"
 p=!q||r==="github"||r==="test"
 o=!q||r==="web"
