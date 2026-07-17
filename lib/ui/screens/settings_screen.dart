@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -318,12 +319,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _openGooglePlayStore() async {
     const packageName = 'com.potatosserver.youbike';
-    final marketUri = Uri.parse('market://details?id=$packageName');
     final webUri = Uri.parse(
       'https://play.google.com/store/apps/details?id=$packageName',
     );
 
-    if (!await launchUrl(marketUri, mode: LaunchMode.externalApplication)) {
+    // On web, directly open the Google Play web page in a new tab.
+    // url_launcher_web only supports platformDefault mode and http/https schemes.
+    if (kIsWeb) {
+      await launchUrl(webUri, mode: LaunchMode.platformDefault);
+      return;
+    }
+
+    // On Android, try market:// scheme first, fallback to web URL
+    final marketUri = Uri.parse('market://details?id=$packageName');
+    if (await canLaunchUrl(marketUri)) {
+      await launchUrl(marketUri, mode: LaunchMode.externalApplication);
+    } else {
       await launchUrl(webUri, mode: LaunchMode.externalApplication);
     }
   }
