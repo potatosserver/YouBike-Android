@@ -343,6 +343,45 @@ class AppLocalizationsZh extends AppLocalizations {
   String get update_check_failed => '檢查更新失敗，請檢查您的網路連線。';
 
   @override
+  String get update_available => '可用更新';
+
+  @override
+  String get downloading_update => '正在下載更新...';
+
+  @override
+  String get download_completed_install => '下載完成。請點選安裝以完成更新。';
+
+  @override
+  String get no_compatible_apk => '找不到相容的 APK。';
+
+  @override
+  String get manual_download_github => '你可以從 GitHub 手動下載此版本。';
+
+  @override
+  String get release_details_available => '可在 GitHub 查看發行說明。';
+
+  @override
+  String get preparing_download => '準備下載...';
+
+  @override
+  String get retry => '重試';
+
+  @override
+  String get install => '安裝';
+
+  @override
+  String get open_github => '開啟 GitHub';
+
+  @override
+  String get open_google_play => '開啟 Google Play 商店';
+
+  @override
+  String get release_notes => '版本說明';
+
+  @override
+  String get download => '下載';
+
+  @override
   String get close => '關閉';
 
   @override

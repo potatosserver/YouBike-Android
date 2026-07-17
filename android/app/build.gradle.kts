@@ -30,6 +30,20 @@ android {
         versionName = flutter.versionName
     }
 
+    flavorDimensions += listOf("channel")
+
+    productFlavors {
+        create("github") {
+            dimension = "channel"
+            applicationIdSuffix = ".github"
+            versionNameSuffix = "-github"
+        }
+        create("google_play") {
+            dimension = "channel"
+            versionNameSuffix = "-gp"
+        }
+    }
+
     signingConfigs {
         create("release") {
             if (keystorePropertiesFile.exists()) {

@@ -734,6 +734,84 @@ abstract class AppLocalizations {
   /// **'Failed to check for updates. Please check your network connection.'**
   String get update_check_failed;
 
+  /// No description provided for @update_available.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Available'**
+  String get update_available;
+
+  /// No description provided for @downloading_update.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading update...'**
+  String get downloading_update;
+
+  /// No description provided for @download_completed_install.
+  ///
+  /// In en, this message translates to:
+  /// **'Download completed. Tap Install to finish the update.'**
+  String get download_completed_install;
+
+  /// No description provided for @no_compatible_apk.
+  ///
+  /// In en, this message translates to:
+  /// **'No compatible APK could be found for this device.'**
+  String get no_compatible_apk;
+
+  /// No description provided for @manual_download_github.
+  ///
+  /// In en, this message translates to:
+  /// **'You can download the release manually from GitHub.'**
+  String get manual_download_github;
+
+  /// No description provided for @release_details_available.
+  ///
+  /// In en, this message translates to:
+  /// **'Release details are available on GitHub.'**
+  String get release_details_available;
+
+  /// No description provided for @preparing_download.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing download...'**
+  String get preparing_download;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @install.
+  ///
+  /// In en, this message translates to:
+  /// **'Install'**
+  String get install;
+
+  /// No description provided for @open_github.
+  ///
+  /// In en, this message translates to:
+  /// **'Open GitHub'**
+  String get open_github;
+
+  /// No description provided for @open_google_play.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Google Play'**
+  String get open_google_play;
+
+  /// No description provided for @release_notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Release Notes'**
+  String get release_notes;
+
+  /// No description provided for @download.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get download;
+
   /// No description provided for @close.
   ///
   /// In en, this message translates to:

@@ -350,6 +350,49 @@ class AppLocalizationsEn extends AppLocalizations {
       'Failed to check for updates. Please check your network connection.';
 
   @override
+  String get update_available => 'Update Available';
+
+  @override
+  String get downloading_update => 'Downloading update...';
+
+  @override
+  String get download_completed_install =>
+      'Download completed. Tap Install to finish the update.';
+
+  @override
+  String get no_compatible_apk =>
+      'No compatible APK could be found for this device.';
+
+  @override
+  String get manual_download_github =>
+      'You can download the release manually from GitHub.';
+
+  @override
+  String get release_details_available =>
+      'Release details are available on GitHub.';
+
+  @override
+  String get preparing_download => 'Preparing download...';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get install => 'Install';
+
+  @override
+  String get open_github => 'Open GitHub';
+
+  @override
+  String get open_google_play => 'Open Google Play';
+
+  @override
+  String get release_notes => 'Release Notes';
+
+  @override
+  String get download => 'Download';
+
+  @override
   String get close => 'Close';
 
   @override

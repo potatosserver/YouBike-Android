@@ -5,8 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:youbike/core/config/app_environment.dart';
 import 'package:youbike/core/l10n/app_localizations.dart';
+import 'package:youbike/core/services/update_checker_service.dart';
 import 'package:youbike/data/services/app_config_service.dart';
+import 'package:youbike/ui/widgets/github_update_dialog.dart';
 import 'package:youbike/ui/widgets/setting_group_card.dart';
 import 'package:youbike/ui/widgets/changelog_dialog.dart';
 
@@ -43,6 +46,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final channel = AppEnvironment.updateChannel.toLowerCase();
+    final showUpdateButton = channel == 'google_play' || channel == 'github';
+    final showGooglePlayButton = channel == 'google_play' || channel == 'web';
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -115,6 +121,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () => _showAboutDialog(),
                 ),
                 _buildItem(
+                  icon: Icons.network_check,
+                  title: 'Channel: ${AppEnvironment.displayChannel}',
+                  onTap: null,
+                ),
+                _buildItem(
                   icon: Icons.code,
                   title: l10n.github_source_code,
                   trailing: Icon(Icons.open_in_new,
@@ -129,13 +140,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     }
                   },
                 ),
-                _buildItem(
-                  icon: Icons.system_update_outlined,
-                  title: l10n.check_for_updates,
-                  onTap: () {
-                    Fluttertoast.showToast(msg: l10n.latest_version_installed);
-                  },
-                ),
+                if (showUpdateButton)
+                  _buildItem(
+                    icon: Icons.system_update_outlined,
+                    title: l10n.check_for_updates,
+                    onTap: () async {
+                      await _checkForUpdates();
+                    },
+                  ),
+                if (showGooglePlayButton)
+                  _buildItem(
+                    icon: Icons.storefront_outlined,
+                    title: l10n.open_google_play,
+                    trailing: Icon(Icons.open_in_new,
+                        size: 20, color: cs.onSurfaceVariant),
+                    onTap: () async {
+                      await _openGooglePlayStore();
+                    },
+                  ),
                 _buildItem(
                   icon: Icons.description_outlined,
                   title: l10n.view_changelog,
@@ -205,6 +227,95 @@ class _SettingsScreenState extends State<SettingsScreen> {
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
+  }
+
+  Future<void> _checkForUpdates() async {
+    final service = UpdateCheckerService();
+    final l10n = AppLocalizations.of(context);
+
+    try {
+      final result = await service.checkForUpdate();
+      if (!mounted) return;
+      await _handleUpdateResult(result, l10n);
+    } catch (_) {
+      if (!mounted) return;
+      Fluttertoast.showToast(msg: l10n.update_check_failed);
+    }
+  }
+
+  Future<void> _handleUpdateResult(
+    UpdateCheckResult result,
+    AppLocalizations l10n,
+  ) async {
+    final localContext = context;
+    final service = UpdateCheckerService();
+
+    if (result.hasError) {
+      Fluttertoast.showToast(msg: l10n.update_check_failed);
+      return;
+    }
+
+    if (result.hasGooglePlayUpdate && result.playUpdateInfo != null) {
+      await service.startGooglePlayUpdate(result.playUpdateInfo!);
+      return;
+    }
+
+    if (result.hasGithubRelease && result.githubRelease != null) {
+      await GithubUpdateDialog.show(localContext, result.githubRelease!);
+      return;
+    }
+
+    if (result.isLatest) {
+      Fluttertoast.showToast(msg: l10n.latest_version_installed);
+      return;
+    }
+
+    await showDialog<void>(
+      context: localContext,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(l10n.check_for_updates),
+          content: Text(
+            'New version available: ${result.latestVersion}\nCurrent version: ${result.currentVersion}',
+          ),
+          actions: [
+            if (result.releaseNotesUrl != null)
+              TextButton(
+                onPressed: () async {
+                  final url = Uri.parse(result.releaseNotesUrl!);
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                  if (ctx.mounted) {
+                    Navigator.of(ctx).pop();
+                  }
+                },
+                child: Text(l10n.view_release_notes),
+              ),
+            TextButton(
+              onPressed: () {
+                if (ctx.mounted) {
+                  Navigator.of(ctx).pop();
+                }
+              },
+              child: Text(l10n.close),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _openGooglePlayStore() async {
+    const packageName = 'com.potatosserver.youbike';
+    final marketUri = Uri.parse('market://details?id=$packageName');
+    final webUri = Uri.parse(
+      'https://play.google.com/store/apps/details?id=$packageName',
+    );
+
+    if (!await launchUrl(marketUri, mode: LaunchMode.externalApplication)) {
+      await launchUrl(webUri, mode: LaunchMode.externalApplication);
+    }
   }
 
   void _showAboutDialog() {

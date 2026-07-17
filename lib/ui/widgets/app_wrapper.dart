@@ -5,7 +5,9 @@ import 'package:youbike/ui/widgets/loading_overlay.dart';
 import 'package:youbike/providers/loading_view_model.dart';
 import 'package:youbike/providers/station_view_model.dart';
 import 'package:youbike/providers/map_view_model.dart';
+import 'package:youbike/core/config/app_environment.dart';
 import 'package:youbike/core/services/gps_requester.dart';
+import 'package:youbike/core/services/update_checker_service.dart';
 import 'package:youbike/core/utils/log_service.dart';
 
 class AppWrapper extends StatefulWidget {
@@ -60,6 +62,12 @@ class _AppWrapperState extends State<AppWrapper> {
 
       loadingVm.updateStatus('init_updating', progress: 96);
       await Future.delayed(const Duration(milliseconds: 300));
+
+      // Only use updateChannel for runtime update behavior.
+      // FLAVOR is not involved in this app initialization flow.
+      if (AppEnvironment.updateChannel == 'google_play') {
+        await _checkGooglePlayUpdate();
+      }
     } catch (e) {
       LogService().e('APP_INIT', 'Initial data fetch failed', error: e);
     } finally {
@@ -70,6 +78,19 @@ class _AppWrapperState extends State<AppWrapper> {
           _isInitializing = false;
         });
       }
+    }
+  }
+
+  Future<void> _checkGooglePlayUpdate() async {
+    try {
+      final updateInfo =
+          await UpdateCheckerService().checkForGooglePlayUpdate();
+      if (updateInfo != null) {
+        await UpdateCheckerService().startGooglePlayUpdate(updateInfo);
+      }
+    } catch (e, st) {
+      LogService().e('UPDATE', 'Google Play update check failed',
+          error: e, stackTrace: st);
     }
   }
 

@@ -63,8 +63,9 @@ class ChangelogDialog extends StatelessWidget {
                   if (url == null) return;
                   final uri = Uri.parse(url);
                   canLaunchUrl(uri).then((can) {
-                    if (can)
+                    if (can) {
                       launchUrl(uri, mode: LaunchMode.externalApplication);
+                    }
                   });
                 },
                 style: {

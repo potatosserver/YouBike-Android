@@ -51,8 +51,9 @@ class MapViewModel extends LocalizedViewModel {
   }
 
   LatLng getEffectiveLocation() {
-    if (config.useLocation && lastKnownLocation != null)
+    if (config.useLocation && lastKnownLocation != null) {
       return lastKnownLocation!;
+    }
     // 回退到使用者選擇的區域預設中心
     final regionData = config.regions[config.selectedRegion]!;
     return LatLng(

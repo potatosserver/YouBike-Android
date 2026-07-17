@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Explicitly remove install permission for Google Play builds if any
+         dependency adds it. open_filex no longer requires REQUEST_INSTALL_PACKAGES. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove" />
+</manifest>
