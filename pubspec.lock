@@ -90,7 +90,7 @@ packages:
     source: hosted
     version: "2.1.0"
   crypto:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: crypto
       sha256: c8ea0233063ba03258fbcf2ca4d6dadfefe14f02fab57702265467a19f27fadf
@@ -385,10 +385,10 @@ packages:
     dependency: "direct main"
     description:
       name: in_app_update
-      sha256: "6ce3fe4ce975812f7d6133ea95cd146ca29fccc733860b40871302a0385ddffb"
+      sha256: c55b4da41baf34b440ba627843932aa6f1689b5c499cfac98aec156b3113d89e
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.0"
+    version: "5.0.0"
   intl:
     dependency: "direct main"
     description:
@@ -726,7 +726,7 @@ packages:
     source: hosted
     version: "6.1.5+1"
   pub_semver:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: pub_semver
       sha256: "5bfcf68ca79ef689f8990d1160781b4bad40a3bd5e5218ad4076ddb7f4081585"
