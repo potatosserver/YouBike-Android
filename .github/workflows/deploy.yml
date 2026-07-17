@@ -1,0 +1,47 @@
+name: Web Compile and Push to Branch
+
+on:
+  push:
+    branches:
+      - main  # 每次 push 到 main 分支就自動執行編譯與推送 [1.2.1]
+  workflow_dispatch:  # 保留手動單鍵點擊執行按鈕，不需輸入任何變數
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 確保 Action 有權限可以將編譯產物推送至同 Repo 的 gh-pages 分支 [1.2.1]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Generate L10n
+        run: flutter gen-l10n
+
+      # 1. 從 GitHub Secrets 安全重建被 gitignore 的 env/prod.json 檔案
+      - name: Recreate prod.json from Secret
+        run: |
+          mkdir -p env
+          echo '${{ secrets.ENV_PROD_JSON }}' > env/prod.json
+
+      # 2. 編譯 Web Wasm 正式版本 [1.1.5, 1.2.6]
+      - name: Build Web Wasm
+        run: flutter build web --wasm --release --dart-define-from-file=env/prod.json
+
+      # 3. 自動將編譯好的網頁推送到同 Repo 的 gh-pages 分支 [1.2.1]
+      - name: Push Web Build to gh-pages Branch
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: build/web    # 要上傳的編譯產物資料夾 [1.2.1]
+          branch: gh-pages     # 你的目標分支（機器人會自動維護與更新此分支）
+          clean: true          # 自動清理舊檔案，保持分支乾淨
