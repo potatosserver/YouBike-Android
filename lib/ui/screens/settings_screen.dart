@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -152,7 +153,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 if (showGooglePlayButton)
                   _buildItem(
-                    icon: Icons.storefront_outlined,
+                    leading: const FaIcon(FontAwesomeIcons.googlePlay, size: 22),
                     title: l10n.open_google_play,
                     trailing: Icon(Icons.open_in_new,
                         size: 20, color: cs.onSurfaceVariant),
@@ -195,7 +196,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildItem({
-    required IconData icon,
+    IconData? icon,
+    Widget? leading,
     required String title,
     String? subtitle,
     Widget? trailing,
@@ -206,7 +208,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) {
     final cs = Theme.of(context).colorScheme;
     return ListTile(
-      leading: Icon(icon, color: iconColor ?? cs.onSurfaceVariant, size: 22),
+      leading: leading ?? Icon(icon, color: iconColor ?? cs.onSurfaceVariant, size: 22),
       title: Text(
         title,
         style: TextStyle(
