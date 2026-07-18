@@ -16,12 +16,17 @@
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="YouBike 站點搜尋">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/Icon-512.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <!-- PWA: 主題色 (獨立瀏覽器標題列) -->
+  <meta name="theme-color" content="#FF9800">
 
   <!-- 你的自訂標題 -->
   <title>YouBike 站點搜尋 : 一個簡單、美觀、低流量的YouBike站點搜尋器</title>
@@ -164,6 +169,32 @@
     window.addEventListener('flutter-first-frame', () => {
       document.body.classList.add('flutter-loaded');
     });
+
+    // PWA: 註冊 Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('flutter_service_worker.js', {
+          scope: '/'
+        }).then(function (registration) {
+          console.log('[PWA] Service Worker 註冊成功:', registration.scope);
+
+          // 監聽更新
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('[PWA] 新版本已就緒，重新整理後生效');
+                  // 可在此顯示更新提示給使用者
+                }
+              });
+            }
+          });
+        }).catch(function (error) {
+          console.error('[PWA] Service Worker 註冊失敗:', error);
+        });
+      });
+    }
   </script>
 </body>
 </html>

@@ -1,13 +1,34 @@
 {
-    "name": "youbike",
-    "short_name": "youbike",
+    "name": "YouBike 站點搜尋",
+    "short_name": "YouBike",
+    "description": "一個專為 YouBike 設計的簡單、美觀且低流量站點搜尋器，提供快速查詢站點資訊功能，滿足即時需求。",
     "start_url": ".",
+    "scope": "/",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "display_override": ["window-controls-overlay"],
+    "background_color": "#FF9800",
+    "theme_color": "#FF9800",
     "orientation": "portrait-primary",
+    "lang": "zh-TW",
+    "dir": "ltr",
     "prefer_related_applications": false,
+    "categories": ["navigation", "travel", "utilities"],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "搜尋站點",
+            "short_name": "搜尋",
+            "description": "快速搜尋 YouBike 站點",
+            "url": "/?action=search",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        }
+    ],
     "icons": [
         {
             "src": "icons/Icon-192.png",
