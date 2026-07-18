@@ -251,39 +251,6 @@ class _MapViewState extends State<MapView> {
       ),
     );
   }
-
-  Widget _buildInfoLabelValue(String label, int? value, ColorScheme cs) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            softWrap: false,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 12,
-              color: cs.onSurface.withValues(alpha: 0.7),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          value?.toString() ?? '--',
-          softWrap: false,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: cs.onSurface,
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 class _PopupArrowPainter extends CustomPainter {
