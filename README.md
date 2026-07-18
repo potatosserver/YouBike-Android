@@ -1,7 +1,7 @@
 # YouBike 微笑單車 — 全台即時查詢 App
 
 > 全台 YouBike 微笑單車即時查詢 Android App，使用 Flutter 打造。
-> Material Design 3 · 橘色品牌設計 · 零靜態分析錯誤
+> Material Design 3 · 橘色品牌設計
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.0+-02569B?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?logo=dart)](https://dart.dev)
