@@ -52,8 +52,12 @@ class _PermissionHandlerPageState extends State<PermissionHandlerPage>
       _checked = true;
     });
     // 已授權就直接進入 App
-    if (_permissionGranted && mounted) {
-      _goHome();
+    if (_permissionGranted) {
+      if (mounted) {
+        setState(() {
+          _checked = true;
+        });
+      }
     }
   }
 
@@ -80,7 +84,6 @@ class _PermissionHandlerPageState extends State<PermissionHandlerPage>
     if (result.isGranted || result.isLimited) {
       if (!mounted) return;
       setState(() => _permissionGranted = true);
-      _goHome();
     } else if (result.isPermanentlyDenied) {
       _showPermanentlyDeniedDialog();
     }
