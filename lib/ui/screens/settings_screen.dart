@@ -498,6 +498,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   void _showAboutDialog() {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -516,7 +517,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                   icon: Icons.badge_outlined, text: l10n.developer_label),
               const SizedBox(height: 12),
               _buildAboutRow(
-                  icon: Icons.info_outline, text: l10n.version_label(_version)),
+                  icon: Icons.info_outline,
+                  text: l10n.version_label(_version)),
             ],
           ),
         ),
@@ -549,6 +551,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   void _showClearDataDialog() {
     final l10n = AppLocalizations.of(context);
     final router = GoRouter.of(context);
+    final cs = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -570,7 +573,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             },
             child: Text(
               l10n.confirm,
-              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+              style: TextStyle(color: cs.error),
             ),
           ),
         ],

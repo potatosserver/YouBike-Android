@@ -221,6 +221,7 @@ class _PermissionHandlerPageState extends State<PermissionHandlerPage>
 
   void _showSkipWarningDialog() {
     final l10n = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -238,7 +239,7 @@ class _PermissionHandlerPageState extends State<PermissionHandlerPage>
             },
             child: Text(
               l10n.skip_permission_confirm,
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: cs.error),
             ),
           ),
         ],

@@ -24,12 +24,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dialogTheme = DialogThemeData(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      titleTextStyle:
-          const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-    );
-
     return Consumer2<ThemeProvider, AppConfigService>(
       builder: (context, themeProvider, config, child) {
         return MaterialApp.router(
@@ -43,7 +37,7 @@ class MyApp extends StatelessWidget {
               seedColor: BrandColors.orange,
               brightness: Brightness.light,
             ),
-            dialogTheme: dialogTheme,
+            dialogTheme: _buildDialogTheme(Brightness.light),
           ),
           darkTheme: ThemeData(
             useMaterial3: true,
@@ -51,7 +45,7 @@ class MyApp extends StatelessWidget {
               seedColor: BrandColors.orange,
               brightness: Brightness.dark,
             ),
-            dialogTheme: dialogTheme,
+            dialogTheme: _buildDialogTheme(Brightness.dark),
           ),
           localizationsDelegates: const [
             AppLocalizations.delegate,
@@ -62,6 +56,29 @@ class MyApp extends StatelessWidget {
           supportedLocales: supportedLocales,
         );
       },
+    );
+  }
+
+  DialogThemeData _buildDialogTheme(Brightness brightness) {
+    // 以 brightness 對應的 ColorScheme.fromSeed 計算需用的 onSurface，
+    // 由於這裡拿不到 theme，這條 helper 改由呼叫端提供 colorScheme。
+    // 實際做法：建立 ColorScheme 後組 DialogThemeData。
+    final cs = ColorScheme.fromSeed(
+      seedColor: BrandColors.orange,
+      brightness: brightness,
+    );
+    return DialogThemeData(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: cs.surface,
+      titleTextStyle: TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 20,
+        color: cs.onSurface,
+      ),
+      contentTextStyle: TextStyle(
+        fontSize: 14,
+        color: cs.onSurfaceVariant,
+      ),
     );
   }
 }
