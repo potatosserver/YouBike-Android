@@ -2,7 +2,14 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:youbike/core/l10n/app_localizations.dart';
+import 'package:youbike/data/services/app_config_service.dart';
 
+/// 語言中央服務。
+///
+/// 持有 [selectedLocale] 並解析 [appLocale]，同時負責與 [AppConfigService.currentLang]
+/// 的雙向同步 — 避免 UI 重複自行呼叫兩個 service。
+///
+/// App 啟動時由 main.dart 呼叫 [loadLocale]；後續切換語言一律走 [setLanguageCode]。
 class LanguageService with ChangeNotifier {
   static const String _languageCodeKey = 'languageCode';
 
@@ -49,7 +56,7 @@ class LanguageService with ChangeNotifier {
     notifyListeners();
   }
 
-  /// 儲存新的語言偏好。
+  /// 儲存新的語言偏好（僅設定 Locale；為維持相容保留此 method，新程式碼請用 [setLanguageCode]）。
   Future<void> setLocale(Locale locale) async {
     final prefs = await SharedPreferences.getInstance();
     // 僅儲存語言代碼，不含地區碼
@@ -64,5 +71,25 @@ class LanguageService with ChangeNotifier {
     await prefs.remove(_languageCodeKey);
     _selectedLocale = null;
     notifyListeners();
+  }
+
+  /// 統一的語言切換入口（取代呼叫端各自呼叫兩個 service）。
+  ///
+  /// 同時更新：
+  /// - 本 service 的 `selectedLocale`（會持久化並 notifyProviders）
+  /// - [config] 的 `currentLang`（同步到 AppConfigService 內部 prefs，UI 可立即讀取）
+  ///
+  /// `code` 範例：`'zh'` / `'en'`；'zh_TW' 應於呼叫端先歸一為 'zh'。
+  /// 回傳語言代碼以便呼叫端做後續動作。
+  Future<String> setLanguageCode(String code, AppConfigService config) async {
+    await setLocale(Locale(code));
+    config.setLanguage(_normalizeLangCode(code));
+    return _normalizeLangCode(code);
+  }
+
+  /// 將 'zh_TW' / 'zh_CN' 等含底線的代碼統一為 'zh'；其他維持原樣。
+  static String _normalizeLangCode(String code) {
+    if (code.startsWith('zh')) return 'zh';
+    return code;
   }
 }

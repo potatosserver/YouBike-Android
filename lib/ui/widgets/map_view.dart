@@ -12,6 +12,7 @@ import 'package:youbike/ui/widgets/map_markers.dart';
 import 'package:youbike/ui/widgets/pulse_marker.dart';
 import 'package:youbike/core/l10n/app_localizations.dart';
 import 'package:youbike/core/services/station_format_helper.dart';
+import 'package:youbike/data/services/app_config_service.dart';
 
 class MapView extends StatefulWidget {
   final MapController mapController;
@@ -163,7 +164,11 @@ class _MapViewState extends State<MapView> {
                           child: Text(
                             _stationFormat.name(
                               station,
-                              Localizations.localeOf(context).languageCode,
+                              // 與全站統一，從 AppConfigService.currentLang 取得語言碼。
+                              // 原本用 Localizations.localeOf(context).languageCode，
+                              // 但與其他 widget 來源不同一，會造成「切換語言後 partial update」。
+                              Provider.of<AppConfigService>(context)
+                                  .currentLang,
                             ),
                             style: TextStyle(
                               fontSize: 15,

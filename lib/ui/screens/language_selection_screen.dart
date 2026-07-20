@@ -12,6 +12,7 @@ class LanguageSelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final config = Provider.of<AppConfigService>(context);
+    final languageService = Provider.of<LanguageService>(context, listen: false);
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -27,22 +28,15 @@ class LanguageSelectionScreen extends StatelessWidget {
         children: [
           RadioDot(
             label: '繁體中文',
-            isSelected: config.currentLang == 'zh_TW',
-            onTap: () {
-              config.setLanguage('zh_TW');
-              Provider.of<LanguageService>(context, listen: false)
-                  .setLocale(const Locale('zh'));
-            },
+            isSelected: config.currentLang == 'zh_TW' ||
+                config.currentLang == 'zh',
+            onTap: () => languageService.setLanguageCode('zh', config),
           ),
           const SizedBox(height: 24),
           RadioDot(
             label: 'English',
             isSelected: config.currentLang == 'en',
-            onTap: () {
-              config.setLanguage('en');
-              Provider.of<LanguageService>(context, listen: false)
-                  .setLocale(const Locale('en'));
-            },
+            onTap: () => languageService.setLanguageCode('en', config),
           ),
         ],
       ),
