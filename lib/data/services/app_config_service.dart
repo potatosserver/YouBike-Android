@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppConfigService with ChangeNotifier {
@@ -8,6 +9,11 @@ class AppConfigService with ChangeNotifier {
   bool useNotification = true;
   Set<String> pinnedStationIds = {};
   SharedPreferences? _prefs;
+  String _appVersion = '0.0.0+0';
+
+  /// 已快取的應用版本字串（格式：`version+buildNumber`，從 PackageInfo 讀取）。
+  /// 在 [init] 時建立；若 init 期間讀取失敗則回傳預設值。
+  String get appVersion => _appVersion;
 
   final Map<String, Map<String, dynamic>> _regions = {
     "taipei": {"name": "region_taipei", "lat": 25.047924, "lng": 121.517081},
@@ -34,6 +40,13 @@ class AppConfigService with ChangeNotifier {
     useNotification = _prefs?.getBool('useNotification') ?? true;
     final pinnedList = _prefs?.getStringList('pinnedStations') ?? [];
     pinnedStationIds = pinnedList.map((id) => id.trim()).toSet();
+    // 集中讀取 PackageInfo — 取代原本散落 3 處的 PackageInfo.fromPlatform() 呼叫。
+    try {
+      final info = await PackageInfo.fromPlatform();
+      _appVersion = '${info.version}+${info.buildNumber}';
+    } catch (_) {
+      // 保留預設 value '0.0.0+0' 即可；AppConfigService.init 不該拋例外。
+    }
     notifyListeners();
   }
 

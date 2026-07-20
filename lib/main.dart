@@ -28,7 +28,7 @@ void main() async {
   // 2. 初始化 Firebase + App Check + FCM
   try {
     log.i('APP_START', 'Initializing Firebase...');
-    await FirebaseService.instance.init();
+    await FirebaseCoreService.instance.ensureInitialized();
     log.i('APP_START', 'Firebase 初始化完成');
 
     // 🛡️ 啟用 App Check 防護盾

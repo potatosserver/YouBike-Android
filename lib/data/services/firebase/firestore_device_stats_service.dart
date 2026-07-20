@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/foundation.dart';
 
 import '../device_id_service.dart';
+import '../app_config_service.dart';
 import 'firebase_core_service.dart';
 import 'fcm_service.dart';
+import 'package:youbike/core/config/app_environment.dart';
 
 /// Firestore device_stats 文件操作
 ///
@@ -13,6 +14,9 @@ import 'fcm_service.dart';
 ///
 /// 依賴 [FirebaseCoreService] 確保 Firebase 已初始化，
 /// 依賴 [FcmTokenService] 取得 FCM Token。
+///
+/// App version 與 display channel 統一由 [AppConfigService] / [AppEnvironment]
+/// 提供，避免在此檔重複計算。
 ///
 /// Web 使用 firestore_device_stats_stub.dart，由條件 import 排除此檔案。
 class FirestoreDeviceStatsService {
@@ -29,7 +33,10 @@ class FirestoreDeviceStatsService {
   ///
   /// 自動初始化 Firebase（冪等）、取得 FCM Token、寫入 Firestore。
   /// 失敗不拋出例外，僅 log 錯誤。
-  Future<void> reportAppActive() async {
+  ///
+  /// 需要來自 [config] 的 `appVersion`、`displayChannel` 等 runtime 值，
+  /// 請於 AppConfigService.init() 完成後呼叫本 method。
+  Future<void> reportAppActive(AppConfigService config) async {
     try {
       // 確保 Firebase 已初始化（冪等）
       await FirebaseCoreService.instance.ensureInitialized();
@@ -44,15 +51,11 @@ class FirestoreDeviceStatsService {
       final deviceModel = deviceData['model']!;
       final fcmToken = await FcmTokenService.instance.getToken();
 
-      final packageInfo = await PackageInfo.fromPlatform();
-      final appVersion =
-          '${packageInfo.version}+${packageInfo.buildNumber}';
-
-      const String displayChannel =
-          String.fromEnvironment('UPDATE_CHANNEL', defaultValue: 'github') ==
-                  'google_play'
-              ? 'Google Play'
-              : 'GitHub';
+      // 共用 AppConfigService.appVersion（init 階段讀取一次）與
+      // AppEnvironment.displayChannel（靜態 String.fromEnvironment 解析），
+      // 不再於本檔重複 PackageInfo.fromPlatform() 與 channel 雙分支。
+      final appVersion = config.appVersion;
+      final displayChannel = AppEnvironment.displayChannel;
 
       await FirebaseFirestore.instance
           .collection('device_stats')

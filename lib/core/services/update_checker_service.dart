@@ -8,7 +8,6 @@ import 'package:in_app_update/in_app_update.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:youbike/core/config/app_environment.dart';
 
 class UpdateCheckResult {
@@ -62,9 +61,9 @@ class UpdateCheckerService {
   static const _githubLatestReleaseUrl =
       'https://api.github.com/repos/potatosserver/YouBike-Flutter/releases/latest';
 
-  Future<UpdateCheckResult> checkForUpdate() async {
-    final packageInfo = await PackageInfo.fromPlatform();
-    final currentVersion = packageInfo.version;
+  Future<UpdateCheckResult> checkForUpdate({required String currentVersion}) async {
+    // 從 caller 注入 currentVersion，避免本檔再呼叫 PackageInfo.fromPlatform() —
+    // 版號資訊統一由 AppConfigService.init 期間讀取並 cache。
     final channel = AppEnvironment.updateChannel.toLowerCase();
 
     try {

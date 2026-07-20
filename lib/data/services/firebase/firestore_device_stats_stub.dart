@@ -2,6 +2,8 @@
 //
 // Web 平台無 Firestore，所有方法都是 no-op。
 
+import '../app_config_service.dart';
+
 /// Web stub — Firestore device_stats 文件操作
 class FirestoreDeviceStatsService {
   static FirestoreDeviceStatsService? _instance;
@@ -13,6 +15,6 @@ class FirestoreDeviceStatsService {
     return _instance!;
   }
 
-  Future<void> reportAppActive() async {}
+  Future<void> reportAppActive(AppConfigService config) async {}
   Future<void> deleteDeviceStats() async {}
 }

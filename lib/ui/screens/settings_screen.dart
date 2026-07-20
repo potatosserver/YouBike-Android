@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 // permission_handler 保留僅用於 openAppSettings()（其餘權限流程已集中於 PermissionService）。
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -63,14 +62,10 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   Future<void> _initVersion() async {
-    try {
-      final packageInfo = await PackageInfo.fromPlatform();
-      if (mounted) {
-        setState(() => _version = packageInfo.version);
-      }
-    } catch (_) {
-      if (mounted) setState(() => _version = 'Error');
-    }
+    // AppConfigService.init() 已 cache 好 appVersion；直接讀並剝掉 buildNumber。
+    final config = Provider.of<AppConfigService>(context, listen: false);
+    final version = config.appVersion.split('+').first;
+    if (mounted) setState(() => _version = version.isEmpty ? '0.0.0' : version);
   }
 
   /// 通知服務開關處理：
@@ -342,9 +337,13 @@ class _SettingsScreenState extends State<SettingsScreen>
   Future<void> _checkForUpdates() async {
     final service = UpdateCheckerService();
     final l10n = AppLocalizations.of(context);
+    // 由 AppConfigService 提供已 cache 的版號（取代原本 PackageInfo.fromPlatform()）。
+    final config = Provider.of<AppConfigService>(context, listen: false);
+    final versionOnly =
+        config.appVersion.split('+').first; // '1.0.1+2' → '1.0.1'
 
     try {
-      final result = await service.checkForUpdate();
+      final result = await service.checkForUpdate(currentVersion: versionOnly);
       if (!mounted) return;
       await _handleUpdateResult(result, l10n);
     } catch (error) {

@@ -11,6 +11,7 @@ import 'package:youbike/ui/widgets/map_mask_overlay.dart';
 import 'package:youbike/ui/widgets/loading_overlay.dart';
 import 'package:youbike/ui/widgets/search_panel.dart';
 import 'package:youbike/ui/widgets/home_update_button.dart';
+import 'package:youbike/data/services/app_config_service.dart';
 import 'package:youbike/data/services/firebase_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -38,7 +39,10 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     // 回報裝置活躍到 Firestore（非同步，失敗不影響使用）
-    Future.microtask(() => FirebaseService.instance.reportAppActive());
+    // 先在 microtask 之前取得 config，避免跨 async gap 使用 context。
+    final config = Provider.of<AppConfigService>(context, listen: false);
+    Future.microtask(() => FirestoreDeviceStatsService.instance
+        .reportAppActive(config));
   }
 
   @override
