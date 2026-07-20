@@ -1,4 +1,3 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -7,12 +6,14 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+// permission_handler 保留僅用於 openAppSettings()（其餘權限流程已集中於 PermissionService）。
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youbike/core/config/app_environment.dart';
 import 'package:youbike/core/l10n/app_localizations.dart';
 import 'package:youbike/core/services/update_checker_service.dart';
 import 'package:youbike/data/services/app_config_service.dart';
+import 'package:youbike/data/services/permission_service.dart';
 import 'package:youbike/ui/widgets/github_update_dialog.dart';
 import 'package:youbike/ui/widgets/setting_group_card.dart';
 import 'package:youbike/ui/widgets/changelog_dialog.dart';
@@ -26,6 +27,9 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen>
     with WidgetsBindingObserver {
+  /// 統一權限讀取與請求入口。
+  final PermissionService _perm = PermissionService();
+
   String _version = '...';
 
   @override
@@ -51,28 +55,10 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   Future<void> _syncNotificationPrefFromSystem() async {
     final config = Provider.of<AppConfigService>(context, listen: false);
-    final granted = await _readSystemNotificationStatus();
+    final granted = await _perm.readSystemNotificationStatus();
     if (!mounted) return;
     if (config.useNotification != granted) {
       config.setUseNotification(granted);
-    }
-  }
-
-  /// 讀取 OS 真實通知權限狀態：
-  /// - iOS/舊 Android 走 FCM authorizationStatus
-  /// - Android 13+ 走 permission_handler
-  Future<bool> _readSystemNotificationStatus() async {
-    try {
-      final s = await Permission.notification.status;
-      if (s.isGranted || s.isLimited) return true;
-    } catch (_) {}
-    try {
-      final fcmStatus =
-          await FirebaseMessaging.instance.getNotificationSettings();
-      return fcmStatus.authorizationStatus == AuthorizationStatus.authorized ||
-          fcmStatus.authorizationStatus == AuthorizationStatus.provisional;
-    } catch (_) {
-      return true; // 讀不到 → 保守視為開啟，避免誤寫 false
     }
   }
 
@@ -102,47 +88,13 @@ class _SettingsScreenState extends State<SettingsScreen>
     _showDisableNotificationDialog(config);
   }
 
-  /// 若 OS 還未授予通知權限，主動請求一次（同 permission_handler_page 一次性原則）
+  /// 若 OS 還未授予通知權限，主動請求一次（一次性原則，集中於 PermissionService）
   Future<void> _requestOsNotificationPermissionIfNeeded() async {
-    if (kIsWeb) return;
-    try {
-      final s = await Permission.notification.status;
-      if (s.isGranted) return;
-      if (s.isPermanentlyDenied) {
-        _showOsPermissionDeniedHint();
-        return;
-      }
-      final result = await Permission.notification.request();
-      if (result.isPermanentlyDenied) {
-        _showOsPermissionDeniedHint();
-      }
-    } catch (_) {
-      // 平台不支援時 ignore
+    final result = await _perm.requestOsNotificationOnce();
+    if (!mounted) return;
+    if (result == NotificationRequestResult.permanentlyDenied) {
+      _perm.showPermanentlyDeniedDialog(context);
     }
-  }
-
-  void _showOsPermissionDeniedHint() {
-    final l10n = AppLocalizations.of(context);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.permission_denied_title),
-        content: Text(l10n.permission_denied_content),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              openAppSettings();
-              Navigator.pop(ctx);
-            },
-            child: Text(l10n.open_settings),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _showDisableNotificationDialog(AppConfigService config) async {
@@ -498,7 +450,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   void _showAboutDialog() {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(

@@ -4,18 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:youbike/core/l10n/app_localizations.dart';
 import 'package:youbike/core/theme/brand_colors.dart';
+import 'package:youbike/data/services/permission_service.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
-  static const _skipLocKey = 'skip_location_permission';
-  static const _skipNotifKey = 'skip_notification_permission';
-
   Future<void> _onGetStarted(BuildContext context) async {
     // 清除略過記錄，強制重新走完整權限流程（定位 + 通知）
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_skipLocKey);
-    await prefs.remove(_skipNotifKey);
+    await prefs.remove(PermissionPrefKeys.skipLocation);
+    await prefs.remove(PermissionPrefKeys.skipNotification);
     if (context.mounted) {
       context.go('/permission');
     }
