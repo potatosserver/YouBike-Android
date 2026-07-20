@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -6,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youbike/core/config/app_environment.dart';
 import 'package:youbike/core/l10n/app_localizations.dart';
@@ -22,13 +24,56 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen>
+    with WidgetsBindingObserver {
   String _version = '...';
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initVersion();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 從系統設定返回 App 時，用 OS 真實通知狀態回寫 pref
+    if (state == AppLifecycleState.resumed) {
+      _syncNotificationPrefFromSystem();
+    }
+  }
+
+  Future<void> _syncNotificationPrefFromSystem() async {
+    final config = Provider.of<AppConfigService>(context, listen: false);
+    final granted = await _readSystemNotificationStatus();
+    if (!mounted) return;
+    if (config.useNotification != granted) {
+      config.setUseNotification(granted);
+    }
+  }
+
+  /// 讀取 OS 真實通知權限狀態：
+  /// - iOS/舊 Android 走 FCM authorizationStatus
+  /// - Android 13+ 走 permission_handler
+  Future<bool> _readSystemNotificationStatus() async {
+    try {
+      final s = await Permission.notification.status;
+      if (s.isGranted || s.isLimited) return true;
+    } catch (_) {}
+    try {
+      final fcmStatus =
+          await FirebaseMessaging.instance.getNotificationSettings();
+      return fcmStatus.authorizationStatus == AuthorizationStatus.authorized ||
+          fcmStatus.authorizationStatus == AuthorizationStatus.provisional;
+    } catch (_) {
+      return true; // 讀不到 → 保守視為開啟，避免誤寫 false
+    }
   }
 
   Future<void> _initVersion() async {
@@ -40,6 +85,96 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (_) {
       if (mounted) setState(() => _version = 'Error');
     }
+  }
+
+  /// 通知服務開關處理：
+  /// - 開啟：若 OS 還未授權，直接請求通知權限；請求成功則寫入 true，失敗仍保留偏好為 true
+  ///         （使用者可在系統設定重新授予，亦可由 splash 重新檢查）
+  /// - 關閉：先回滾開關狀態，彈 dialog；使用者按「開啟設定」後跳到系統設定頁，
+  ///         回到 App 時 didChangeAppLifecycleState 會以 OS 真實狀態回寫 pref。
+  void _onNotificationServiceChanged(bool val) {
+    final config = Provider.of<AppConfigService>(context, listen: false);
+    if (val) {
+      config.setUseNotification(true);
+      _requestOsNotificationPermissionIfNeeded();
+      return;
+    }
+    _showDisableNotificationDialog(config);
+  }
+
+  /// 若 OS 還未授予通知權限，主動請求一次（同 permission_handler_page 一次性原則）
+  Future<void> _requestOsNotificationPermissionIfNeeded() async {
+    if (kIsWeb) return;
+    try {
+      final s = await Permission.notification.status;
+      if (s.isGranted) return;
+      if (s.isPermanentlyDenied) {
+        _showOsPermissionDeniedHint();
+        return;
+      }
+      final result = await Permission.notification.request();
+      if (result.isPermanentlyDenied) {
+        _showOsPermissionDeniedHint();
+      }
+    } catch (_) {
+      // 平台不支援時 ignore
+    }
+  }
+
+  void _showOsPermissionDeniedHint() {
+    final l10n = AppLocalizations.of(context);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.permission_denied_title),
+        content: Text(l10n.permission_denied_content),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              openAppSettings();
+              Navigator.pop(ctx);
+            },
+            child: Text(l10n.open_settings),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showDisableNotificationDialog(AppConfigService config) async {
+    final l10n = AppLocalizations.of(context);
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.notification_service_disable_title),
+        content: Text(l10n.notification_service_disable_content),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.open_settings),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (accepted != true) {
+      // 取消：將 Switch 視覺狀態同步回偏好值（true）
+      // 這裡先 setUseNotification(true) 確保 Provider 與 UI 一致；
+      // 因 useNotification 本身就是 true，notifyListeners 不會實質變更 pref，
+      // 但會讓 Switch 動畫復位。
+      config.setUseNotification(true);
+      return;
+    }
+    // 此處不主動寫 pref，交給 didChangeAppLifecycleState 從系統設定返回時依 OS 狀態回寫。
+    await openAppSettings();
   }
 
   @override
@@ -91,6 +226,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       size: 22, color: cs.onSurfaceVariant),
                   onTap: () => context.push('/language-selection'),
                 ),
+              ],
+            ),
+
+            // ── 權限 ──
+            SettingGroupCard(
+              title: l10n.permission_group_title,
+              children: [
                 _buildItem(
                   icon: Icons.location_on_outlined,
                   title: l10n.settings_location,
@@ -102,6 +244,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   onTap: null,
                 ),
+                if (!kIsWeb)
+                  _buildItem(
+                    icon: Icons.notifications_active_outlined,
+                    title: l10n.settings_notification_service,
+                    trailing: Switch(
+                      value: config.useNotification,
+                      onChanged: _onNotificationServiceChanged,
+                      activeTrackColor: cs.primary,
+                      activeThumbColor: cs.onPrimary,
+                    ),
+                    onTap: null,
+                  ),
               ],
             ),
 

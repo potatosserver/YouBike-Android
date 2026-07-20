@@ -5,6 +5,7 @@ class AppConfigService with ChangeNotifier {
   String currentLang = 'zh_TW';
   String selectedRegion = 'kaohsiung';
   bool useLocation = true;
+  bool useNotification = true;
   Set<String> pinnedStationIds = {};
   SharedPreferences? _prefs;
 
@@ -30,6 +31,7 @@ class AppConfigService with ChangeNotifier {
     currentLang = _prefs?.getString('currentLang') ?? 'zh_TW';
     selectedRegion = _prefs?.getString('selectedRegion') ?? 'kaohsiung';
     useLocation = _prefs?.getBool('useLocation') ?? true;
+    useNotification = _prefs?.getBool('useNotification') ?? true;
     final pinnedList = _prefs?.getStringList('pinnedStations') ?? [];
     pinnedStationIds = pinnedList.map((id) => id.trim()).toSet();
     notifyListeners();
@@ -50,6 +52,12 @@ class AppConfigService with ChangeNotifier {
   void setUseLocation(bool use) {
     useLocation = use;
     _prefs?.setBool('useLocation', use);
+    notifyListeners();
+  }
+
+  void setUseNotification(bool use) {
+    useNotification = use;
+    _prefs?.setBool('useNotification', use);
     notifyListeners();
   }
 

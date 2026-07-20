@@ -686,6 +686,60 @@ abstract class AppLocalizations {
   /// **'Get Started'**
   String get setup_complete;
 
+  /// No description provided for @setup_continue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get setup_continue;
+
+  /// No description provided for @permission_notification_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification Permission'**
+  String get permission_notification_title;
+
+  /// No description provided for @permission_notification_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable notifications to receive YouBike station updates, push messages, and important reminders. You can change this anytime in system settings.'**
+  String get permission_notification_desc;
+
+  /// No description provided for @skip_notification_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip Notification Permission'**
+  String get skip_notification_title;
+
+  /// No description provided for @skip_notification_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'If you skip notification permission, you won\'t receive YouBike push messages or real-time station updates. You can enable notifications anytime in system settings.'**
+  String get skip_notification_desc;
+
+  /// No description provided for @settings_notification_service.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification Service'**
+  String get settings_notification_service;
+
+  /// No description provided for @permission_group_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions'**
+  String get permission_group_title;
+
+  /// No description provided for @notification_service_disable_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable Notification Service'**
+  String get notification_service_disable_title;
+
+  /// No description provided for @notification_service_disable_content.
+  ///
+  /// In en, this message translates to:
+  /// **'YouBike notifications are managed by the system \"App notifications\" permission. Please go to system settings to turn off notifications manually.'**
+  String get notification_service_disable_content;
+
   /// No description provided for @settings_logs.
   ///
   /// In en, this message translates to:

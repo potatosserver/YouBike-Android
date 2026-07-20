@@ -321,6 +321,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get setup_complete => 'Get Started';
 
   @override
+  String get setup_continue => 'Continue';
+
+  @override
+  String get permission_notification_title => 'Notification Permission';
+
+  @override
+  String get permission_notification_desc =>
+      'Enable notifications to receive YouBike station updates, push messages, and important reminders. You can change this anytime in system settings.';
+
+  @override
+  String get skip_notification_title => 'Skip Notification Permission';
+
+  @override
+  String get skip_notification_desc =>
+      'If you skip notification permission, you won\'t receive YouBike push messages or real-time station updates. You can enable notifications anytime in system settings.';
+
+  @override
+  String get settings_notification_service => 'Notification Service';
+
+  @override
+  String get permission_group_title => 'Permissions';
+
+  @override
+  String get notification_service_disable_title =>
+      'Disable Notification Service';
+
+  @override
+  String get notification_service_disable_content =>
+      'YouBike notifications are managed by the system \"App notifications\" permission. Please go to system settings to turn off notifications manually.';
+
+  @override
   String get settings_logs => 'View Logs';
 
   @override

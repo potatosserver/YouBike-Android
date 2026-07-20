@@ -14,6 +14,8 @@ class FcmTokenService {
   }
 
   Future<String?> getToken() async => null;
+
+  Future<void> requestPermission() async {}
 }
 
 /// Web stub — FCM 訊息處理器

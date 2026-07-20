@@ -22,7 +22,8 @@ class FcmTokenService {
 
     try {
       await FirebaseCoreService.instance.ensureInitialized();
-      await _requestPermission();
+      // 通知權限已由 PermissionHandlerPage 於初次設定流程中請求，
+      // 這裡不再自動請求，避免繞過 UI 流程。
 
       final messaging = FirebaseMessaging.instance;
       messaging.onTokenRefresh.listen(_onTokenRefresh);
@@ -36,10 +37,14 @@ class FcmTokenService {
     }
   }
 
-  Future<void> _requestPermission() async {
+  /// 供 PermissionHandlerPage 之外臨時請求使用；一般流程不會呼叫。
+  Future<void> requestPermission() async {
     final s = await FirebaseMessaging.instance.requestPermission(
-      alert: true, badge: true, sound: true,
-      criticalAlert: false, provisional: false,
+      alert: true,
+      badge: true,
+      sound: true,
+      criticalAlert: false,
+      provisional: false,
     );
     debugPrint('[FcmToken] 權限: ${s.authorizationStatus}');
   }

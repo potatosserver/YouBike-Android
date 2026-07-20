@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:youbike/data/services/language_service.dart';
 import 'package:youbike/core/theme/theme_provider.dart';
 import 'package:youbike/data/services/app_config_service.dart';
@@ -23,24 +25,36 @@ void main() async {
   final languageService = LanguageService();
   await languageService.loadLocale();
 
-  // 2. 初始化 Firebase + 獲取 FCM Token（必須在註冊監聽前）
+  // 2. 初始化 Firebase + App Check + FCM
   try {
     log.i('APP_START', 'Initializing Firebase...');
     await FirebaseService.instance.init();
     log.i('APP_START', 'Firebase 初始化完成');
 
-    // 🔑 獲取 FCM Token — 沒有 Token 就無法收到推播
+    // 🛡️ 啟用 App Check 防護盾
+    log.i('APP_START', 'Activating App Check...');
+    
+    await FirebaseAppCheck.instance.activate(
+      // 根據新版規範，傳入對應的 Provider 類別實例
+      providerAndroid: kDebugMode 
+          ? const AndroidDebugProvider() 
+          : const AndroidPlayIntegrityProvider(),
+      providerApple: const AppleAppAttestProvider(),
+    );
+    log.i('APP_START', 'App Check 已啟用，當前模式: ${kDebugMode ? "Debug" : "Play Integrity"}');
+
+    // 🔑 獲取 FCM Token
     final token = await FcmTokenService.instance.getToken();
     if (token != null) {
-      log.i('APP_START', 'FCM Token 獲取成功: ${token.substring(0, 12)}...');
+      log.i('APP_START', 'FCM Token: ${token.substring(0, 12)}...');
     } else {
-      log.w('APP_START', '⚠️ FCM Token 獲取失敗，無法接收推播');
+      log.w('APP_START', '⚠️ FCM Token 獲取失敗');
     }
   } catch (e) {
-    log.w('APP_START', 'Firebase 初始化失敗（可能是 Web 或配置錯誤）: $e');
+    log.w('APP_START', 'Firebase/AppCheck 初始化失敗: $e');
   }
 
-  // 3. 註冊 FCM 訊息監聽（前景 / 背景點擊 / 冷啟動）
+  // 3. 註冊 FCM 訊息監聽（通知服務開關僅影響「引導使用者到系統設定」，不做 in-app 阻擋）
   await FcmMessageHandler.instance.registerListeners();
 
   log.i('APP_START',
