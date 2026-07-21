@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:youbike/core/theme/brand_colors.dart';
 import 'package:youbike/providers/loading_view_model.dart';
 import 'package:youbike/core/l10n/app_localizations.dart';
+import 'package:youbike/ui/widgets/youbike_logo.dart';
 import 'package:youbike/core/services/loading_notice_translator.dart';
 
 class LoadingOverlay extends StatefulWidget {
@@ -64,27 +65,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                   scale: _scaleAnimation,
                   child: FadeTransition(
                     opacity: _opacityAnimation,
-                    child: Container(
-                      width: 130,
-                      height: 130,
-                      decoration: BoxDecoration(
-                        color: BrandColors.orange,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: BrandColors.orange.withValues(alpha: 0.3),
-                            blurRadius: 30,
-                            spreadRadius: 5,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.directions_bike_rounded,
-                        size: 64,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: const YouBikeLogo(size: 130, iconSize: 64),
                   ),
                 ),
                 const SizedBox(height: 48),

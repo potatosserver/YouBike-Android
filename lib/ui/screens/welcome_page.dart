@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:youbike/core/l10n/app_localizations.dart';
-import 'package:youbike/core/theme/brand_colors.dart';
 import 'package:youbike/data/services/permission_service.dart';
+import 'package:youbike/ui/widgets/youbike_logo.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -41,27 +41,7 @@ class WelcomePage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: BrandColors.orange,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: BrandColors.orange.withValues(alpha: 0.3),
-                          blurRadius: 30,
-                          spreadRadius: 5,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.directions_bike_rounded,
-                      size: 56,
-                      color: Colors.white,
-                    ),
-                  ),
+                  const YouBikeLogo(),
                   const SizedBox(height: 32),
                   Text(
                     l10n.welcome_title,
