@@ -3,6 +3,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:youbike/core/l10n/app_localizations.dart';
 import 'package:youbike/core/theme/brand_colors.dart';
 import 'package:youbike/core/utils/log_service.dart';
+import 'package:youbike/ui/widgets/base/confirm_dialog.dart';
 
 class AppLogPage extends StatefulWidget {
   const AppLogPage({super.key});
@@ -23,32 +24,23 @@ class _AppLogPageState extends State<AppLogPage> {
     });
   }
 
-  Future<void> _clearLogs() async {
-    final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.clear_logs_confirm_title),
-        content: Text(l10n.clear_logs_confirm_content),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.confirm,
-                style: TextStyle(color: Theme.of(ctx).colorScheme.error)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true && mounted) {
-      await LogService().clearAppLogs();
-      setState(() => _logs = []);
-      if (mounted) Fluttertoast.showToast(msg: l10n.logs_cleared);
+  Future<void> _confirmClearLogs() async {
+      final l10n = AppLocalizations.of(context);
+      await ConfirmDialog.show(
+        context,
+        title: l10n.clear_logs_confirm_title,
+        content: l10n.clear_logs_confirm_content,
+        confirmLabel: l10n.confirm,
+        cancelLabel: l10n.cancel,
+        danger: true,
+        onConfirm: () async {
+          if (!mounted) return;
+          await LogService().clearAppLogs();
+          setState(() => _logs = LogService().appLogs);
+          Fluttertoast.showToast(msg: l10n.logs_cleared);
+        },
+      );
     }
-  }
 
   Color _levelColor(String level) {
     switch (level) {
@@ -92,7 +84,7 @@ class _AppLogPageState extends State<AppLogPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
-            onPressed: _clearLogs,
+            onPressed: _confirmClearLogs,
             tooltip: l10n.clear_all_logs,
           ),
         ],

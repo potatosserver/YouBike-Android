@@ -16,6 +16,7 @@ import 'package:youbike/data/services/permission_service.dart';
 import 'package:youbike/ui/widgets/github_update_dialog.dart';
 import 'package:youbike/ui/widgets/setting_group_card.dart';
 import 'package:youbike/ui/widgets/changelog_dialog.dart';
+import 'package:youbike/ui/widgets/base/confirm_dialog.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -501,33 +502,18 @@ class _SettingsScreenState extends State<SettingsScreen>
   void _showClearDataDialog() {
     final l10n = AppLocalizations.of(context);
     final router = GoRouter.of(context);
-    final cs = Theme.of(context).colorScheme;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.clear_data_confirm_title),
-        content: Text(l10n.clear_data_confirm_content),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.clear();
-              if (ctx.mounted) {
-                Navigator.pop(ctx);
-                router.go('/welcome');
-              }
-            },
-            child: Text(
-              l10n.confirm,
-              style: TextStyle(color: cs.error),
-            ),
-          ),
-        ],
-      ),
+    ConfirmDialog.show(
+      context,
+      title: l10n.clear_data_confirm_title,
+      content: l10n.clear_data_confirm_content,
+      confirmLabel: l10n.confirm,
+      cancelLabel: l10n.cancel,
+      danger: true,
+      onConfirm: () async {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+        if (mounted) router.go('/welcome');
+      },
     );
   }
 }

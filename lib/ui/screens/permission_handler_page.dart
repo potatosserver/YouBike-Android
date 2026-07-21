@@ -8,6 +8,7 @@ import 'package:youbike/core/l10n/app_localizations.dart';
 import 'package:youbike/core/theme/brand_colors.dart';
 import 'package:youbike/data/services/app_config_service.dart';
 import 'package:youbike/data/services/permission_service.dart';
+import 'package:youbike/ui/widgets/base/confirm_dialog.dart';
 
 /// 權限類型：location 或 notification
 enum PermissionType { location, notification }
@@ -164,35 +165,20 @@ class _PermissionHandlerPageState extends State<PermissionHandlerPage>
 
   void _showSkipWarningDialog() {
     final l10n = AppLocalizations.of(context);
-    final cs = Theme.of(context).colorScheme;
     final skipTitle = widget.type == PermissionType.location
         ? l10n.skip_location_title
         : l10n.skip_notification_title;
     final skipDesc = widget.type == PermissionType.location
         ? l10n.skip_location_desc
         : l10n.skip_notification_desc;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(skipTitle),
-        content: Text(skipDesc),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _performSkip();
-            },
-            child: Text(
-              l10n.skip_permission_confirm,
-              style: TextStyle(color: cs.error),
-            ),
-          ),
-        ],
-      ),
+    ConfirmDialog.show(
+      context,
+      title: skipTitle,
+      content: skipDesc,
+      confirmLabel: l10n.skip_permission_confirm,
+      cancelLabel: l10n.cancel,
+      danger: true,
+      onConfirm: _performSkip,
     );
   }
 
