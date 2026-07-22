@@ -21,22 +21,6 @@ class _CancelledRefresh implements Exception {
   String toString() => 'refresh cancelled by newer request';
 }
 
-/// Hard caps that respect what the /tw2/parkingInfo server actually
-/// hands us back. The server paginates its `data` at `per_page=20` and
-/// rejects payloads above ~50 station_no entries with HTTP 422, so:
-///  - Non-search ("n nearest") mode surfaces 20 stations — one full
-///    server page, in a single POST.
-///  - Search mode surfaces 40 stations (= two complete server pages).
-///    That number is intentionally picked so the realtime API walk
-///    splits into exactly two 20-station POSTs, each landing in a single
-///    server page without any silent truncation between them.
-const int kNonSearchMax = 20;
-const int kSearchMax = 40;
-/// Render-side cap: how many stations _executeRefresh surfaces into the
-/// panel after sortAndPick. Mirrors what line 178 / 248 / 256 in the
-/// docstring assume. Pinned stays the same as kNonSearchMax.
-const int kStationPanelMax = kNonSearchMax;
-
 class StationViewModel extends LocalizedViewModel {
   AppConfigService config;
   MapViewModel? mapVm;
@@ -178,13 +162,13 @@ class StationViewModel extends LocalizedViewModel {
   /// 若使用者處於搜尋狀態 (_activeQuery 非空)，會自動套用同一個關鍵字，
   /// 避免搜尋的卡片結果被「距離最近前 N 名」洗掉。
   /// 面板 / API 數量上限：
-  ///   - 搜尋模式: kSearchMax (40) — 拆成 two 20 個 station batch 走 server pagination
-  ///   - 無搜尋: kStationPanelMax (20) — 「最近 N 名」模式下, 一個完整 server 頁
+  ///   - 搜尋模式: 無搜尋關鍵字外的總量上限 = 40 — 拆成 two 20 個 station batch 走 server pagination
+  ///   - 無搜尋: 「最近 N 名」模式下 = 20 — 一個完整 server 頁
   Future<void> refreshCards({LatLng? moveTo}) async {
     final stations = _activeQuery.isEmpty
         ? _fullStationList
         : _filterStations(_activeQuery);
-    await _executeRefresh(stations: stations, moveTo: moveTo);
+    await _executeRefresh(stations: stations, moveTo: moveTo, limit: 20);
   }
 
   /// 設定目前搜尋關鍵字，清空時還原成 n+20 最近站。
@@ -194,13 +178,12 @@ class StationViewModel extends LocalizedViewModel {
   /// Search order is intentionally "distance-first, query-second":
   ///   1. name-filter candidates from the full list
   ///   2. sort those candidates by `StationSorter.sortAndPick` against the
-  ///      effective ref point -> take kSearchMax (40), so the 40 are the
+  ///      effective ref point -> take 40, so the 40 are the
   ///      *closest* name-matching stations, not just the first 40 in the
   ///      api's natural (station_no) order
-  ///   3. hand those 40 to `_executeRefresh` where the coordinator will
-  ///      sort+pin-by-priority and pick 20 to render. The realtime API
-  ///      walk then splits 20 into two 20-batches -> two complete server
-  ///      pages.
+  ///   3. hand those 40 to `_executeRefresh` so the limit passed through is 40 as well.
+  ///      The realtime API walk then splits 40 into two 20-batches ->
+  ///      two complete server pages.
   Future<void> setQuery(String query) async {
     _activeQuery = query;
     if (query.isEmpty) {
@@ -213,7 +196,7 @@ class StationViewModel extends LocalizedViewModel {
       notifyListeners();
       return;
     }
-    // Distance-first: pick the kSearchMax closest name matches. Pinned
+    // Distance-first: pick the 40 closest name matches. Pinned
     // stations are honored as a priority slice inside this set so a
     // pinned "台大" stays visible when searching "台".
     final refPoint = mapVm?.getEffectiveLocation();
@@ -223,9 +206,9 @@ class StationViewModel extends LocalizedViewModel {
             filtered,
             refPoint,
             config.pinnedStationIds,
-            limit: kSearchMax,
+            limit: 40,
           );
-    await _executeRefresh(stations: byDistance);
+    await _executeRefresh(stations: byDistance, limit: 40);
   }
 
   List<Station> _filterStations(String query) {
@@ -235,7 +218,9 @@ class StationViewModel extends LocalizedViewModel {
   }
 
   Future<void> _executeRefresh(
-      {required List<Station> stations, LatLng? moveTo}) async {
+      {required List<Station> stations,
+      LatLng? moveTo,
+      int limit = 20}) async {
     if (_fullStationList.isEmpty) await fetchBaseData(null);
     if (_fullStationList.isEmpty) return;
 
@@ -249,20 +234,20 @@ class StationViewModel extends LocalizedViewModel {
       // Two cap rules, by mode:
       //  * Non-search ("n nearest"): pass the *entire* _fullStationList to
       //    sortAndPick so the truly closest stations can be discovered.
-      //    cap with kStationPanelMax (20) only via sortAndPick's `limit`.
+      //    cap with 20 only via sortAndPick's `limit`.
       //    Slicing here would pre-trim by station_no order and silently
       //    exclude, say, every southern station for a non-Taipei user.
-      //  * Search: setQuery has already constrained the hits to kSearchMax
-      //    (40) — that number is intentionally picked so that the realtime
+      //  * Search: setQuery has already constrained the hits to 40
+      //    — that number is intentionally picked so that the realtime
       //    API walk falls into exactly TWO 20-station POST batches, hitting
       //    two complete server pages without any silent truncation.
-      //    We let all 40 candidates pass through and rely on the
-      //    kStationPanelMax `limit` to keep the panel tidy at 20.
+      //    We let all 40 candidates pass through and rely on the `limit` to keep the
+      //    panel tidy at 40 in search mode.
       final candidates = await _coordinator.execute(
         fullStations: stations,
         pinnedIds: config.pinnedStationIds,
         mapVm: mapVm!,
-        limit: kStationPanelMax,
+        limit: limit,
         moveTo: moveTo,
       );
 
