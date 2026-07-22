@@ -102,6 +102,28 @@ class AnimatedMapController implements MapMoveStrategy {
     final animation =
         CurvedAnimation(parent: _controller!, curve: Curves.fastOutSlowIn);
 
+    // ── Guard: any non-finite value → instant move (skips animation + this ID).
+    //
+    // Otherwise the ID embeds something like "NaN" or "Infinity" and the
+    // matching `tileUpdateTransformer` below calls `loadOnly` with NaN values,
+    // which crashes flutter_map with `Unsupported operation: Infinity or NaN
+    // toInt` inside `DiscreteTileRange.fromPixelBounds`.  This happens during
+    // rapid/pinch zoom when downstream `MapViewModel.center` resolves to a
+    // bad LatLng, or when `destZoom` arrives as NaN from a stale cache.
+    final latFinite = destCenter.latitude.isFinite;
+    final lonFinite = destCenter.longitude.isFinite;
+    final zoomFinite = destZoom.isFinite;
+    if (!latFinite || !lonFinite || !zoomFinite) {
+      // Don't dispatch through animation. Fall back to instant move at a sane
+      // zoom (default 16 if destZoom was bad) so we don't leave the camera in
+      // an undefined state.
+      final safeLat = latFinite ? destCenter.latitude : 0.0;
+      final safeLon = lonFinite ? destCenter.longitude : 0.0;
+      final safeZoom = zoomFinite ? destZoom : 16.0;
+      mapController.move(LatLng(safeLat, safeLon), safeZoom);
+      return;
+    }
+
     final startIdWithTarget =
         '$_startedId#${destCenter.latitude},${destCenter.longitude},$destZoom';
 
@@ -143,22 +165,45 @@ class AnimatedMapController implements MapMoveStrategy {
   }
 
   /// 掛在 TileLayer.tileUpdateTransformer 上，確保動畫期間 tile 不會白屏。
+  //
+  // Also defensive against upstream NaN / Infinity values: even if a stray
+  // `_startedId` carries bad numbers (e.g. zoom tweens computed outside of
+  // [animateTo], or `[destZoom]` being NaN because callers re-use this ID),
+  // we drop the event rather than crashing flutter_map with
+  // `Unsupported operation: Infinity or NaN toInt` inside
+  // `DiscreteTileRange.fromPixelBounds`. The Dart `double.parse('NaN')`
+  // succeeds, so plain string parsing is not enough — we must validate.
   late final TileUpdateTransformer tileUpdateTransformer =
       TileUpdateTransformer.fromHandlers(
     handleData: (updateEvent, sink) {
       final mapEvent = updateEvent.mapEvent;
       final id = mapEvent is MapEventMove ? mapEvent.id : null;
       if (id?.startsWith(_startedId) ?? false) {
-        final parts = id!.split('#')[2].split(',');
-        final lat = double.parse(parts[0]);
-        final lon = double.parse(parts[1]);
-        final zoom = double.parse(parts[2]);
-        sink.add(
-          updateEvent.loadOnly(
-            loadCenterOverride: LatLng(lat, lon),
-            loadZoomOverride: zoom,
-          ),
-        );
+        try {
+          final parts = id!.split('#')[2].split(',');
+          if (parts.length < 3) {
+            // malformed started payload — fall through to default passthrough
+            sink.add(updateEvent);
+            return;
+          }
+          final lat = double.parse(parts[0]);
+          final lon = double.parse(parts[1]);
+          final zoom = double.parse(parts[2]);
+          if (!lat.isFinite || !lon.isFinite || !zoom.isFinite) {
+            // bad numbers in the ID — let flutter_map use the live camera
+            sink.add(updateEvent);
+            return;
+          }
+          sink.add(
+            updateEvent.loadOnly(
+              loadCenterOverride: LatLng(lat, lon),
+              loadZoomOverride: zoom,
+            ),
+          );
+        } catch (_) {
+          // parse failure or any other unexpected error → never crash the stream
+          sink.add(updateEvent);
+        }
       } else if (id == _inProgressId) {
         // 不 prune 也不 load，保持既有 tile 可視
       } else if (id == _finishedId) {

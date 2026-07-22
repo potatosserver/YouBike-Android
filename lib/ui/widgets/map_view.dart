@@ -77,6 +77,13 @@ class _MapViewState extends State<MapView> with TickerProviderStateMixin {
       options: MapOptions(
         initialCenter: initialCenter,
         initialZoom: 18.0,
+        // 禁止雙指旋轉地圖，只保留平移、縮放等單軸手勢。
+        // 旋轉會讓 bearing 進入非常規值，配合瘋狂縮放時容易觸發
+        // `TileRangeCalculator` 內部 `viewingZoom` 在邊界處算出 NaN，
+        // 進而引爆 `Unsupported operation: Infinity or NaN toInt`。
+        interactionOptions: const InteractionOptions(
+          flags: InteractiveFlag.all - InteractiveFlag.rotate,
+        ),
         onMapReady: () {
           _log("MAP-INIT", "Map initialized and ready for use");
           widget.onReady(true);
