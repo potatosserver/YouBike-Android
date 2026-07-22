@@ -12,6 +12,7 @@ import 'package:youbike/ui/widgets/map_markers.dart';
 import 'package:youbike/ui/widgets/pulse_marker.dart';
 import 'package:youbike/core/l10n/app_localizations.dart';
 import 'package:youbike/core/services/station_format_helper.dart';
+import 'package:youbike/core/services/map_animated_move.dart';
 import 'package:youbike/data/services/app_config_service.dart';
 
 class MapView extends StatefulWidget {
@@ -20,22 +21,41 @@ class MapView extends StatefulWidget {
   final Function(bool) onReady;
   final Function(LatLng, double) onMoveToStation;
 
+  /// Optional shared AnimatedMapController. If null, the widget will lazily
+  /// create its own. Sharing an instance lets other parts of the screen
+  /// (e.g. SearchPanel triggering a card tap) drive the same animation.
+  final AnimatedMapController? animatedMap;
+
   const MapView({
     super.key,
     required this.mapController,
     required this.isMapReady,
     required this.onReady,
     required this.onMoveToStation,
+    this.animatedMap,
   });
 
   @override
   State<MapView> createState() => _MapViewState();
 }
 
-class _MapViewState extends State<MapView> {
+class _MapViewState extends State<MapView> with TickerProviderStateMixin {
   Timer? _mapMoveDebounceTimer;
   Station? _selectedStation;
   final _stationFormat = const StationFormatHelper();
+  AnimatedMapController? _animatedMap;
+
+  /// Effective animated map used inside this widget — either the one injected
+  /// by the caller (`widget.animatedMap`) or a lazily-initialized one owned
+  /// by this widget.
+  AnimatedMapController _getAnimatedMap() {
+    if (widget.animatedMap != null) return widget.animatedMap!;
+    _animatedMap ??= AnimatedMapController(
+      mapController: widget.mapController,
+      vsync: this,
+    );
+    return _animatedMap!;
+  }
 
   void _log(String tag, String message) {
     final now = DateTime.now();
@@ -85,7 +105,8 @@ class _MapViewState extends State<MapView> {
           tileProvider: NetworkTileProvider(),
           keepBuffer: 5,
           tileDisplay:
-              const TileDisplay.fadeIn(duration: Duration(milliseconds: 1)),
+              const TileDisplay.fadeIn(duration: Duration(milliseconds: 200)),
+          tileUpdateTransformer: _animatedMoveTransformer(),
         ),
         Selector<StationViewModel, List<Station>>(
           selector: (_, vm) => vm.fullStations,
@@ -96,7 +117,7 @@ class _MapViewState extends State<MapView> {
             return StationMarkerLayer(
               stations: stations,
               onStationSelected: (station) {
-                setState(() => _selectedStation = station);
+                _animateToStation(station);
               },
             );
           },
@@ -256,6 +277,28 @@ class _MapViewState extends State<MapView> {
       ),
     );
   }
+
+  void _animateToStation(Station station) {
+    setState(() => _selectedStation = station);
+    _getAnimatedMap().animateTo(LatLng(station.lat, station.lng), 18.0);
+  }
+
+  /// Provide a tileUpdateTransformer, sourced from the shared instance (or
+  /// the lazy internal one).  Falls back to the package default when neither
+  /// is initialised yet.
+  TileUpdateTransformer _animatedMoveTransformer() {
+    return _getAnimatedMap().tileUpdateTransformer;
+  }
+
+  @override
+  void dispose() {
+    // Only dispose the internal instance — widget.animatedMap is owned
+    // by the caller (e.g. HomeScreen).
+    if (widget.animatedMap == null) {
+      _animatedMap?.dispose();
+    }
+    super.dispose();
+  }
 }
 
 class _PopupArrowPainter extends CustomPainter {
@@ -324,15 +367,15 @@ class _StationMarkerLayerState extends State<StationMarkerLayer> {
     }).toList();
 
     _clusterOptions = MarkerClusterLayerOptions(
-      maxClusterRadius: 80,
+      maxClusterRadius: 120,
       size: const Size(45, 45),
       alignment: Alignment.center,
       disableClusteringAtZoom: 16,
       markers: _cachedMarkers,
       animationsOptions: const AnimationsOptions(
-        zoom: Duration.zero,
-        fitBound: Duration.zero,
-        spiderfy: Duration.zero,
+        zoom: Duration(milliseconds: 200),
+        fitBound: Duration(milliseconds: 200),
+        spiderfy: Duration(milliseconds: 200),
       ),
       builder: (context, markers) {
         return ClusterMarker(count: markers.length);

@@ -1,0 +1,171 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+
+/// Abstract interface for any "move the map camera" worker.
+///
+/// Used by `MapMoveTrigger.fire(...)` so the actual move can either be
+/// animated (via [AnimatedMapController]) or instantaneous (default).
+abstract class MapMoveStrategy {
+  void moveTo(LatLng position, {double zoom = 18.0});
+}
+
+/// 純函數 helper：依照兩點之間的距離，回傳 camera 動畫應該用多久。
+///
+/// ≤200m → 200ms（最短滑動）
+/// ≥1500m → Duration.zero（直接跳，不值得動畫）
+/// 200m–1500m → 線性內插 200ms → 500ms
+class MapAnimatedMove {
+  static const double nearMaxMeters = 200.0;
+  static const double farMinMeters = 1500.0;
+  static const Duration nearDuration = Duration(milliseconds: 200);
+  static const Duration midDuration = Duration(milliseconds: 500);
+
+  static double metersBetween(LatLng a, LatLng b) {
+    return const Distance().as(LengthUnit.Meter, a, b);
+  }
+
+  static Duration durationForMeters(double meters) {
+    if (meters <= 0 || meters.isNaN || meters.isInfinite) {
+      return Duration.zero;
+    }
+    if (meters <= nearMaxMeters) return nearDuration;
+    if (meters >= farMinMeters) return Duration.zero;
+    const span = farMinMeters - nearMaxMeters;
+    final over = meters - nearMaxMeters;
+    final ratio = (over / span).clamp(0.0, 1.0);
+    final ms = nearDuration.inMilliseconds +
+        ((midDuration.inMilliseconds - nearDuration.inMilliseconds) * ratio)
+            .round();
+    return Duration(milliseconds: ms);
+  }
+}
+
+/// AnimatedMapController — marker tap 時幫你滑過去。
+///
+/// 用法：
+/// ```dart
+/// final animated = AnimatedMapController(mapController: controller, vsync: this);
+/// // 點 marker 時
+/// animated.animateTo(LatLng(25.033, 121.565), 18.0);
+/// // 在 FlutterMap 的 options 裡
+/// tileUpdateTransformer: animated.tileUpdateTransformer,
+/// ```
+class AnimatedMapController implements MapMoveStrategy {
+  final MapController mapController;
+  final TickerProvider vsync;
+
+  AnimatedMapController({required this.mapController, required this.vsync});
+
+  // ── 這三個 id 與 tileUpdateTransformer 綁定 ──
+  static const _startedId = 'AnimatedMapController#MoveStarted';
+  static const _inProgressId = 'AnimatedMapController#MoveInProgress';
+  static const _finishedId = 'AnimatedMapController#MoveFinished';
+
+  AnimationController? _controller;
+
+  void _disposeAnimController() {
+    _controller?.dispose();
+    _controller = null;
+  }
+
+  /// Move the camera to [destCenter] with a distance-aware duration.
+  /// Delegates to `animateTo`; satisfies [MapMoveStrategy.moveTo].
+  @override
+  void moveTo(LatLng destCenter, {double zoom = 18.0}) {
+    animateTo(destCenter, zoom);
+  }
+
+  /// 指定目標點與 zoom-level
+  void animateTo(LatLng destCenter, double destZoom) {
+    final camera = mapController.camera;
+    final startCenter = camera.center;
+    final startZoom = camera.zoom;
+
+    final meters = MapAnimatedMove.metersBetween(startCenter, destCenter);
+    final duration = MapAnimatedMove.durationForMeters(meters);
+    if (duration == Duration.zero) {
+      // 離太遠不滑，直接跳
+      mapController.move(destCenter, destZoom);
+      return;
+    }
+
+    _disposeAndReset();
+
+    final latTween = Tween<double>(
+        begin: startCenter.latitude, end: destCenter.latitude);
+    final lngTween = Tween<double>(
+        begin: startCenter.longitude, end: destCenter.longitude);
+    final zoomTween = Tween<double>(begin: startZoom, end: destZoom);
+
+    _controller = AnimationController(duration: duration, vsync: vsync);
+    final animation =
+        CurvedAnimation(parent: _controller!, curve: Curves.fastOutSlowIn);
+
+    final startIdWithTarget =
+        '$_startedId#${destCenter.latitude},${destCenter.longitude},$destZoom';
+
+    var hasTriggeredMove = false;
+
+    _controller!.addListener(() {
+      final String id;
+      if (animation.value == 1.0) {
+        id = _finishedId;
+      } else if (!hasTriggeredMove) {
+        id = startIdWithTarget;
+      } else {
+        id = _inProgressId;
+      }
+
+      hasTriggeredMove |= mapController.move(
+        LatLng(latTween.evaluate(animation), lngTween.evaluate(animation)),
+        zoomTween.evaluate(animation),
+        id: id,
+      );
+    });
+
+    animation.addStatusListener((status) {
+      if (status == AnimationStatus.completed ||
+          status == AnimationStatus.dismissed) {
+        _disposeAnimController();
+      }
+    });
+
+    _controller!.forward();
+  }
+
+  void _disposeAndReset() {
+    _disposeAnimController();
+  }
+
+  void dispose() {
+    _disposeAnimController();
+  }
+
+  /// 掛在 TileLayer.tileUpdateTransformer 上，確保動畫期間 tile 不會白屏。
+  late final TileUpdateTransformer tileUpdateTransformer =
+      TileUpdateTransformer.fromHandlers(
+    handleData: (updateEvent, sink) {
+      final mapEvent = updateEvent.mapEvent;
+      final id = mapEvent is MapEventMove ? mapEvent.id : null;
+      if (id?.startsWith(_startedId) ?? false) {
+        final parts = id!.split('#')[2].split(',');
+        final lat = double.parse(parts[0]);
+        final lon = double.parse(parts[1]);
+        final zoom = double.parse(parts[2]);
+        sink.add(
+          updateEvent.loadOnly(
+            loadCenterOverride: LatLng(lat, lon),
+            loadZoomOverride: zoom,
+          ),
+        );
+      } else if (id == _inProgressId) {
+        // 不 prune 也不 load，保持既有 tile 可視
+      } else if (id == _finishedId) {
+        sink.add(updateEvent.pruneOnly());
+      } else {
+        sink.add(updateEvent);
+      }
+    },
+  );
+}

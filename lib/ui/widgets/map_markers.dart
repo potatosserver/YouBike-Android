@@ -45,6 +45,18 @@ class ClusterMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final digits = count.toString().length;
+    // 字型隨數字位數縮減，全部塞進固定容器（不擴大容器尺寸）。
+    // 1-2 位: 18px / 3 位: 14px / 4 位+: 11px
+    final double fontSize;
+    if (digits <= 2) {
+      fontSize = 18.0;
+    } else if (digits == 3) {
+      fontSize = 14.0;
+    } else {
+      fontSize = 11.0;
+    }
+
     return Container(
       width: 45,
       height: 45,
@@ -60,12 +72,16 @@ class ClusterMarker extends StatelessWidget {
         ],
       ),
       child: Center(
-        child: Text(
-          count.toString(),
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            count.toString(),
+            maxLines: 1,
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: fontSize,
+            ),
           ),
         ),
       ),

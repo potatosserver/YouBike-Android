@@ -13,6 +13,7 @@ import 'package:youbike/ui/widgets/search_panel.dart';
 import 'package:youbike/ui/widgets/home_update_button.dart';
 import 'package:youbike/data/services/app_config_service.dart';
 import 'package:youbike/data/services/firebase_service.dart';
+import 'package:youbike/core/services/map_animated_move.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,10 +21,11 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final MapController _mapController = MapController();
   double? _panelHeight;
   bool _isMapReady = false;
+  AnimatedMapController? _animatedMap;
 
   MapViewModel get _mapVm => Provider.of<MapViewModel>(context, listen: false);
 
@@ -31,11 +33,15 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      if (mounted) {
-        Provider.of<StationViewModel>(context, listen: false)
-            .mapTrigger
-            .attach(_mapController);
-      }
+      if (!mounted) return;
+      final stationVm =
+          Provider.of<StationViewModel>(context, listen: false);
+      stationVm.mapTrigger.attach(_mapController);
+      // Inject the shared AnimatedMapController so every map-trigger fire
+      // slides into place.
+      _animatedMap ??=
+          AnimatedMapController(mapController: _mapController, vsync: this);
+      stationVm.mapTrigger.attachStrategy(() => _animatedMap!);
     });
 
     // 回報裝置活躍到 Firestore（非同步，失敗不影響使用）
@@ -76,8 +82,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     mapController: _mapController,
                     isMapReady: _isMapReady,
                     onReady: (ready) => setState(() => _isMapReady = ready),
-                    onMoveToStation: (pos, zoom) =>
-                        _mapController.move(pos, zoom),
+                    onMoveToStation: (pos, zoom) {
+                      if (_animatedMap != null) {
+                        _animatedMap!.animateTo(pos, zoom);
+                      } else {
+                        _mapController.move(pos, zoom);
+                      }
+                    },
+                    animatedMap: _animatedMap,
                   ),
                 )
               else
@@ -91,8 +103,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     mapController: _mapController,
                     isMapReady: _isMapReady,
                     onReady: (ready) => setState(() => _isMapReady = ready),
-                    onMoveToStation: (pos, zoom) =>
-                        _mapController.move(pos, zoom),
+                    onMoveToStation: (pos, zoom) {
+                      if (_animatedMap != null) {
+                        _animatedMap!.animateTo(pos, zoom);
+                      } else {
+                        _mapController.move(pos, zoom);
+                      }
+                    },
+                    animatedMap: _animatedMap,
                   ),
                 ),
               Positioned.fill(
