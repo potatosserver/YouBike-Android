@@ -370,6 +370,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get view_changelog => '查看版本日誌';
 
   @override
+  String get beta_features_page_title => 'Beta 版';
+
+  @override
+  String get beta_providers_group_title => '自行車系統';
+
+  @override
+  String get beta_moovo_provider => 'Moovo 自行車系統';
+
+  @override
+  String get beta_moovo_subtitle => '啟用後將陸續加入 Moovo 站點支援，目前處於實驗階段，可能造成不穩定。';
+
+  @override
   String get check_for_updates => '檢查更新';
 
   @override

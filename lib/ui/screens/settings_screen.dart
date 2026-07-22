@@ -174,6 +174,13 @@ class _SettingsScreenState extends State<SettingsScreen>
                       size: 22, color: cs.onSurfaceVariant),
                   onTap: () => context.push('/language-selection'),
                 ),
+                _buildItem(
+                  icon: Icons.science_outlined,
+                  title: l10n.beta_features_page_title,
+                  trailing: Icon(Icons.chevron_right,
+                      size: 22, color: cs.onSurfaceVariant),
+                  onTap: () => context.push('/beta-features'),
+                ),
               ],
             ),
 

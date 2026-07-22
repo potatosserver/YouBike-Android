@@ -376,6 +376,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get view_changelog => 'View Changelog';
 
   @override
+  String get beta_features_page_title => 'Beta Features';
+
+  @override
+  String get beta_providers_group_title => 'Bike Providers';
+
+  @override
+  String get beta_moovo_provider => 'Moovo Bike System';
+
+  @override
+  String get beta_moovo_subtitle =>
+      'Enables upcoming Moovo station support. Currently experimental and may be unstable.';
+
+  @override
   String get check_for_updates => 'Check for Updates';
 
   @override

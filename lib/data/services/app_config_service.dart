@@ -7,6 +7,10 @@ class AppConfigService with ChangeNotifier {
   String selectedRegion = 'kaohsiung';
   bool useLocation = true;
   bool useNotification = true;
+  /// Moovo 自行車系統開關（位於設定 → 參數 → Beta 版 → 內含）。
+  /// 儲存於 SharedPreferences (key `useMoovo`)，預設 `false`。
+  /// 其他檔案可透過 Provider 取得 `useMoovo` (`listen: true/false` 都可)。
+  bool useMoovo = false;
   Set<String> pinnedStationIds = {};
   SharedPreferences? _prefs;
   String _appVersion = '0.0.0+0';
@@ -38,6 +42,7 @@ class AppConfigService with ChangeNotifier {
     selectedRegion = _prefs?.getString('selectedRegion') ?? 'kaohsiung';
     useLocation = _prefs?.getBool('useLocation') ?? true;
     useNotification = _prefs?.getBool('useNotification') ?? true;
+    useMoovo = _prefs?.getBool('useMoovo') ?? false;
     final pinnedList = _prefs?.getStringList('pinnedStations') ?? [];
     pinnedStationIds = pinnedList.map((id) => id.trim()).toSet();
     // 集中讀取 PackageInfo — 取代原本散落 3 處的 PackageInfo.fromPlatform() 呼叫。
@@ -71,6 +76,14 @@ class AppConfigService with ChangeNotifier {
   void setUseNotification(bool use) {
     useNotification = use;
     _prefs?.setBool('useNotification', use);
+    notifyListeners();
+  }
+
+  /// 設定 Moovo 自行車系統開關 — 與 `useLocation` / `useNotification` 相同的 Pattern：
+  /// 寫入記憶體欄位 → 寫入 SharedPreferences → 通知監聽者。
+  void setUseMoovo(bool use) {
+    useMoovo = use;
+    _prefs?.setBool('useMoovo', use);
     notifyListeners();
   }
 

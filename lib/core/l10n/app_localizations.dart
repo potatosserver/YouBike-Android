@@ -782,6 +782,30 @@ abstract class AppLocalizations {
   /// **'View Changelog'**
   String get view_changelog;
 
+  /// No description provided for @beta_features_page_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Beta Features'**
+  String get beta_features_page_title;
+
+  /// No description provided for @beta_providers_group_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike Providers'**
+  String get beta_providers_group_title;
+
+  /// No description provided for @beta_moovo_provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Moovo Bike System'**
+  String get beta_moovo_provider;
+
+  /// No description provided for @beta_moovo_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enables upcoming Moovo station support. Currently experimental and may be unstable.'**
+  String get beta_moovo_subtitle;
+
   /// No description provided for @check_for_updates.
   ///
   /// In en, this message translates to:
