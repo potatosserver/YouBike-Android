@@ -148,25 +148,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     onHeightChanged: (h) => setState(() => _panelHeight = h),
                   ),
                 ),
-              if (!isWide)
-                Positioned(
-                  bottom: (_panelHeight ?? availableHeight * 0.35) - 40,
-                  left: 0,
-                  right: 0,
-                  height: 140,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onVerticalDragUpdate: (details) {
-                      double newHeight =
-                          (_panelHeight ?? availableHeight * 0.35) -
-                              details.delta.dy;
-                      newHeight = newHeight.clamp(
-                          availableHeight * 0.2, availableHeight * 0.8);
-                      setState(() => _panelHeight = newHeight);
-                    },
-                    child: Container(color: Colors.transparent),
-                  ),
-                ),
               ...[
                 Positioned(
                   top: isWide ? (horizontalMargin + 16.0) : 40,

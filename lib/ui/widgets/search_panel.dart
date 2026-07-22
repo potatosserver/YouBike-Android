@@ -35,12 +35,19 @@ class _SearchPanelState extends State<SearchPanel> {
   final TextEditingController _searchController = TextEditingController();
   bool _isFocused = false;
   bool _hasText = false;
+  // Running drag height inside a single gesture. Mirrors the original
+  // home_screen implementation: kept here (instance state) instead of via
+  // `widget.panelHeight` because the parent rebuilds only after the callback
+  // returns — so the prop would lag every frame.
+  double _dragBase = 0.0;
 
   @override
   void initState() {
     super.initState();
     _searchFocusNode.addListener(_handleFocusChange);
     _searchController.addListener(_handleTextChange);
+    _dragBase = widget.panelHeight ??
+        MediaQuery.of(context).size.height * 0.35;
   }
 
   void _handleFocusChange() {
@@ -73,23 +80,38 @@ class _SearchPanelState extends State<SearchPanel> {
         return Column(
           children: [
             if (!widget.isWide)
-              Container(
-                width: double.infinity,
-                height: 24,
-                padding: const EdgeInsets.symmetric(vertical: 9),
-                child: Center(
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.4,
-                    height: 6,
-                    decoration: BoxDecoration(
-                        color: cs.onSurfaceVariant.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(3),
-                        boxShadow: [
-                          BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 3,
-                              offset: const Offset(0, 1))
-                        ]),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onVerticalDragUpdate: (details) {
+                  final screenHeight = MediaQuery.of(context).size.height;
+                  // Mirrors the original home_screen implementation: the
+                  // running height lives in this instance field instead of
+                  // crossing the widget boundary via `widget.panelHeight`,
+                  // which only refreshes on a parent build and would
+                  // otherwise let the panel lag or jitter.
+                  _dragBase -= details.delta.dy;
+                  final newHeight = _dragBase.clamp(
+                      screenHeight * 0.2, screenHeight * 0.8);
+                  widget.onHeightChanged(newHeight);
+                },
+                child: Container(
+                  width: double.infinity,
+                  height: 24,
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  child: Center(
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 0.4,
+                      height: 6,
+                      decoration: BoxDecoration(
+                          color: cs.onSurfaceVariant.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(3),
+                          boxShadow: [
+                            BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 3,
+                                offset: const Offset(0, 1))
+                          ]),
+                    ),
                   ),
                 ),
               ),
