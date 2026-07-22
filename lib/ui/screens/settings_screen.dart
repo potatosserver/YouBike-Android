@@ -212,13 +212,6 @@ class _SettingsScreenState extends State<SettingsScreen>
               title: l10n.about,
               children: [
                 _buildItem(
-                  icon: Icons.article_outlined,
-                  title: l10n.settings_logs,
-                  trailing: Icon(Icons.chevron_right,
-                      size: 22, color: cs.onSurfaceVariant),
-                  onTap: () => context.push('/app-logs'),
-                ),
-                _buildItem(
                   icon: Icons.info_outline,
                   title: l10n.about_youbike,
                   trailing: Icon(Icons.chevron_right,

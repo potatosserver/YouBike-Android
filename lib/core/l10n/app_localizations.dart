@@ -740,12 +740,6 @@ abstract class AppLocalizations {
   /// **'YouBike notifications are managed by the system \"App notifications\" permission. Please go to system settings to turn off notifications manually.'**
   String get notification_service_disable_content;
 
-  /// No description provided for @settings_logs.
-  ///
-  /// In en, this message translates to:
-  /// **'View Logs'**
-  String get settings_logs;
-
   /// No description provided for @about_youbike.
   ///
   /// In en, this message translates to:
@@ -925,36 +919,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This will clear all app data and settings, restoring the app to its initial state.'**
   String get app_reset_desc;
-
-  /// No description provided for @clear_logs_confirm_title.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm Clear Logs'**
-  String get clear_logs_confirm_title;
-
-  /// No description provided for @clear_logs_confirm_content.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to clear all app logs? This action cannot be undone.'**
-  String get clear_logs_confirm_content;
-
-  /// No description provided for @logs_cleared.
-  ///
-  /// In en, this message translates to:
-  /// **'Logs cleared.'**
-  String get logs_cleared;
-
-  /// No description provided for @no_logs.
-  ///
-  /// In en, this message translates to:
-  /// **'No logs yet.'**
-  String get no_logs;
-
-  /// No description provided for @clear_all_logs.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear All Logs'**
-  String get clear_all_logs;
 
   /// No description provided for @welcome_title.
   ///

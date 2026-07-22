@@ -352,9 +352,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'YouBike notifications are managed by the system \"App notifications\" permission. Please go to system settings to turn off notifications manually.';
 
   @override
-  String get settings_logs => 'View Logs';
-
-  @override
   String get about_youbike => 'About YouBike';
 
   @override
@@ -454,22 +451,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get app_reset_desc =>
       'This will clear all app data and settings, restoring the app to its initial state.';
-
-  @override
-  String get clear_logs_confirm_title => 'Confirm Clear Logs';
-
-  @override
-  String get clear_logs_confirm_content =>
-      'Are you sure you want to clear all app logs? This action cannot be undone.';
-
-  @override
-  String get logs_cleared => 'Logs cleared.';
-
-  @override
-  String get no_logs => 'No logs yet.';
-
-  @override
-  String get clear_all_logs => 'Clear All Logs';
 
   @override
   String get welcome_title => 'Welcome to YouBike';

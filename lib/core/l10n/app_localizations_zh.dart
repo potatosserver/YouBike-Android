@@ -346,9 +346,6 @@ class AppLocalizationsZh extends AppLocalizations {
       'YouBike 通知是由系統的「應用程式通知」權限控制。請前往系統設定手動關閉通知權限。';
 
   @override
-  String get settings_logs => '檢視日誌';
-
-  @override
   String get about_youbike => '關於 YouBike';
 
   @override
@@ -440,21 +437,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get app_reset_desc => '此操作將清除所有應用程式資料和設定，將應用程式還原至初始狀態。';
-
-  @override
-  String get clear_logs_confirm_title => '確認清除日誌';
-
-  @override
-  String get clear_logs_confirm_content => '確定要清除所有應用程式日誌嗎？此操作無法復原。';
-
-  @override
-  String get logs_cleared => '日誌已清除。';
-
-  @override
-  String get no_logs => '尚無日誌。';
-
-  @override
-  String get clear_all_logs => '清除所有日誌';
 
   @override
   String get welcome_title => '歡迎使用 YouBike';
